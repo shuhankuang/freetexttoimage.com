@@ -15,8 +15,10 @@ export default function LoginPage() {
   const { data: session, isPending } = authClient.useSession();
 
   useEffect(() => { if (!isPending && session) router.replace("/studio"); }, [isPending, session, router]);
+  // 支持深链：/login?mode=signup 直达注册 tab（来自右上角 “Get started free”）。放在 effect 里避免 SSR 水合不一致。
+  useEffect(() => { if (new URLSearchParams(window.location.search).get("mode") === "signup") setMode("signup"); }, []);
 
-  function switchMode(next) { setMode(next); setError(""); }
+  function switchMode(next) { setMode(next); setError(""); window.history.replaceState(null, "", next === "signup" ? "/login?mode=signup" : "/login"); }
 
   async function submit(event) {
     event.preventDefault();

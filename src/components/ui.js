@@ -9,6 +9,7 @@ import {
   LogOut,
   Plus,
   Sparkle,
+  Sparkles,
   Trash2,
   User,
 } from "lucide-react";
@@ -23,6 +24,7 @@ function formaIcon(Glyph, defaultSize) {
 }
 
 export const SparkIcon = formaIcon(Sparkle, 18);
+export const SparklesIcon = formaIcon(Sparkles, 16);
 export const ArrowIcon = formaIcon(ArrowRight, 17);
 export const CompassIcon = formaIcon(Compass, 20);
 export const GridIcon = formaIcon(LayoutGrid, 20);
