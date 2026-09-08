@@ -7,7 +7,6 @@ import { Button, Card, Label, Modal, Spinner, TextArea } from "@heroui/react";
 import SettingSelect from "@/components/setting-select";
 import InspirationGallery from "@/components/inspiration-gallery";
 import { ArrowIcon, PlusIcon, SparkIcon } from "@/components/ui";
-import { getSession, saveCreation } from "@/lib/store";
 
 const imagePool = ["dunes", "architecture", "flowers", "forest", "coast", "mountain", "portrait"];
 const suggestions = ["A glass house in a misty pine forest at dawn", "An editorial portrait lit by a soft red neon sign", "A quiet coastal village painted in loose watercolors"];
@@ -21,15 +20,31 @@ export default function ImageStudio() {
   useEffect(() => () => { if (reference?.url?.startsWith("blob:")) URL.revokeObjectURL(reference.url); }, [reference]);
   function attach(event) { const file = event.target.files?.[0]; if (!file) return; if (file.size > 10 * 1024 * 1024) { setError("Reference images must be smaller than 10 MB."); return; } setReference({ name: file.name, url: URL.createObjectURL(file) }); setError(""); }
   function surprise() { setPrompt(suggestions[Math.floor(Math.random() * suggestions.length)]); setError(""); }
-  function generate() {
+  async function generate() {
     if (!prompt.trim()) { setError("Describe the image you want to create."); return; }
-    const session = getSession(); if (!session) { router.replace("/login"); return; }
     setPending(true); setError("");
-    window.setTimeout(() => {
-      const image = imagePool[Math.floor(Math.random() * imagePool.length)];
-      const creation = { id: crypto.randomUUID(), title: prompt.trim().split(/\s+/).slice(0, 5).join(" "), prompt: prompt.trim(), style, ratio, image: `/gallery/${image}.jpg`, createdAt: new Date().toISOString() };
-      saveCreation(session.email, creation); setResult(creation); setPending(false);
-    }, 900);
+    try {
+      // 保持 demo 的“生成中”体感
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      const response = await fetch("/api/creations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: prompt.trim().split(/\s+/).slice(0, 5).join(" "),
+          prompt: prompt.trim(),
+          style,
+          ratio,
+          image: `/gallery/${imagePool[Math.floor(Math.random() * imagePool.length)]}.jpg`,
+        }),
+      });
+      if (response.status === 401) { router.replace("/login"); return; }
+      if (!response.ok) { const body = await response.json().catch(() => null); throw new Error(body?.error || "Generation failed. Please try again."); }
+      setResult(await response.json());
+    } catch (err) {
+      setError(err?.message || "Generation failed. Please try again.");
+    } finally {
+      setPending(false);
+    }
   }
   function choosePrompt(value) { setPrompt(value); setError(""); document.getElementById("image-prompt")?.focus({ preventScroll: true }); window.scrollTo({ top: 0, behavior: "smooth" }); }
   return <main className="workspace-page image-studio">

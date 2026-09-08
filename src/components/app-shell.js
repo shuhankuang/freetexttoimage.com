@@ -4,16 +4,16 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Button, Spinner } from "@heroui/react";
-import { signOut } from "@/lib/store";
-import { useLocalData } from "@/components/use-local-data";
+import { authClient } from "@/lib/auth-client";
 import { GridIcon, ImageIcon, Logo, LogoutIcon, UserIcon } from "@/components/ui";
 
 export default function AppShell({ children, publicView = false }) {
   const pathname = usePathname(); const router = useRouter();
-  const { value: user, ready } = useLocalData("forma.session");
-  useEffect(() => { if (ready && !user && !publicView) router.replace("/login"); }, [router, publicView, ready, user]);
-  if (!publicView && (!ready || !user)) return <div className="screen-loader"><Spinner /><span>Opening your workspace…</span></div>;
-  const logout = () => { signOut(); router.replace("/login"); };
+  const { data: session, isPending } = authClient.useSession();
+  const user = session?.user || null;
+  useEffect(() => { if (!isPending && !user && !publicView) router.replace("/login"); }, [router, publicView, isPending, user]);
+  if (!publicView && (isPending || !user)) return <div className="screen-loader"><Spinner /><span>Opening your workspace…</span></div>;
+  async function logout() { await authClient.signOut(); router.replace("/login"); }
   return <div className="app-frame">
     <aside className="app-sidebar"><Logo /><span className="sidebar-eyebrow">YOUR CREATIVE SPACE</span><nav aria-label="Workspace navigation">
       <Link className={pathname === "/" ? "active" : ""} href="/"><GridIcon />Explore</Link>
