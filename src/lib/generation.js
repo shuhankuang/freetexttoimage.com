@@ -184,8 +184,8 @@ export async function createJob(user, { prompt, style, ratio, model = DEFAULT_MO
   const jobId = crypto.randomUUID();
   db.prepare(
     `INSERT INTO creations
-       (id, user_id, title, prompt, style, ratio, image, image_key, status, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, 'processing', ?)`
+       (id, user_id, title, prompt, style, ratio, image, image_key, status, model, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, 'processing', ?, ?)`
   ).run(
     creationId,
     user.id,
@@ -193,6 +193,7 @@ export async function createJob(user, { prompt, style, ratio, model = DEFAULT_MO
     prompt.trim(),
     style || null,
     ratio || null,
+    model,
     now
   );
   insertJob({
