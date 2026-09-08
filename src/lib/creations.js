@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { listProviders } from "@/lib/models";
+import { Buffer } from "node:buffer";
 
 // creations 表服务端访问层。只被 route handler / server 代码 import。
 
@@ -13,11 +14,58 @@ const columns = "id, user_id, title, prompt, style, ratio, image, status, model,
 const MODEL_LABELS = new Map(listProviders().map((p) => [p.id, p.label]));
 const decorate = (row) => (row ? { ...row, model: MODEL_LABELS.get(row.model) || row.model || null } : row);
 
-export function listCreations(userId) {
-  return db
-    .prepare(`SELECT ${columns} FROM creations WHERE user_id = ? ORDER BY created_at DESC`)
-    .all(userId)
-    .map(decorate);
+const DEFAULT_PAGE_SIZE = 24;
+const MAX_PAGE_SIZE = 48;
+
+function encodeCursor(row) {
+  return Buffer.from(JSON.stringify([row.createdAt, row.id])).toString("base64url");
+}
+
+function decodeCursor(value) {
+  if (!value) return null;
+  try {
+    const [createdAt, id] = JSON.parse(Buffer.from(value, "base64url").toString("utf8"));
+    if (typeof createdAt !== "string" || Number.isNaN(Date.parse(createdAt)) || typeof id !== "string" || !id) {
+      throw new Error("invalid cursor values");
+    }
+    return { createdAt, id };
+  } catch {
+    const error = new Error("Invalid creations cursor");
+    error.code = "INVALID_CURSOR";
+    throw error;
+  }
+}
+
+export function listCreationsPage(userId, { limit = DEFAULT_PAGE_SIZE, cursor: rawCursor } = {}) {
+  const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, Number.parseInt(limit, 10) || DEFAULT_PAGE_SIZE));
+  const cursor = decodeCursor(rawCursor);
+  const afterCursor = `created_at < ? OR (created_at = ? AND id < ?)`;
+  const rows = cursor
+    ? db.prepare(
+        `SELECT ${columns} FROM creations
+         WHERE user_id = ? AND (${afterCursor})
+         ORDER BY created_at DESC, id DESC LIMIT ?`
+      ).all(userId, cursor.createdAt, cursor.createdAt, cursor.id, pageSize + 1)
+    : db.prepare(
+        `SELECT ${columns} FROM creations
+         WHERE user_id = ? ORDER BY created_at DESC, id DESC LIMIT ?`
+      ).all(userId, pageSize + 1);
+
+  const pageRows = rows.slice(0, pageSize);
+  const hasMore = rows.length > pageSize;
+  const last = pageRows.at(-1);
+  const remaining = hasMore
+    ? db.prepare(
+        `SELECT COUNT(*) AS count FROM creations
+         WHERE user_id = ? AND (${afterCursor})`
+      ).get(userId, last.createdAt, last.createdAt, last.id).count
+    : 0;
+
+  return {
+    items: pageRows.map(decorate),
+    nextCursor: hasMore ? encodeCursor(last) : null,
+    remaining,
+  };
 }
 
 export function getCreation(userId, id) {

@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Button, Card, Label, Modal, Spinner, TextArea } from "@heroui/react";
+import { Button, Card, Label, Spinner, TextArea } from "@heroui/react";
 import SettingSelect from "@/components/setting-select";
 import InspirationGallery from "@/components/inspiration-gallery";
-import ResultInfo from "@/components/result-info";
+import ResultViewer from "@/components/result-viewer";
 import { ArrowIcon, CheckIcon, DiceIcon, ImagePlusIcon, NoCardIcon, SparkIcon, SparklesIcon } from "@/components/ui";
 
 const suggestions = ["A glass house in a misty pine forest at dawn", "An editorial portrait lit by a soft red neon sign", "A quiet coastal village painted in loose watercolors"];
@@ -96,6 +96,6 @@ export default function ImageStudio({ models = [], defaultModel = "z-image" }) {
     </Card.Footer></Card>
     <div className="studio-footnote"><span className="ft-item"><CheckIcon size={14} />Free to try</span><span className="ft-dot">·</span><span className="ft-item"><NoCardIcon size={15} />No credit card required</span><span className="ft-dot">·</span><span className="ft-item"><SparklesIcon size={14} />High-quality AI images</span></div>
     <InspirationGallery onChoose={choosePrompt} />
-    <Modal.Backdrop isOpen={!!result} onOpenChange={(open) => { if (!open) setResult(null); }}><Modal.Container size="lg"><Modal.Dialog className="result-dialog rounded-xl"><Modal.CloseTrigger /><Modal.Body>{result && <div className="result-grid"><Image src={result.image} alt={result.prompt} width={800} height={800} unoptimized /><ResultInfo eyebrow="CREATION READY" prompt={result.prompt} model={result.model} ratio={result.ratio} createdAt={result.createdAt} actions={<><Button className="primary-button" onPress={() => router.push("/creations")}>View in library <ArrowIcon /></Button><Button variant="outline" slot="close">Create another</Button></>} /></div>}</Modal.Body></Modal.Dialog></Modal.Container></Modal.Backdrop>
+    <ResultViewer item={result} isOpen={!!result} onOpenChange={(open) => { if (!open) setResult(null); }} />
   </main>;
 }

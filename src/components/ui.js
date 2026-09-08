@@ -4,6 +4,7 @@ import {
   Check,
   Compass,
   Copy,
+  Download,
   Dices,
   Image as ImageGlyph,
   ImagePlus,
@@ -39,6 +40,7 @@ export const PlusIcon = formaIcon(Plus, 18);
 export const DiceIcon = formaIcon(Dices, 15);
 export const ImagePlusIcon = formaIcon(ImagePlus, 16);
 export const CopyIcon = formaIcon(Copy, 14);
+export const DownloadIcon = formaIcon(Download, 17);
 
 // “无需信用卡”：lucide CreditCard 本体画一条对角斜杠，比单独放一张卡更表意
 export function NoCardIcon({ size = 15, strokeWidth = 1.7 }) {

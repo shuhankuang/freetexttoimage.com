@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckIcon, CopyIcon } from "@/components/ui";
+import { CheckIcon, CopyIcon, DownloadIcon } from "@/components/ui";
 
 // 生成结果弹窗（studio 与 creations 共用）右侧信息面板：
 // 眉标（可选）+ 提示语（无大标题、直接可读）+ 复制按钮 + 底部小字参数 + 右下角动作区。
@@ -42,7 +42,7 @@ function formatDate(value) {
   }).format(d);
 }
 
-export default function ResultInfo({ eyebrow, prompt, model, ratio, createdAt, actions }) {
+export default function ResultInfo({ prompt, model, ratio, createdAt, image, actions }) {
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -61,9 +61,10 @@ export default function ResultInfo({ eyebrow, prompt, model, ratio, createdAt, a
 
   return (
     <div className="result-info">
-      {eyebrow && <span className="section-label">{eyebrow}</span>}
+      <span className="result-type">Text to Image</span>
 
       <div className="result-prompt">
+        <span className="result-prompt-label">Prompt</span>
         {prompt ? <p className="result-prompt-text">{prompt}</p> : <p className="result-prompt-text result-prompt-empty">No prompt recorded for this image.</p>}
         {prompt && (
           <button type="button" className="copy-prompt" onClick={handleCopy} aria-label="Copy prompt">
@@ -81,7 +82,12 @@ export default function ResultInfo({ eyebrow, prompt, model, ratio, createdAt, a
             ))}
           </p>
         )}
-        {actions && <div className="result-actions">{actions}</div>}
+        {(image || actions) && (
+          <div className="result-controls">
+            {actions && <div className="result-actions">{actions}</div>}
+            {image && <a className="result-download" href={image} download><DownloadIcon />Download</a>}
+          </div>
+        )}
       </div>
     </div>
   );

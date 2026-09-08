@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { listCreations } from "@/lib/creations";
+import { listCreationsPage } from "@/lib/creations";
 import { createJob } from "@/lib/generation";
 
 async function requireUser() {
@@ -9,10 +9,21 @@ async function requireUser() {
   return session?.user || null;
 }
 
-export async function GET() {
+export async function GET(request) {
   const user = await requireUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  return NextResponse.json(listCreations(user.id));
+  const { searchParams } = new URL(request.url);
+  try {
+    return NextResponse.json(listCreationsPage(user.id, {
+      limit: searchParams.get("limit"),
+      cursor: searchParams.get("cursor"),
+    }));
+  } catch (error) {
+    if (error?.code === "INVALID_CURSOR") {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    throw error;
+  }
 }
 
 // 提交一次真实生成：调模型服务拿任务 → 落一条 status=processing 的 creation + job，
