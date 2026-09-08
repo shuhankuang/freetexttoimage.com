@@ -1,5 +1,6 @@
 import AppShell from "@/components/app-shell";
 import ImageStudio from "@/components/image-studio";
+import { DEFAULT_MODEL, listProviders } from "@/lib/models";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
@@ -12,5 +13,5 @@ export async function generateMetadata({ params }) {
 }
 
 export default function HomePage() {
-  return <AppShell publicView><ImageStudio /></AppShell>;
+  return <AppShell publicView><ImageStudio models={listProviders()} defaultModel={DEFAULT_MODEL} /></AppShell>;
 }
