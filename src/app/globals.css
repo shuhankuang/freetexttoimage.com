@@ -127,11 +127,13 @@ body { font-family: Arial, Helvetica, sans-serif; }
 .composer-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .composer-heading .prompt-label { display: flex; gap: 8px; align-items: center; color: #747f68; font-weight: 400; margin: 0; font-size: 14px; }
 .prompt-label svg { color: #b39772; }
-.composer-heading .button { color: #7e8775; font-size: 13px; gap: 6px; padding: 0; min-width: 0; height: 32px; }
+.composer-heading .button { color: #7e8775; font-size: 13px; gap: 6px; padding: 0 10px; min-width: 0; height: 32px; border-radius: 8px; }
+.composer-heading .button:hover { color: #414b39; }
 .image-studio .generator-textarea { min-height: 82px; height: 90px; font-size: 16px !important; line-height: 1.8; }
 .image-studio .generator-textarea::placeholder { color: #939b89; }
 .image-studio .generator-meta { justify-content: space-between; align-items: center; gap: 10px; margin-top: 8px; }
-.generator-meta .button { height: 34px; padding: 0; font-size: 13px; color: #869079; gap: 5px; }
+.generator-meta .button { height: 34px; padding: 0 10px; font-size: 13px; color: #869079; gap: 5px; border-radius: 8px; }
+.generator-meta .button:hover { color: #414b39; }
 .image-studio .generator-footer { flex-direction: row; align-items: center; padding: 13px 15px !important; background: #fcfcf9; gap: 12px; }
 .image-studio .generator-settings { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; }
 .image-studio .setting-select.style-select { width: 140px; }.image-studio .setting-select.ratio-select { width: 85px; }
@@ -192,3 +194,11 @@ a:focus-visible,button:focus-visible { outline: 2px solid var(--accent); outline
 .auth-tabs button.selected { background: #fff; color: var(--foreground); box-shadow: 0 1px 3px rgba(40, 44, 32, .08); }
 @media (prefers-color-scheme: dark) { .auth-tabs button.selected { background: rgba(255,255,255,.12); color: #fff; } }
 .auth-tabs button[disabled] { opacity: .5; cursor: default; }
+
+/* Sign-out 确认弹窗 */
+.logout-dialog .modal__body { padding: 34px 34px 30px; }
+.logout-dialog .modal__heading { font: 400 27px/1.2 Georgia, serif; color: var(--foreground); margin: 0; }
+.logout-dialog .modal__body > p { margin: 12px 0 0; color: #767d70; line-height: 1.7; font-size: 14px; }
+.logout-dialog .logout-actions { margin-top: 28px; display: flex; gap: 9px; }
+.logout-dialog .logout-actions .button { gap: 7px; }
+@media (max-width: 620px) { .logout-dialog .modal__body { padding: 26px 22px 22px; }.logout-dialog .logout-actions { width: 100%; flex-direction: column-reverse; }.logout-dialog .logout-actions .button { width: 100%; } }

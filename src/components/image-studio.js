@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button, Card, Label, Modal, Spinner, TextArea } from "@heroui/react";
 import SettingSelect from "@/components/setting-select";
 import InspirationGallery from "@/components/inspiration-gallery";
-import { ArrowIcon, PlusIcon, SparkIcon } from "@/components/ui";
+import { ArrowIcon, DiceIcon, ImagePlusIcon, SparkIcon } from "@/components/ui";
 
 const imagePool = ["dunes", "architecture", "flowers", "forest", "coast", "mountain", "portrait"];
 const suggestions = ["A glass house in a misty pine forest at dawn", "An editorial portrait lit by a soft red neon sign", "A quiet coastal village painted in loose watercolors"];
@@ -50,9 +50,9 @@ export default function ImageStudio() {
   return <main className="workspace-page image-studio">
     <div className="creative-heading"><span className="section-label"><span className="tiny-dot" />A LITTLE IMAGINATION. ENDLESS POSSIBILITIES.</span><h1>You imagine it. <em>We bring it to life.</em><span className="title-flower">✳</span></h1><p>Turn the ideas in your head into images you can&apos;t stop looking at.</p></div>
     <Card className="generator-card"><Card.Content>
-      <div className="composer-heading"><Label htmlFor="image-prompt" className="prompt-label"><SparkIcon />Your imagination starts here</Label><Button variant="ghost" onPress={surprise}><SparkIcon size={15} />Surprise me</Button></div>
+      <div className="composer-heading"><Label htmlFor="image-prompt" className="prompt-label"><SparkIcon />Your imagination starts here</Label><Button variant="ghost" onPress={surprise}><DiceIcon />Surprise me</Button></div>
       <TextArea id="image-prompt" maxLength={2000} fullWidth rows={3} value={prompt} onChange={(event) => { setPrompt(event.target.value); setError(""); }} placeholder="A sun-drenched villa on the edge of a quiet sea, soft linen curtains dancing in the breeze..." className="generator-textarea" />
-      <div className="generator-meta"><input ref={fileInput} hidden type="file" accept="image/png,image/jpeg,image/webp" onChange={attach} /><Button variant="ghost" onPress={() => fileInput.current.click()}><PlusIcon />Add reference image</Button><span>{prompt.length} / 2,000</span></div>
+      <div className="generator-meta"><input ref={fileInput} hidden type="file" accept="image/png,image/jpeg,image/webp" onChange={attach} /><Button variant="ghost" onPress={() => fileInput.current.click()}><ImagePlusIcon />Add reference image</Button><span>{prompt.length} / 2,000</span></div>
       {reference && <div className="reference-preview"><Image src={reference.url} alt="Reference preview" width={64} height={64} unoptimized /><div><strong>{reference.name}</strong><span>Reference image</span></div><Button size="sm" variant="ghost" onPress={() => setReference(null)}>Remove</Button></div>}
       {error && <p className="inline-error" role="alert">{error}</p>}
     </Card.Content><Card.Footer className="generator-footer">

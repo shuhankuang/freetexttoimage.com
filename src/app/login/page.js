@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, FieldError, Form, Input, Label, TextField } from "@heroui/react";
-import { ArrowIcon, Logo, SparkIcon } from "@/components/ui";
+import { ArrowIcon, GoogleIcon, Logo, SparkIcon } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
 
 const DEMO_EMAIL = "demo@forma.studio";
@@ -73,8 +73,8 @@ export default function LoginPage() {
         <Button type="submit" size="lg" fullWidth isPending={pending} className="primary-button">{mode === "signin" ? "Sign in" : "Create account"} <ArrowIcon /></Button>
       </Form>
       <div className="auth-divider"><span>or</span></div>
-      <Button size="lg" fullWidth variant="outline" onPress={google}>Continue with Google</Button>
-      <Button size="lg" fullWidth variant="ghost" onPress={demo} isDisabled={pending}>Continue with demo account</Button>
+      <Button size="lg" fullWidth variant="outline" onPress={google}><GoogleIcon />Continue with Google</Button>
+      <Button size="lg" fullWidth variant="ghost" onPress={demo} isDisabled={pending} className="mt-4">Continue with demo account</Button>
       <p className="legal-copy">This prototype stores accounts and creations locally in a SQLite file. Passwords are hashed and never leave your machine.</p>
     </div></section>
   </main>;
