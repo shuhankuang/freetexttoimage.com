@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { CheckIcon, CopyIcon, SparkIcon } from "@/components/ui";
+import { CheckIcon, CopyIcon } from "@/components/ui";
 
 // 生成结果弹窗（studio 与 creations 共用）右侧信息面板：
-// 眉标 + 标题 + 「提示语块（可一键复制）」+ 生成参数徽章 + 动作区。
+// 眉标（可选）+ 提示语（无大标题、直接可读）+ 复制按钮 + 底部小字参数 + 右下角动作区。
 // model / ratio / createdAt 由父级从作品记录传入——model 已是服务端装饰好的可读标签。
 
 // 剪贴板：优先 navigator.clipboard（localhost/https 可用），失败退回 execCommand。
@@ -42,7 +42,7 @@ function formatDate(value) {
   }).format(d);
 }
 
-export default function ResultInfo({ eyebrow, title, prompt, model, ratio, createdAt, actions }) {
+export default function ResultInfo({ eyebrow, prompt, model, ratio, createdAt, actions }) {
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -54,41 +54,35 @@ export default function ResultInfo({ eyebrow, title, prompt, model, ratio, creat
   }
 
   const meta = [
-    model && { key: "model", label: "Model", value: model },
-    ratio && { key: "ratio", label: "Aspect ratio", value: ratio },
-    formatDate(createdAt) && { key: "created", label: "Created", value: formatDate(createdAt) },
+    model && { label: "Model", value: model },
+    ratio && { label: "Aspect", value: ratio },
+    formatDate(createdAt) && { label: "Created", value: formatDate(createdAt) },
   ].filter(Boolean);
 
   return (
     <div className="result-info">
       {eyebrow && <span className="section-label">{eyebrow}</span>}
-      {title && <h2 className="result-title">{title}</h2>}
 
-      {prompt && (
-        <div className="prompt-sheet">
-          <div className="prompt-sheet-head">
-            <span className="prompt-sheet-label"><SparkIcon size={12} />Prompt</span>
-            <button type="button" className="copy-prompt" onClick={handleCopy} aria-label="Copy prompt">
-              {copied ? <CheckIcon size={13} /> : <CopyIcon size={13} />}
-              {copied ? "Copied" : "Copy"}
-            </button>
-          </div>
-          <p className="prompt-sheet-text">{prompt}</p>
-        </div>
-      )}
+      <div className="result-prompt">
+        {prompt ? <p className="result-prompt-text">{prompt}</p> : <p className="result-prompt-text result-prompt-empty">No prompt recorded for this image.</p>}
+        {prompt && (
+          <button type="button" className="copy-prompt" onClick={handleCopy} aria-label="Copy prompt">
+            {copied ? <CheckIcon size={13} /> : <CopyIcon size={13} />}
+            {copied ? "Copied" : "Copy prompt"}
+          </button>
+        )}
+      </div>
 
-      {meta.length > 0 && (
-        <dl className="result-meta">
-          {meta.map(({ key, label, value }) => (
-            <div className="result-meta-item" key={key}>
-              <dt>{label}</dt>
-              <dd>{value}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
-
-      {actions && <div className="result-actions">{actions}</div>}
+      <div className="result-foot">
+        {meta.length > 0 && (
+          <p className="result-meta-line">
+            {meta.map(({ label, value }, i) => (
+              <span key={label} className={i === 0 ? "first" : ""}><b>{label}</b>{value}</span>
+            ))}
+          </p>
+        )}
+        {actions && <div className="result-actions">{actions}</div>}
+      </div>
     </div>
   );
 }
