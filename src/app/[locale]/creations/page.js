@@ -7,6 +7,7 @@ import { Button, Spinner } from "@heroui/react";
 import { ArrowIcon, ImageIcon, PlusIcon, TrashIcon } from "@/components/ui";
 import ResultViewer from "@/components/result-viewer";
 import { authClient } from "@/lib/auth-client";
+import { useI18n } from "@/i18n/provider";
 
 const PAGE_SIZE = 24;
 
@@ -31,7 +32,7 @@ function columnCountFor(width) {
   return 1;
 }
 
-function CreationTile({ item, position, total, onOpen }) {
+function CreationTile({ item, position, total, onOpen, t }) {
   const heightRatio = tileHeightRatio(item.ratio);
   const failed = item.status === "failed";
   return (
@@ -40,23 +41,23 @@ function CreationTile({ item, position, total, onOpen }) {
         className="creation-image"
         style={{ aspectRatio: `1 / ${heightRatio}` }}
         onClick={onOpen}
-        aria-label={`View ${item.title || "generated image"}`}
+        aria-label={t("creations.view", { name: item.title || t("creations.generatedImage") })}
       >
         {item.image ? (
           <Image
             src={item.image}
-            alt={item.title || item.prompt || "Generated image"}
+            alt={item.title || item.prompt || t("creations.generatedImageAlt")}
             fill
             sizes="(max-width: 359px) 100vw, (max-width: 999px) 50vw, (max-width: 1399px) 33vw, 25vw"
             unoptimized
           />
         ) : (
           <span className="creation-state">
-            {failed ? <><TrashIcon size={14} />Generation failed</> : <><Spinner size="sm" color="current" />Generating…</>}
+            {failed ? <><TrashIcon size={14} />{t("creations.generationFailed")}</> : <><Spinner size="sm" color="current" />{t("creations.generating")}</>}
           </span>
         )}
         <span className="creation-overlay" aria-hidden="true">
-          <span>{[item.model, item.ratio].filter(Boolean).join(" · ") || "AI image"}</span>
+          <span>{[item.model, item.ratio].filter(Boolean).join(" · ") || t("creations.aiImage")}</span>
         </span>
         <span className="creation-open" aria-hidden="true"><ArrowIcon /></span>
       </button>
@@ -76,6 +77,7 @@ function distribute(items, count) {
 }
 
 export default function CreationsPage() {
+  const { path, t } = useI18n();
   const [selected, setSelected] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -106,7 +108,7 @@ export default function CreationsPage() {
     let cancelled = false;
     fetch(`/api/creations?limit=${PAGE_SIZE}`)
       .then(async (response) => {
-        if (!response.ok) throw new Error("Unable to load creations");
+        if (!response.ok) throw new Error("load-failed");
         return response.json();
       })
       .then((page) => {
@@ -135,7 +137,7 @@ export default function CreationsPage() {
     setPageError(false);
     try {
       const response = await fetch(`/api/creations?limit=${PAGE_SIZE}&cursor=${encodeURIComponent(nextCursor)}`);
-      if (!response.ok) throw new Error("Unable to load more creations");
+      if (!response.ok) throw new Error("load-more-failed");
       const page = await response.json();
       setItems((current) => {
         const known = new Set(current.map((item) => item.id));
@@ -161,23 +163,23 @@ export default function CreationsPage() {
   }
 
   if (isPending || (signedIn && loading)) {
-    return <main className="workspace-page"><div className="screen-loader"><Spinner /><span>Loading your creations…</span></div></main>;
+    return <main className="workspace-page"><div className="screen-loader"><Spinner /><span>{t("creations.loading")}</span></div></main>;
   }
 
   return <main className="workspace-page creations-page">
-    <div className="page-title"><div><span className="section-label">LIBRARY</span><h1>My creations</h1><p>Every generated image, together with the prompt that made it.</p></div><Link className="link-button primary-button" href="/studio"><PlusIcon /> New image</Link></div>
-    {initialError && <div className="library-load-state"><ImageIcon /><h2>Couldn&apos;t load your creations</h2><p>Check your connection and try again.</p><Button variant="outline" onPress={retryInitial}>Try again</Button></div>}
+    <div className="page-title"><div><span className="section-label">{t("creations.section")}</span><h1>{t("creations.title")}</h1><p>{t("creations.subtitle")}</p></div><Link className="link-button primary-button" href={path("/studio")}><PlusIcon /> {t("creations.newImage")}</Link></div>
+    {initialError && <div className="library-load-state"><ImageIcon /><h2>{t("creations.loadErrorTitle")}</h2><p>{t("creations.loadErrorBody")}</p><Button variant="outline" onPress={retryInitial}>{t("creations.retry")}</Button></div>}
     {!initialError && items.length > 0 && <>
-      <div className="library-summary"><span><strong>{total}</strong> creations</span></div>
-      <div className="creation-wall" ref={wallRef} role="list" aria-label="Your creations">
-        {columns.map((column, index) => <div className="creation-column" key={index}>{column.map(({ item, position }) => <CreationTile key={item.id} item={item} position={position} total={total} onOpen={() => setSelected(item)} />)}</div>)}
+      <div className="library-summary"><span>{t("creations.count", { count: total })}</span></div>
+      <div className="creation-wall" ref={wallRef} role="list" aria-label={t("creations.listLabel")}>
+        {columns.map((column, index) => <div className="creation-column" key={index}>{column.map(({ item, position }) => <CreationTile key={item.id} item={item} position={position} total={total} onOpen={() => setSelected(item)} t={t} />)}</div>)}
       </div>
       {(nextCursor || pageError) && <div className="library-pagination">
-        {pageError && <p role="alert">That page didn&apos;t load. Your existing creations are still here.</p>}
-        <Button variant="outline" isPending={loadingMore} onPress={loadMore}>{pageError ? "Retry" : `Load more · ${remaining} remaining`}</Button>
+        {pageError && <p role="alert">{t("creations.pageError")}</p>}
+        <Button variant="outline" isPending={loadingMore} onPress={loadMore}>{pageError ? t("creations.retry") : t("creations.loadMore", { count: remaining })}</Button>
       </div>}
     </>}
-    {!initialError && items.length === 0 && <div className="empty-library"><span><ImageIcon /></span><h2>Your library is empty</h2><p>Generate your first image and it will appear here with its prompt and settings.</p><Link className="link-button primary-button" href="/studio">Create an image <ArrowIcon /></Link></div>}
-    <ResultViewer item={selected} isOpen={!!selected} onOpenChange={(open) => { if (!open) setSelected(null); }} actions={selected && <Button isIconOnly variant="danger-soft" aria-label="Delete creation" onPress={() => remove(selected.id)}><TrashIcon /></Button>} />
+    {!initialError && items.length === 0 && <div className="empty-library"><span><ImageIcon /></span><h2>{t("creations.emptyTitle")}</h2><p>{t("creations.emptyBody")}</p><Link className="link-button primary-button" href={path("/studio")}>{t("creations.createImage")} <ArrowIcon /></Link></div>}
+    <ResultViewer item={selected} isOpen={!!selected} onOpenChange={(open) => { if (!open) setSelected(null); }} actions={selected && <Button isIconOnly variant="danger-soft" aria-label={t("creations.delete")} onPress={() => remove(selected.id)}><TrashIcon /></Button>} />
   </main>;
 }

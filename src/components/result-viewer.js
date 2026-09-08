@@ -3,15 +3,17 @@
 import Image from "next/image";
 import { Modal } from "@heroui/react";
 import ResultInfo from "@/components/result-info";
+import { useI18n } from "@/i18n/provider";
 
-function ResultState({ item }) {
+function ResultState({ item, t }) {
   if (item?.status === "failed") {
-    return <><strong>Generation failed</strong><span>Try again with a different prompt.</span></>;
+    return <><strong>{t("result.failedTitle")}</strong><span>{t("result.failedBody")}</span></>;
   }
-  return <><strong>Still working…</strong><span>Your image is being generated.</span></>;
+  return <><strong>{t("result.workingTitle")}</strong><span>{t("result.workingBody")}</span></>;
 }
 
 export default function ResultViewer({ item, isOpen, onOpenChange, actions }) {
+  const { t } = useI18n();
   return (
     <Modal.Backdrop
       className="result-viewer-backdrop"
@@ -21,8 +23,8 @@ export default function ResultViewer({ item, isOpen, onOpenChange, actions }) {
     >
       <Modal.Container size="full">
         <Modal.Dialog className="result-viewer-dialog">
-          <Modal.Heading className="result-viewer-title">Generated image details</Modal.Heading>
-          <Modal.CloseTrigger aria-label="Close image viewer" />
+          <Modal.Heading className="result-viewer-title">{t("result.details")}</Modal.Heading>
+          <Modal.CloseTrigger aria-label={t("result.close")} />
           <Modal.Body>
             {item && (
               <div className="result-viewer">
@@ -30,13 +32,13 @@ export default function ResultViewer({ item, isOpen, onOpenChange, actions }) {
                   {item.image ? (
                     <Image
                       src={item.image}
-                      alt={item.prompt || item.title || "Generated image"}
+                      alt={item.prompt || item.title || t("result.imageAlt")}
                       fill
                       sizes="(max-width: 760px) 100vw, 66vw"
                       unoptimized
                     />
                   ) : (
-                    <div className="result-state"><ResultState item={item} /></div>
+                    <div className="result-state"><ResultState item={item} t={t} /></div>
                   )}
                 </div>
                 <ResultInfo

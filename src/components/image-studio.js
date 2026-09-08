@@ -7,6 +7,7 @@ import { Button, Card, Label, Spinner, TextArea } from "@heroui/react";
 import SettingSelect from "@/components/setting-select";
 import InspirationGallery from "@/components/inspiration-gallery";
 import ResultViewer from "@/components/result-viewer";
+import { useI18n } from "@/i18n/provider";
 import { ArrowIcon, CheckIcon, DiceIcon, ImagePlusIcon, NoCardIcon, SparkIcon, SparklesIcon } from "@/components/ui";
 
 const suggestions = ["A glass house in a misty pine forest at dawn", "An editorial portrait lit by a soft red neon sign", "A quiet coastal village painted in loose watercolors"];
@@ -19,6 +20,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default function ImageStudio({ models = [], defaultModel = "z-image" }) {
   const router = useRouter(); const fileInput = useRef(null);
+  const { messages, path, t } = useI18n();
   const [prompt, setPrompt] = useState(""); const [model, setModel] = useState(defaultModel); const [ratio, setRatio] = useState("1:1");
   const [reference, setReference] = useState(null); const [pending, setPending] = useState(false); const [result, setResult] = useState(null); const [error, setError] = useState("");
 
@@ -39,10 +41,10 @@ export default function ImageStudio({ models = [], defaultModel = "z-image" }) {
   }
 
   useEffect(() => () => { if (reference?.url?.startsWith("blob:")) URL.revokeObjectURL(reference.url); }, [reference]);
-  function attach(event) { const file = event.target.files?.[0]; if (!file) return; if (file.size > 10 * 1024 * 1024) { setError("Reference images must be smaller than 10 MB."); return; } setReference({ name: file.name, url: URL.createObjectURL(file) }); setError(""); }
+  function attach(event) { const file = event.target.files?.[0]; if (!file) return; if (file.size > 10 * 1024 * 1024) { setError(t("studio.errors.referenceSize")); return; } setReference({ name: file.name, url: URL.createObjectURL(file) }); setError(""); }
   function surprise() { setPrompt(suggestions[Math.floor(Math.random() * suggestions.length)]); setError(""); }
   async function generate() {
-    if (!prompt.trim()) { setError("Describe the image you want to create."); return; }
+    if (!prompt.trim()) { setError(t("studio.errors.promptRequired")); return; }
     setPending(true); setError("");
     try {
       // 1) 提交生成任务 → 拿回 status=processing 的 creation
@@ -51,19 +53,19 @@ export default function ImageStudio({ models = [], defaultModel = "z-image" }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: prompt.trim(), model, ratio }),
       });
-      if (response.status === 401) { router.replace("/login"); return; }
+      if (response.status === 401) { router.replace(path("/login")); return; }
       if (!response.ok) {
-        const body = await response.json().catch(() => null);
-        throw new Error(body?.error || "Generation failed. Please try again.");
+        throw new Error(t("studio.errors.generate"));
       }
       const creation = await response.json();
 
       // 2) 轮询直到 succeeded / failed（生成是异步的，可能几十秒）
       const finished = await waitForCreation(creation.id);
-      if (finished.status === "failed") throw new Error("The image generation failed. Please tweak your prompt and try again.");
+      if (finished.status === "failed") throw new Error(t("studio.errors.failed"));
       setResult(finished);
     } catch (err) {
-      setError(err?.message || "Generation failed. Please try again.");
+      const knownErrors = Object.values(messages.studio.errors);
+      setError(knownErrors.includes(err?.message) ? err.message : t("studio.errors.generate"));
     } finally {
       setPending(false);
     }
@@ -72,29 +74,29 @@ export default function ImageStudio({ models = [], defaultModel = "z-image" }) {
     for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt++) {
       const res = await fetch(`/api/creations/${id}`);
       if (!res.ok) {
-        if (res.status === 401) { router.replace("/login"); throw new Error("Please sign in to continue."); }
-        throw new Error("Lost connection while generating. Your image may still be processing — check My creations in a moment.");
+        if (res.status === 401) { router.replace(path("/login")); throw new Error(t("studio.errors.signIn")); }
+        throw new Error(t("studio.errors.connection"));
       }
       const current = await res.json();
       if (current.status === "succeeded" || current.status === "failed") return current;
       await sleep(POLL_INTERVAL_MS);
     }
-    throw new Error("This one is taking longer than expected. Check My creations in a minute — your image may still appear.");
+    throw new Error(t("studio.errors.timeout"));
   }
   function choosePrompt(value) { setPrompt(value); setError(""); document.getElementById("image-prompt")?.focus({ preventScroll: true }); window.scrollTo({ top: 0, behavior: "smooth" }); }
   return <main className="workspace-page image-studio">
-    <div className="creative-heading"><span className="section-label"><span className="tiny-dot" />FREE AI TEXT TO IMAGE GENERATOR</span><h1>Turn Text Into Images. <em>Bring Your Ideas to Life.</em><SparkIcon className="title-flower" size={24} /></h1><p>Create high-quality AI images from any text prompt in seconds.</p></div>
+    <div className="creative-heading"><span className="section-label"><span className="tiny-dot" />{t("studio.section")}</span><h1>{t("studio.title")} <em>{t("studio.titleAccent")}</em><SparkIcon className="title-flower" size={24} /></h1><p>{t("studio.subtitle")}</p></div>
     <Card className="generator-card"><Card.Content>
-      <div className="composer-heading"><Label htmlFor="image-prompt" className="prompt-label"><SparkIcon />Describe the image you want to create</Label><Button variant="ghost" onPress={surprise}><DiceIcon />Surprise me</Button></div>
-      <TextArea id="image-prompt" maxLength={maxPrompt} fullWidth rows={3} value={prompt} onChange={(event) => { setPrompt(event.target.value); setError(""); }} placeholder="A sun-drenched villa on the edge of a quiet sea, soft linen curtains dancing in the breeze..." className="generator-textarea rounded-none" />
-      <div className="generator-meta"><input ref={fileInput} hidden type="file" accept="image/png,image/jpeg,image/webp" onChange={attach} /><Button variant="ghost" onPress={() => fileInput.current.click()}><ImagePlusIcon />Add reference image</Button><span>{prompt.length} / {maxPrompt}</span></div>
-      {reference && <div className="reference-preview"><Image src={reference.url} alt="Reference preview" width={64} height={64} unoptimized /><div><strong>{reference.name}</strong><span>Reference image</span></div><Button size="sm" variant="ghost" onPress={() => setReference(null)}>Remove</Button></div>}
+      <div className="composer-heading"><Label htmlFor="image-prompt" className="prompt-label"><SparkIcon />{t("studio.promptLabel")}</Label><Button variant="ghost" onPress={surprise}><DiceIcon />{t("studio.surprise")}</Button></div>
+      <TextArea id="image-prompt" maxLength={maxPrompt} fullWidth rows={3} value={prompt} onChange={(event) => { setPrompt(event.target.value); setError(""); }} placeholder={t("studio.placeholder")} className="generator-textarea rounded-none" />
+      <div className="generator-meta"><input ref={fileInput} hidden type="file" accept="image/png,image/jpeg,image/webp" onChange={attach} /><Button variant="ghost" onPress={() => fileInput.current.click()}><ImagePlusIcon />{t("studio.addReference")}</Button><span>{prompt.length} / {maxPrompt}</span></div>
+      {reference && <div className="reference-preview"><Image src={reference.url} alt={t("studio.referencePreview")} width={64} height={64} unoptimized /><div><strong>{reference.name}</strong><span>{t("studio.referenceImage")}</span></div><Button size="sm" variant="ghost" onPress={() => setReference(null)}>{t("studio.remove")}</Button></div>}
       {error && <p className="inline-error" role="alert">{error}</p>}
     </Card.Content><Card.Footer className="generator-footer">
-      <div className="generator-settings"><SettingSelect className="style-select" label="Model" value={model} onChange={selectModel} options={modelOptions} /><SettingSelect className="ratio-select" label="Aspect ratio" value={ratio} onChange={setRatio} options={ratioOptions} /><span className="image-count"><SparkIcon size={15} />1 image</span></div>
-      <Button size="lg" className="primary-button" isPending={pending} onPress={generate}>{pending ? <><Spinner color="current" size="sm" /> Creating…</> : <><SparkIcon /> Generate image <ArrowIcon /></>}</Button>
+      <div className="generator-settings"><SettingSelect className="style-select" label={t("studio.model")} value={model} onChange={selectModel} options={modelOptions} /><SettingSelect className="ratio-select" label={t("studio.aspectRatio")} value={ratio} onChange={setRatio} options={ratioOptions} /><span className="image-count"><SparkIcon size={15} />{t("studio.imageCount")}</span></div>
+      <Button size="lg" className="primary-button" isPending={pending} onPress={generate}>{pending ? <><Spinner color="current" size="sm" /> {t("studio.creating")}</> : <><SparkIcon /> {t("studio.generate")} <ArrowIcon /></>}</Button>
     </Card.Footer></Card>
-    <div className="studio-footnote"><span className="ft-item"><CheckIcon size={14} />Free to try</span><span className="ft-dot">·</span><span className="ft-item"><NoCardIcon size={15} />No credit card required</span><span className="ft-dot">·</span><span className="ft-item"><SparklesIcon size={14} />High-quality AI images</span></div>
+    <div className="studio-footnote"><span className="ft-item"><CheckIcon size={14} />{t("studio.freeToTry")}</span><span className="ft-dot">·</span><span className="ft-item"><NoCardIcon size={15} />{t("studio.noCard")}</span><span className="ft-dot">·</span><span className="ft-item"><SparklesIcon size={14} />{t("studio.quality")}</span></div>
     <InspirationGallery onChoose={choosePrompt} />
     <ResultViewer item={result} isOpen={!!result} onOpenChange={(open) => { if (!open) setResult(null); }} />
   </main>;

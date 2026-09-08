@@ -9,6 +9,7 @@ import {
   Image as ImageGlyph,
   ImagePlus,
   LayoutGrid,
+  Languages,
   LogOut,
   Plus,
   Sparkle,
@@ -41,6 +42,7 @@ export const DiceIcon = formaIcon(Dices, 15);
 export const ImagePlusIcon = formaIcon(ImagePlus, 16);
 export const CopyIcon = formaIcon(Copy, 14);
 export const DownloadIcon = formaIcon(Download, 17);
+export const LanguageIcon = formaIcon(Languages, 17);
 
 // “无需信用卡”：lucide CreditCard 本体画一条对角斜杠，比单独放一张卡更表意
 export function NoCardIcon({ size = 15, strokeWidth = 1.7 }) {
@@ -66,4 +68,4 @@ export function GoogleIcon({ size = 18 }) {
 }
 
 // 品牌字标（forma.），非 lucide 图标，保留原样
-export function Logo() { return <Link href="/" className="logo" aria-label="Forma home"><span>f</span><strong>forma<i>.</i></strong></Link>; }
+export function Logo({ href = "/", label = "Forma home" }) { return <Link href={href} className="logo" aria-label={label}><span>f</span><strong>forma<i>.</i></strong></Link>; }

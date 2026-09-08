@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CheckIcon, CopyIcon, DownloadIcon } from "@/components/ui";
+import { useI18n } from "@/i18n/provider";
 
 // 生成结果弹窗（studio 与 creations 共用）右侧信息面板：
 // 眉标（可选）+ 提示语（无大标题、直接可读）+ 复制按钮 + 底部小字参数 + 右下角动作区。
@@ -29,11 +30,11 @@ async function copyText(text) {
   }
 }
 
-function formatDate(value) {
+function formatDate(value, locale) {
   if (!value) return null;
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return null;
-  return new Intl.DateTimeFormat("en", {
+  return new Intl.DateTimeFormat(locale, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -44,6 +45,7 @@ function formatDate(value) {
 
 export default function ResultInfo({ prompt, model, ratio, createdAt, image, actions }) {
   const [copied, setCopied] = useState(false);
+  const { locale, t } = useI18n();
 
   async function handleCopy() {
     if (!prompt) return;
@@ -54,22 +56,22 @@ export default function ResultInfo({ prompt, model, ratio, createdAt, image, act
   }
 
   const meta = [
-    model && { label: "Model", value: model },
-    ratio && { label: "Aspect", value: ratio },
-    formatDate(createdAt) && { label: "Created", value: formatDate(createdAt) },
+    model && { label: t("result.model"), value: model },
+    ratio && { label: t("result.aspect"), value: ratio },
+    formatDate(createdAt, locale) && { label: t("result.created"), value: formatDate(createdAt, locale) },
   ].filter(Boolean);
 
   return (
     <div className="result-info">
-      <span className="result-type">Text to Image</span>
+      <span className="result-type">{t("result.type")}</span>
 
       <div className="result-prompt">
-        <span className="result-prompt-label">Prompt</span>
-        {prompt ? <p className="result-prompt-text">{prompt}</p> : <p className="result-prompt-text result-prompt-empty">No prompt recorded for this image.</p>}
+        <span className="result-prompt-label">{t("result.prompt")}</span>
+        {prompt ? <p className="result-prompt-text">{prompt}</p> : <p className="result-prompt-text result-prompt-empty">{t("result.noPrompt")}</p>}
         {prompt && (
-          <button type="button" className="copy-prompt" onClick={handleCopy} aria-label="Copy prompt">
+          <button type="button" className="copy-prompt" onClick={handleCopy} aria-label={t("result.copy")}>
             {copied ? <CheckIcon size={13} /> : <CopyIcon size={13} />}
-            {copied ? "Copied" : "Copy prompt"}
+            {copied ? t("result.copied") : t("result.copy")}
           </button>
         )}
       </div>
@@ -85,7 +87,7 @@ export default function ResultInfo({ prompt, model, ratio, createdAt, image, act
         {(image || actions) && (
           <div className="result-controls">
             {actions && <div className="result-actions">{actions}</div>}
-            {image && <a className="result-download" href={image} download><DownloadIcon />Download</a>}
+            {image && <a className="result-download" href={image} download><DownloadIcon />{t("result.download")}</a>}
           </div>
         )}
       </div>
