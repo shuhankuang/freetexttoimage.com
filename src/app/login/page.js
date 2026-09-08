@@ -7,9 +7,6 @@ import { Button, FieldError, Form, Input, Label, TextField } from "@heroui/react
 import { ArrowIcon, GoogleIcon, Logo, SparkIcon } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
 
-const DEMO_EMAIL = "demo@forma.studio";
-const DEMO_PASSWORD = "demo-password-123";
-
 export default function LoginPage() {
   const router = useRouter();
   const [mode, setMode] = useState("signin"); // "signin" | "signup"
@@ -49,15 +46,8 @@ export default function LoginPage() {
     if (error) setError(error.message || "Google sign-in is not configured yet.");
   }
 
-  async function demo() {
-    setPending(true); setError("");
-    const { error } = await authClient.signIn.email({ email: DEMO_EMAIL, password: DEMO_PASSWORD });
-    if (error) { setError(error.message || "Demo sign-in failed."); setPending(false); return; }
-    router.replace("/studio");
-  }
-
   return <main className="auth-page">
-    <section className="auth-story"><Logo /><div><span className="eyebrow"><SparkIcon /> YOUR CREATIVE SPACE</span><h1>Make room for<br /><em>better ideas.</em></h1><p>A focused workspace for prompts, images, and everything you want to keep.</p></div><span className="auth-note">Interactive product demo · Accounts stored in SQLite</span></section>
+    <section className="auth-story"><Logo /><div><span className="eyebrow"><SparkIcon /> YOUR CREATIVE SPACE</span><h1>Make room for<br /><em>better ideas.</em></h1><p>A focused workspace for prompts, images, and everything you want to keep.</p></div><span className="auth-note">Your workspace · Sign in to pick up where you left off</span></section>
     <section className="auth-panel"><div className="auth-box"><Link href="/" className="back-link">← Back home</Link>
       <div className="auth-tabs" role="tablist" aria-label="Sign in or create an account">
         <button type="button" role="tab" aria-selected={mode === "signin"} className={mode === "signin" ? "selected" : ""} onClick={() => switchMode("signin")}>Sign in</button>
@@ -74,8 +64,7 @@ export default function LoginPage() {
       </Form>
       <div className="auth-divider"><span>or</span></div>
       <Button size="lg" fullWidth variant="outline" onPress={google}><GoogleIcon />Continue with Google</Button>
-      <Button size="lg" fullWidth variant="ghost" onPress={demo} isDisabled={pending} className="mt-4">Continue with demo account</Button>
-      <p className="legal-copy">This prototype stores accounts and creations locally in a SQLite file. Passwords are hashed and never leave your machine.</p>
+      <p className="legal-copy">Your account and creations are stored securely. Passwords are hashed and never shared.</p>
     </div></section>
   </main>;
 }

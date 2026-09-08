@@ -24,7 +24,7 @@ export default function ImageStudio() {
     if (!prompt.trim()) { setError("Describe the image you want to create."); return; }
     setPending(true); setError("");
     try {
-      // 保持 demo 的“生成中”体感
+      // 保留“生成中”的等待反馈
       await new Promise((resolve) => setTimeout(resolve, 900));
       const response = await fetch("/api/creations", {
         method: "POST",
@@ -59,7 +59,7 @@ export default function ImageStudio() {
       <div className="generator-settings"><SettingSelect label="Style" value={style} onChange={setStyle} options={styles} /><SettingSelect label="Aspect ratio" value={ratio} onChange={setRatio} options={ratios} /><span className="image-count"><SparkIcon size={15} />1 image</span></div>
       <Button size="lg" className="primary-button" isPending={pending} onPress={generate}>{pending ? <><Spinner color="current" size="sm" /> Creating…</> : <><SparkIcon /> Generate image <ArrowIcon /></>}</Button>
     </Card.Footer></Card>
-    <div className="studio-footnote"><span>✓ Made for your next “what if”</span><span>·</span><span>Demo generation · Curated images</span></div>
+    <div className="studio-footnote"><span>✓ Made for your next “what if”</span><span>·</span><span>Curated image gallery</span></div>
     <InspirationGallery onChoose={choosePrompt} />
     <Modal.Backdrop isOpen={!!result} onOpenChange={(open) => { if (!open) setResult(null); }}><Modal.Container size="lg"><Modal.Dialog className="result-dialog"><Modal.CloseTrigger /><Modal.Body>{result && <div className="result-grid"><Image src={result.image} alt={result.title} width={800} height={800} /><div><span className="section-label">CREATION READY</span><Modal.Heading>{result.title}</Modal.Heading><p>{result.prompt}</p><div className="result-tags"><span>{result.style}</span><span>{result.ratio}</span></div><div className="result-actions"><Button className="primary-button" onPress={() => router.push("/creations")}>View in library <ArrowIcon /></Button><Button variant="outline" slot="close">Create another</Button></div></div></div>}</Modal.Body></Modal.Dialog></Modal.Container></Modal.Backdrop>
   </main>;

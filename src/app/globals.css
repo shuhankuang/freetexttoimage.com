@@ -63,7 +63,7 @@ button, input, textarea { font: inherit; }
 .app-frame { min-height: 100vh; display: grid; grid-template-columns: 238px minmax(0, 1fr); }
 .app-sidebar { position: sticky; top: 0; height: 100vh; padding: 28px 18px 18px; background: #f1f0e9; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
 .app-sidebar .logo { margin: 4px 12px 52px; }.app-sidebar nav { display: flex; flex-direction: column; gap: 7px; }.app-sidebar nav a { display: flex; align-items: center; justify-content: flex-start; gap: 12px; min-height: 46px; padding: 0 13px; border-radius: 8px; color: #6e7468; font-size: 15px; }.app-sidebar nav a:hover { background: #e9e9e2; }.app-sidebar nav a.active { background: #e3e5da; color: #414b39; font-weight: 600; }
-.sidebar-account { margin-top: auto; padding: 17px 5px 3px; border-top: 1px solid #dfe0d6; display: flex; align-items: center; gap: 10px; }.sidebar-account > div { min-width: 0; flex: 1; }.sidebar-account strong, .sidebar-account span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.sidebar-account strong { text-transform: capitalize; font-size: 13px; }.sidebar-account div span { margin-top: 4px; color: #868b80; font-size: 11px; }.account-avatar { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; background: #dfe3d5; color: #68765b; }.account-avatar svg { width: 18px; }
+.sidebar-account { margin-top: auto; padding: 17px 5px 3px; border-top: 1px solid #dfe0d6; display: flex; align-items: center; gap: 10px; }.sidebar-account > div { min-width: 0; flex: 1; }.sidebar-account strong, .sidebar-account span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.sidebar-account strong { text-transform: capitalize; font-size: 13px; }.sidebar-account div span { margin-top: 4px; color: #868b80; font-size: 11px; }.sidebar-account .account-avatar { flex: none; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; background: #dfe3d5; color: #68765b; }.account-avatar svg { width: 18px; height: 18px; }
 .app-main { min-width: 0; }.app-header { height: 68px; padding: 0 34px; border-bottom: 1px solid var(--border); display: flex; justify-content: flex-end; align-items: center; gap: 18px; color: #7c8176; font-size: 13px; }.app-header > span { margin-right: auto; }.app-header div { display: flex; align-items: center; gap: 7px; }.credit-dot { width: 7px; height: 7px; border-radius: 50%; background: #8b9b78; }
 .workspace-page { max-width: 1120px; margin: auto; padding: 58px 42px 80px; }.page-title { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 34px; }.page-title h1 { margin: 9px 0 8px; font-size: 38px; letter-spacing: -1.8px; font-weight: 570; }.page-title p { margin: 0; color: #767b70; line-height: 1.6; }.page-title > .button { flex-shrink: 0; gap: 8px; }
 
@@ -110,6 +110,11 @@ body { font-family: Arial, Helvetica, sans-serif; }
 .sidebar-note a { padding: 10px 12px; border: 1px solid #daddcd; border-radius: 6px; background: #f9faf4; font-size: 13px; display: flex; justify-content: space-between; }
 .sidebar-account { margin-top: 24px; padding-top: 22px; }
 .sidebar-account div span { font-size: 12px; }
+/* 未登录时的左下登录引导：整块可点的卡片，明显提示而非角落小箭头 */
+.sidebar-account.account-guest { padding: 9px 11px; border: 1px solid #dcdcd0; border-radius: 11px; background: #f8f7f1; color: #57664a; text-decoration: none; transition: background .15s, border-color .15s; }
+.sidebar-account.account-guest:hover { background: #eff0e4; border-color: #c6cbb2; }
+.sidebar-account.account-guest > div { flex: 1; min-width: 0; }
+.sidebar-account.account-guest svg:last-child { margin-left: auto; color: #7e8775; }
 .app-header { height: 76px; padding: 0 40px; font-size: 13px; gap: 20px; }
 .header-trail { color: #93988b; }.header-trail i { font-style: normal; margin: 0 15px; color: #c3c7b9; }.header-trail strong { color: #48503f; font-weight: 400; }
 .header-signin { display: flex; gap: 12px; color: #626e55; }
@@ -202,3 +207,10 @@ a:focus-visible,button:focus-visible { outline: 2px solid var(--accent); outline
 .logout-dialog .logout-actions { margin-top: 28px; display: flex; gap: 9px; }
 .logout-dialog .logout-actions .button { gap: 7px; }
 @media (max-width: 620px) { .logout-dialog .modal__body { padding: 26px 22px 22px; }.logout-dialog .logout-actions { width: 100%; flex-direction: column-reverse; }.logout-dialog .logout-actions .button { width: 100%; } }
+
+/* 窄栏（≤900px，sidebar 变图标栏）时，左下登录引导降级为居中的头像图标入口 */
+@media (max-width: 900px) {
+  .sidebar-account.account-guest { justify-content: center; padding: 0; border: 0; background: none; }
+  .sidebar-account.account-guest > div, .sidebar-account.account-guest svg:last-child { display: none; }
+  .sidebar-account.account-guest .account-avatar { margin: 0; }
+}

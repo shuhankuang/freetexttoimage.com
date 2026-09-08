@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   ArrowRight,
+  Compass,
   Dices,
   Image as ImageGlyph,
   ImagePlus,
@@ -23,6 +24,7 @@ function formaIcon(Glyph, defaultSize) {
 
 export const SparkIcon = formaIcon(Sparkle, 18);
 export const ArrowIcon = formaIcon(ArrowRight, 17);
+export const CompassIcon = formaIcon(Compass, 20);
 export const GridIcon = formaIcon(LayoutGrid, 20);
 export const ImageIcon = formaIcon(ImageGlyph, 20);
 export const UserIcon = formaIcon(User, 20);
