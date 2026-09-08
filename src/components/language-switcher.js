@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { Dropdown } from "@heroui/react";
-import { CheckIcon, LanguageIcon } from "@/components/ui";
+import { LanguageIcon } from "@/components/ui";
 import { useI18n } from "@/i18n/provider";
 
 export default function LanguageSwitcher({ className = "" }) {
@@ -33,10 +33,10 @@ export default function LanguageSwitcher({ className = "" }) {
           onAction={(key) => switchLanguage(String(key))}
         >
           <Dropdown.Item id="en" textValue={t("language.english")}>
-            <span>{t("language.english")}</span><Dropdown.ItemIndicator><CheckIcon /></Dropdown.ItemIndicator>
+            <span>{t("language.english")}</span><Dropdown.ItemIndicator />
           </Dropdown.Item>
           <Dropdown.Item id="ja" textValue={t("language.japanese")}>
-            <span>{t("language.japanese")}</span><Dropdown.ItemIndicator><CheckIcon /></Dropdown.ItemIndicator>
+            <span>{t("language.japanese")}</span><Dropdown.ItemIndicator />
           </Dropdown.Item>
         </Dropdown.Menu>
       </Dropdown.Popover>
