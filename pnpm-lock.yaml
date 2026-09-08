@@ -32,6 +32,9 @@ importers:
       react-dom:
         specifier: 19.2.8
         version: 19.2.8(react@19.2.8)
+      s3mini:
+        specifier: ^1.0.1
+        version: 1.0.1
     devDependencies:
       '@tailwindcss/postcss':
         specifier: ^4
@@ -2290,6 +2293,10 @@ packages:
 
   run-parallel@1.2.0:
     resolution: {integrity: sha512-5l4VyZR86LZ/lDxZTR6jqL8AFE2S0IFLMP26AbjsLVADxHdhB/c0GUsH+y39UfCi3dzz8OlQuPmnaJOMoDHQBA==}
+
+  s3mini@1.0.1:
+    resolution: {integrity: sha512-8pY0DywQqL+DL6jUpfeRQRDCOIjnm8UrQwyTRgYTjsVBqeNJDhs44nCorqMtanJ79DMxL6igbGSKrih2u5xV6g==}
+    engines: {node: '>=20'}
 
   safe-array-concat@1.1.4:
     resolution: {integrity: sha512-wtZlHyOje6OZTGqAoaDKxFkgRtkF9CnHAVnCHKfuj200wAgL+bSJhdsCD2l0Qx/2ekEXjPWcyKkfGb5CPboslg==}
@@ -4903,6 +4910,8 @@ snapshots:
   run-parallel@1.2.0:
     dependencies:
       queue-microtask: 1.2.3
+
+  s3mini@1.0.1: {}
 
   safe-array-concat@1.1.4:
     dependencies:

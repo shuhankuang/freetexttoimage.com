@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { createCreation, listCreations } from "@/lib/creations";
+import { listCreations } from "@/lib/creations";
+import { createJob } from "@/lib/generation";
 
 async function requireUser() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -14,6 +15,8 @@ export async function GET() {
   return NextResponse.json(listCreations(user.id));
 }
 
+// 提交一次真实生成：调模型服务拿任务 → 落一条 status=processing 的 creation + job，
+// 返回给前端，前端再轮询 GET /api/creations/[id] 直到 succeeded/failed。
 export async function POST(request) {
   const user = await requireUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -25,18 +28,23 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const prompt = typeof body?.prompt === "string" ? body.prompt.trim() : "";
+  const prompt = typeof body?.prompt === "string" ? body.prompt.trim().slice(0, 2000) : "";
   if (!prompt) return NextResponse.json({ error: "prompt is required" }, { status: 400 });
 
-  const creation = createCreation(user.id, {
-    id: body.id || crypto.randomUUID(),
-    title: body.title || prompt.split(/\s+/).slice(0, 5).join(" "),
-    prompt,
-    style: body.style || null,
-    ratio: body.ratio || null,
-    image: body.image || null,
-    createdAt: body.createdAt || new Date().toISOString(),
-  });
-
-  return NextResponse.json(creation, { status: 201 });
+  try {
+    const creation = await createJob(user, {
+      prompt,
+      style: body?.style || null,
+      ratio: body?.ratio || null,
+      model: body?.model || undefined,
+    });
+    return NextResponse.json(creation, { status: 201 });
+  } catch (err) {
+    // 缺配置（KIE_API_KEY / S3_*）→ 503；模型服务侧失败 → 502
+    const status = err?.code === "CONFIG" ? 503 : 502;
+    return NextResponse.json(
+      { error: err?.message || "Generation service is unavailable. Please try again." },
+      { status }
+    );
+  }
 }

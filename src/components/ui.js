@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   ArrowRight,
+  Check,
   Compass,
   Dices,
   Image as ImageGlyph,
@@ -24,6 +25,7 @@ function formaIcon(Glyph, defaultSize) {
 }
 
 export const SparkIcon = formaIcon(Sparkle, 18);
+export const CheckIcon = formaIcon(Check, 14);
 export const SparklesIcon = formaIcon(Sparkles, 16);
 export const ArrowIcon = formaIcon(ArrowRight, 17);
 export const CompassIcon = formaIcon(Compass, 20);
@@ -35,6 +37,17 @@ export const TrashIcon = formaIcon(Trash2, 17);
 export const PlusIcon = formaIcon(Plus, 18);
 export const DiceIcon = formaIcon(Dices, 15);
 export const ImagePlusIcon = formaIcon(ImagePlus, 16);
+
+// “无需信用卡”：lucide CreditCard 本体画一条对角斜杠，比单独放一张卡更表意
+export function NoCardIcon({ size = 15, strokeWidth = 1.7 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2" y="5" width="20" height="14" rx="2" />
+      <path d="M2 10h20" />
+      <line x1="6.5" y1="17.5" x2="17.5" y2="6.5" />
+    </svg>
+  );
+}
 
 // Google 品牌 G（官方四色）。lucide 不含品牌图标，此 SVG 按 Google 官方规范内联。
 export function GoogleIcon({ size = 18 }) {
