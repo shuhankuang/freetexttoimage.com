@@ -71,7 +71,15 @@ async function failJob(jobId, message) {
   });
 }
 
-function touchJob(jobId) {
+function touchJob(jobId, error = null) {
+  if (error) {
+    db.prepare(`UPDATE generation_jobs SET error = ?, updated_at = ? WHERE id = ? AND status = 'processing'`).run(
+      error,
+      iso(),
+      jobId
+    );
+    return;
+  }
   db.prepare(`UPDATE generation_jobs SET updated_at = ? WHERE id = ? AND status = 'processing'`).run(iso(), jobId);
 }
 
@@ -177,7 +185,7 @@ async function pollTick(jobId, startedAt, attempt) {
       await failJob(jobId, err.message);
       return stopPollLoop(jobId);
     }
-    touchJob(jobId); // 瞬时错误 → 退避重试，不轻易判死
+    touchJob(jobId, err?.message || String(err)); // 记录最近一次瞬时错误，继续退避重试
   }
   scheduleTick(jobId, startedAt, attempt + 1);
 }
@@ -261,8 +269,10 @@ export async function handleCallback(payload = {}) {
       return { reason: "finalized" };
     }
   } catch (err) {
-    // 落盘瞬时失败：轮询兜底仍在跑，这里不重复判死
+    // 告诉 webhook 路由返回 503，请求上游重试；轮询兜底也会继续。
     console.error("[generation] callback finalize error:", err?.message || err);
+    touchJob(job.id, err?.message || String(err));
+    return { reason: "retryable-error" };
   }
   return { reason: "still-processing" };
 }
