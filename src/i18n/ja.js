@@ -161,6 +161,7 @@ const ja = {
     scheduleNamedPlan: "次回から {plan} に変更",
     packCredits: "{count} クレジット",
     buyCredits: "{count}クレジットを追加",
+    processing: "処理中…",
     upgrade: "アップグレード",
     currentPlanBadge: "現在のプラン",
     currentPlanTitle: "ご契約中のプラン",

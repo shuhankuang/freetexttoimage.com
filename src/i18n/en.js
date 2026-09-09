@@ -161,6 +161,7 @@ const en = {
     scheduleNamedPlan: "Switch to {plan} next period",
     packCredits: "{count} credits",
     buyCredits: "Get {count} credits",
+    processing: "Processing…",
     upgrade: "Upgrade",
     currentPlanBadge: "Current plan",
     currentPlanTitle: "Your subscription",

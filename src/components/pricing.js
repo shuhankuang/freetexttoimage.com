@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Accordion, Button, Card } from "@heroui/react";
+import { Accordion, Button, Card, Spinner } from "@heroui/react";
 import { useI18n } from "@/i18n/provider";
 import { authClient } from "@/lib/auth-client";
 import { CheckIcon, CoinsIcon } from "@/components/ui";
@@ -68,6 +68,17 @@ export default function Pricing() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkoutState]);
 
+  useEffect(() => {
+    function resetPendingAfterHistoryRestore() {
+      setPendingPack(null);
+      setPendingPlan(null);
+      setPendingPortal(false);
+    }
+
+    window.addEventListener("pageshow", resetPendingAfterHistoryRestore);
+    return () => window.removeEventListener("pageshow", resetPendingAfterHistoryRestore);
+  }, []);
+
   function requireSignIn() {
     router.push(`${path("/login")}?redirect=${encodeURIComponent(path("/pricing"))}`);
   }
@@ -95,6 +106,7 @@ export default function Pricing() {
     setError("");
     if (!session?.user) return requireSignIn();
     setPendingPlan(planId);
+    let leavingPage = false;
     try {
       const response = await fetch("/api/billing/subscribe", {
         method: "POST",
@@ -105,6 +117,7 @@ export default function Pricing() {
       if (!response.ok) throw new Error(body.error || t("pricing.errors.subscribe"));
       if (body.url) {
         window.location.assign(body.url);
+        leavingPage = true;
         return;
       }
       if (body.scheduled) {
@@ -116,7 +129,7 @@ export default function Pricing() {
     } catch (err) {
       setError(err?.message || t("pricing.errors.subscribe"));
     } finally {
-      setPendingPlan(null);
+      if (!leavingPage) setPendingPlan(null);
     }
   }
 
@@ -144,6 +157,11 @@ export default function Pricing() {
 
   const activeSub = status?.subscription?.status === "active" ? status.subscription : null;
   const activeTier = activeSub ? PLANS.find((plan) => plan.id === activeSub.plan)?.tier ?? 0 : 0;
+  const billingBusy = Boolean(pendingPlan || pendingPack || pendingPortal);
+
+  function pendingButtonContent() {
+    return <><Spinner size="sm" color="current" aria-label={t("pricing.processing")} />{t("pricing.processing")}</>;
+  }
 
   function planAction(plan) {
     if (plan.id === "free") {
@@ -160,9 +178,12 @@ export default function Pricing() {
       fullWidth
       variant={plan.featured && !schedulesChange ? undefined : "outline"}
       isPending={pendingPlan === plan.id}
+      isDisabled={billingBusy && pendingPlan !== plan.id}
       onPress={() => subscribe(plan.id)}
     >
-      {schedulesChange
+      {pendingPlan === plan.id
+        ? pendingButtonContent()
+        : schedulesChange
         ? t("pricing.scheduleNamedPlan", { plan: t(`pricing.plans.${plan.id}.label`) })
         : activeSub
           ? t("pricing.upgradeTo", { plan: t(`pricing.plans.${plan.id}.label`) })
@@ -189,14 +210,16 @@ export default function Pricing() {
         <span className="current-plan-credits"><CoinsIcon size={15} />{t("pricing.creditsRemaining", { count: status.credits.total })}</span>
         <span className="current-plan-renew">{activeSub.cancelAtPeriodEnd ? t("pricing.cancelsOn", { date: formatDate(activeSub.currentPeriodEnd) }) : t("pricing.nextCreditReset", { date: formatDate(status.credits.monthlyResetAt) })}</span>
       </div>
-      <Button variant="outline" isPending={pendingPortal} onPress={manageBilling}>{t("pricing.manageSubscription")}</Button>
+      <Button variant="outline" isPending={pendingPortal} isDisabled={billingBusy && !pendingPortal} onPress={manageBilling}>
+        {pendingPortal ? pendingButtonContent() : t("pricing.manageSubscription")}
+      </Button>
     </Card.Content></Card>}
 
     <section className="pricing-plans-section" aria-label={t("pricing.subscriptionSection")}>
       <div className="pricing-section-heading">
         <div className="billing-toggle" role="tablist" aria-label={t("pricing.billingPeriod")}>
-          <button type="button" role="tab" aria-selected={interval === "month"} onClick={() => setInterval("month")}>{t("pricing.monthly")}</button>
-          <button type="button" role="tab" aria-selected={interval === "year"} onClick={() => setInterval("year")}>{t("pricing.yearly")}<em>{t("pricing.twoMonthsFree")}</em></button>
+          <button type="button" role="tab" aria-selected={interval === "month"} disabled={billingBusy} onClick={() => setInterval("month")}>{t("pricing.monthly")}</button>
+          <button type="button" role="tab" aria-selected={interval === "year"} disabled={billingBusy} onClick={() => setInterval("year")}>{t("pricing.yearly")}<em>{t("pricing.twoMonthsFree")}</em></button>
         </div>
       </div>
 
@@ -226,7 +249,9 @@ export default function Pricing() {
       <div className="topup-grid">{PACKS.map((pack) => <Card key={pack.id} className={`topup-card${pack.best ? " best" : ""}`}><Card.Content>
         {pack.best && <span className="topup-best">{t("pricing.bestValue")}</span>}
         <span className="topup-price">{pack.price}</span><strong><CoinsIcon size={16} />{t("pricing.packCredits", { count: pack.credits })}</strong>
-        <Button className={pack.best ? "primary-button" : "topup-button"} variant={pack.best ? undefined : "secondary"} fullWidth isPending={pendingPack === pack.id} onPress={() => buyPack(pack.id)}>{t("pricing.buyCredits", { count: pack.credits })}</Button>
+        <Button className={pack.best ? "primary-button" : "topup-button"} variant={pack.best ? undefined : "secondary"} fullWidth isPending={pendingPack === pack.id} isDisabled={billingBusy && pendingPack !== pack.id} onPress={() => buyPack(pack.id)}>
+          {pendingPack === pack.id ? pendingButtonContent() : t("pricing.buyCredits", { count: pack.credits })}
+        </Button>
       </Card.Content></Card>)}</div>
     </section>
 
