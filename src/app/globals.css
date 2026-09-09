@@ -56,6 +56,10 @@ button, input, textarea { font: inherit; }
 .back-link { display: inline-block; margin-bottom: 54px; color: #777c70; font-size: 14px; }.auth-box h2 { margin: 0; font-size: 34px; letter-spacing: -1.2px; }.auth-box > p { color: #777c72; margin: 12px 0 30px; }
 .auth-form { display: flex; flex-direction: column; gap: 20px; }.auth-form .textfield { gap: 8px; }.auth-form .label { font-size: 14px; font-weight: 600; }.auth-form .input { min-height: 48px; font-size: 16px; }.auth-form .button { margin-top: 4px; }
 .auth-divider { height: 46px; display: flex; align-items: center; color: #9c9f96; font-size: 13px; }.auth-divider::before, .auth-divider::after { content: ""; flex: 1; border-top: 1px solid var(--border); }.auth-divider span { padding: 0 14px; }
+.google-login-button { min-height: 52px; gap: 10px; border: 1px solid #4f5d46 !important; border-radius: 9px !important; background: #4f5d46 !important; color: #fff !important; font-weight: 650 !important; box-shadow: 0 7px 18px rgba(54, 66, 47, .2); transition: background .15s, transform .15s, box-shadow .15s; }
+.google-login-button:hover { background: #414e39 !important; transform: translateY(-1px); box-shadow: 0 10px 24px rgba(54, 66, 47, .25); }
+.email-link-button { min-height: 48px; gap: 9px; border: 1px solid transparent !important; border-radius: 9px !important; background: #ecefe4 !important; color: #5f6d53 !important; font-weight: 600 !important; box-shadow: none !important; }
+.email-link-button:hover { background: #e3e8d9 !important; color: #4d5d42 !important; }
 .legal-copy { font-size: 12px !important; line-height: 1.6; text-align: center; margin-top: 22px !important; }
 .magic-link-sent { text-align: center; }
 .magic-link-icon { width: 48px; height: 48px; margin: 0 auto 20px; display: grid; place-items: center; border-radius: 14px; background: #e9eddf; color: #607052; }

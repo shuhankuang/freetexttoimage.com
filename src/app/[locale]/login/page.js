@@ -79,13 +79,13 @@ export default function LoginPage() {
         <h2>{t("auth.title")}</h2>
         <p>{t("auth.body")}</p>
         {error && <p className="inline-error" role="alert">{error}</p>}
+        <Button size="lg" fullWidth className="google-login-button" onPress={google}><GoogleIcon />{t("auth.google")}</Button>
+        <div className="auth-divider"><span>{t("auth.or")}</span></div>
         <Form aria-label={t("auth.title")} className="auth-form" onSubmit={submit}>
           <TextField isRequired name="email" type="email" autoComplete="email"><Label>{t("auth.email")}</Label><Input placeholder="you@example.com" /><FieldError /></TextField>
-          <Button type="submit" size="lg" fullWidth isPending={pending} className="primary-button">{t("auth.sendLink")} <ArrowIcon /></Button>
+          <Button type="submit" size="lg" fullWidth variant="soft" isPending={pending} className="email-link-button">{t("auth.sendLink")} <ArrowIcon /></Button>
         </Form>
       </>}
-      <div className="auth-divider"><span>{t("auth.or")}</span></div>
-      <Button size="lg" fullWidth variant="outline" onPress={google}><GoogleIcon />{t("auth.google")}</Button>
       <p className="legal-copy">{t("auth.legal")}</p>
     </div></section>
   </main>;
