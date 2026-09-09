@@ -66,39 +66,110 @@ export async function grantPermanentCredits(userId, amount, { reason, refType = 
 // 月度积分发放/重置（订阅 invoice.paid 时调用）。是"设为 X"不是"加 X"——月度积分不结转，
 // 上个周期没花完的会被覆盖掉，ledger 记的 delta 是净变化量（可能是负数，代表没花完的部分被清零），
 // 保留审计轨迹。幂等靠外层 stripe_events 的原子闭锁保证同一张发票只处理一次，这里不用再 CAS。
-export async function resetMonthlyCredits(userId, amount, { reason, refType = null, refId = null }) {
-  const [account] = await db.select().from(creditAccounts).where(eq(creditAccounts.userId, userId));
-  const previous = account?.monthlyBalance ?? 0;
-  const delta = amount - previous;
+export async function resetMonthlyCredits(userId, amount, {
+  reason,
+  refType = null,
+  refId = null,
+  monthlyResetAt = null,
+  idempotencyKey = null,
+}) {
+  return db.transaction(async (tx) => {
+    if (idempotencyKey) {
+      const guard = await tx
+        .insert(creditLedger)
+        .values({
+          id: `monthly-reset:${idempotencyKey}`,
+          userId,
+          delta: 0,
+          bucket: "guard",
+          reason: `${reason}_guard`,
+          refType,
+          refId,
+          createdAt: iso(),
+        })
+        .onConflictDoNothing({ target: creditLedger.id });
+      if ((guard.rowsAffected ?? 0) === 0) return false;
+    }
 
-  if (account) {
-    await db.update(creditAccounts).set({ monthlyBalance: amount }).where(eq(creditAccounts.userId, userId));
-  } else {
-    await db
-      .insert(creditAccounts)
-      .values({ userId, monthlyBalance: amount, permanentBalance: 0 })
-      .onConflictDoNothing({ target: creditAccounts.userId });
-  }
+    const [account] = await tx.select().from(creditAccounts).where(eq(creditAccounts.userId, userId));
+    const previous = account?.monthlyBalance ?? 0;
+    const delta = amount - previous;
 
-  if (delta !== 0) {
-    await db.insert(creditLedger).values({
-      id: crypto.randomUUID(),
+    if (account) {
+      await tx
+        .update(creditAccounts)
+        .set({ monthlyBalance: amount, monthlyResetAt })
+        .where(eq(creditAccounts.userId, userId));
+    } else {
+      await tx.insert(creditAccounts).values({
+        userId,
+        monthlyBalance: amount,
+        permanentBalance: 0,
+        monthlyResetAt,
+      });
+    }
+
+    if (delta !== 0) {
+      await tx.insert(creditLedger).values({
+        id: crypto.randomUUID(),
+        userId,
+        delta,
+        bucket: "monthly",
+        reason,
+        refType,
+        refId,
+        createdAt: iso(),
+      });
+    }
+    return true;
+  });
+}
+
+// 年付订阅一年只会产生一张续费发票，所以订阅年内的月度额度在用户再次访问时刷新。
+// expectedResetAt 是 CAS 条件：并发请求只有一个能推进时间并写入流水，且事务保证余额与流水同成同败。
+export async function refreshMonthlyCreditsIfDue(userId, amount, {
+  expectedResetAt,
+  nextResetAt,
+  periodKey,
+}) {
+  if (!expectedResetAt || new Date(expectedResetAt).getTime() > Date.now()) return false;
+
+  return db.transaction(async (tx) => {
+    const [account] = await tx.select().from(creditAccounts).where(eq(creditAccounts.userId, userId));
+    if (!account || account.monthlyResetAt !== expectedResetAt) return false;
+
+    const previous = account.monthlyBalance;
+    const result = await tx
+      .update(creditAccounts)
+      .set({ monthlyBalance: amount, monthlyResetAt: nextResetAt })
+      .where(and(eq(creditAccounts.userId, userId), eq(creditAccounts.monthlyResetAt, expectedResetAt)));
+    if ((result.rowsAffected ?? 0) === 0) return false;
+
+    const delta = amount - previous;
+    await tx.insert(creditLedger).values({
+      id: `monthly-cycle:${userId}:${periodKey}`,
       userId,
       delta,
       bucket: "monthly",
-      reason,
-      refType,
-      refId,
+      reason: "subscription_monthly_refresh",
+      refType: "subscription_cycle",
+      refId: periodKey,
       createdAt: iso(),
     });
-  }
+    return true;
+  });
 }
 
 export async function getBalance(userId) {
   const [account] = await db.select().from(creditAccounts).where(eq(creditAccounts.userId, userId));
   const monthlyBalance = account?.monthlyBalance ?? 0;
   const permanentBalance = account?.permanentBalance ?? 0;
-  return { monthlyBalance, permanentBalance, total: monthlyBalance + permanentBalance };
+  return {
+    monthlyBalance,
+    permanentBalance,
+    monthlyResetAt: account?.monthlyResetAt || null,
+    total: monthlyBalance + permanentBalance,
+  };
 }
 
 // 扣款（生成前调用）：月度优先、永久兜底，乐观并发控制（读→算→带条件 UPDATE→检查

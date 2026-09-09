@@ -155,6 +155,8 @@ export const subscriptions = sqliteTable("subscriptions", {
   userId: text("user_id").primaryKey(),
   stripeSubscriptionId: text("stripe_subscription_id").notNull(),
   plan: text("plan").notNull(), // 'basic' | 'pro'
+  billingInterval: text("billing_interval").notNull().default("month"), // 'month' | 'year'
+  billingAnchorAt: text("billing_anchor_at"), // Stripe billing_cycle_anchor，用于年付内的月度积分刷新
   status: text("status").notNull(),
   currentPeriodEnd: text("current_period_end"),
   cancelAtPeriodEnd: integer("cancel_at_period_end", { mode: "boolean" }).notNull().default(false),

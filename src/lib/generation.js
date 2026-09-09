@@ -7,6 +7,7 @@ import { getCreation, updateCreationSucceeded, updateCreationStatus } from "@/li
 import { getProvider, DEFAULT_MODEL } from "@/lib/models";
 import { publicObjectUrl, uploadObject, s3Configured } from "@/lib/storage";
 import { deductCredits, refundCredits, getBalance } from "@/lib/credits";
+import { ensureSubscriptionCreditsFresh } from "@/lib/billing";
 
 const THUMBNAIL_WIDTH = 640; // 网格列按宽度布局；固定宽度并保留原比例，避免裁掉生成内容
 
@@ -222,6 +223,9 @@ export async function createJob(user, { prompt, style, ratio, model = DEFAULT_MO
   }
   const provider = getProvider(model);
   const cost = provider.creditCost || 1;
+
+  // 年付订阅在年内没有月度 invoice；真正扣款前按订阅锚点刷新本月额度。
+  await ensureSubscriptionCreditsFresh(user.id);
 
   const now = iso();
   const creationId = crypto.randomUUID();

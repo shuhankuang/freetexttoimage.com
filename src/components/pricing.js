@@ -1,39 +1,50 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button, Card } from "@heroui/react";
+import { Accordion, Button, Card } from "@heroui/react";
 import { useI18n } from "@/i18n/provider";
 import { authClient } from "@/lib/auth-client";
-import { CoinsIcon } from "@/components/ui";
+import { CheckIcon, CoinsIcon } from "@/components/ui";
 
-// 展示用配置——真正扣多少钱、发多少积分一律服务端决定（一次性包见 billing.js CREDIT_PACKS，
-// 订阅见 SUBSCRIPTION_PLANS）。这里改了如果服务端没同步改，只是文案对不上，不会多发/少发。
 const PACKS = [
   { id: "credits_40", price: "$5", credits: 40 },
   { id: "credits_140", price: "$15", credits: 140 },
-  { id: "credits_320", price: "$30", credits: 320 },
+  { id: "credits_320", price: "$30", credits: 320, best: true },
 ];
 
 const PLANS = [
-  { id: "basic", price: "$9", credits: 100, tier: 1 },
-  { id: "pro", price: "$24", credits: 350, tier: 2 },
+  { id: "free", credits: 10, zImages: 10, wanImages: 2, tier: 0 },
+  {
+    id: "pro", credits: 350, zImages: 350, wanImages: 87, tier: 2, featured: true,
+    month: { price: "$24", unit: "month" },
+    year: { price: "$240", unit: "year", equivalent: "$20" },
+  },
+  {
+    id: "basic", credits: 100, zImages: 100, wanImages: 25, tier: 1,
+    month: { price: "$9", unit: "month" },
+    year: { price: "$90", unit: "year", equivalent: "$7.50" },
+  },
 ];
+
+const BENEFITS = ["models", "successOnly", "downloads", "history"];
+const FAQS = ["cost", "failure", "monthly", "yearly", "permanent", "cancel", "change"];
 
 export default function Pricing() {
   const router = useRouter();
   const { locale, path, t } = useI18n();
   const { data: session } = authClient.useSession();
+  const [interval, setInterval] = useState("month");
   const [pendingPack, setPendingPack] = useState(null);
   const [pendingPlan, setPendingPlan] = useState(null);
   const [pendingPortal, setPendingPortal] = useState(false);
   const [error, setError] = useState("");
-  const [status, setStatus] = useState(null); // { subscription, credits } | null，未登录时留 null
-  // 懒初始化直接读，不在 effect 里 setState——用 window.location，不用 useSearchParams，
-  // 跟登录页一致，省一个 Suspense 边界；SSR 阶段没有 window，兜底 null。
+  const [scheduledChange, setScheduledChange] = useState(null);
+  const [status, setStatus] = useState(null);
   const [checkoutState] = useState(() =>
     typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("checkout")
-  ); // "success" | "cancelled" | null
+  );
 
   function refreshStatus() {
     if (!session?.user) return;
@@ -45,12 +56,13 @@ export default function Pricing() {
 
   useEffect(() => { refreshStatus(); }, [session?.user]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 付款成功回跳：真正发积分/开通订阅靠 webhook，这里只负责让页面尽快看到新状态，不直接当成"已到账"。
   useEffect(() => {
     if (checkoutState !== "success") return;
-    const ticks = [500, 2000, 4000, 8000];
-    const timers = ticks.map((delay) =>
-      setTimeout(() => { window.dispatchEvent(new Event("credits:refresh")); refreshStatus(); }, delay)
+    const timers = [500, 2000, 4000, 8000].map((delay) =>
+      setTimeout(() => {
+        window.dispatchEvent(new Event("credits:refresh"));
+        refreshStatus();
+      }, delay)
     );
     return () => timers.forEach(clearTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -72,7 +84,7 @@ export default function Pricing() {
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok || !body.url) throw new Error(body.error || t("pricing.errors.checkout"));
-      window.location.assign(body.url); // 跳外部 Stripe 域名，next/link 处理不了跨域导航
+      window.location.assign(body.url);
     } catch (err) {
       setError(err?.message || t("pricing.errors.checkout"));
       setPendingPack(null);
@@ -87,15 +99,19 @@ export default function Pricing() {
       const response = await fetch("/api/billing/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: planId }),
+        body: JSON.stringify({ plan: planId, interval, locale }),
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(body.error || t("pricing.errors.subscribe"));
       if (body.url) {
-        window.location.assign(body.url); // 全新订阅：走 Checkout
+        window.location.assign(body.url);
         return;
       }
-      window.dispatchEvent(new Event("credits:refresh")); // 升级：立即生效，没有要跳转的页面
+      if (body.scheduled) {
+        setScheduledChange(formatDate(body.effectiveAt));
+        return;
+      }
+      window.dispatchEvent(new Event("credits:refresh"));
       refreshStatus();
     } catch (err) {
       setError(err?.message || t("pricing.errors.subscribe"));
@@ -106,6 +122,7 @@ export default function Pricing() {
 
   async function manageBilling() {
     setError("");
+    if (!session?.user) return requireSignIn();
     setPendingPortal(true);
     try {
       const response = await fetch("/api/billing/portal", { method: "POST" });
@@ -126,77 +143,99 @@ export default function Pricing() {
   }
 
   const activeSub = status?.subscription?.status === "active" ? status.subscription : null;
-  const activeTier = activeSub ? PLANS.find((p) => p.id === activeSub.plan)?.tier ?? 0 : 0;
+  const activeTier = activeSub ? PLANS.find((plan) => plan.id === activeSub.plan)?.tier ?? 0 : 0;
 
   function planAction(plan) {
-    if (activeSub && plan.id === activeSub.plan) {
+    if (plan.id === "free") {
+      if (session?.user && !activeSub) return <span className="plan-current-badge">{t("pricing.currentPlanBadge")}</span>;
+      return <Link className="pricing-plan-link" href={session?.user ? path("/studio") : path("/login")}>{t("pricing.startFree")}</Link>;
+    }
+    if (activeSub && plan.id === activeSub.plan && interval === activeSub.interval) {
       return <span className="plan-current-badge">{t("pricing.currentPlanBadge")}</span>;
     }
-    if (activeSub && plan.tier < activeTier) return null; // 降级不走这个按钮，走下面的 Portal
-    return (
-      <Button
-        className="primary-button"
-        fullWidth
-        isPending={pendingPlan === plan.id}
-        onPress={() => subscribe(plan.id)}
-      >
-        {activeSub ? t("pricing.upgrade") : t("pricing.subscribe")}
-      </Button>
-    );
+
+    const schedulesChange = activeSub && (interval !== activeSub.interval || plan.tier < activeTier);
+    return <Button
+      className={plan.featured && !schedulesChange ? "primary-button" : "pricing-plan-button"}
+      fullWidth
+      variant={plan.featured && !schedulesChange ? undefined : "outline"}
+      isPending={pendingPlan === plan.id}
+      onPress={() => subscribe(plan.id)}
+    >
+      {schedulesChange
+        ? t("pricing.scheduleNamedPlan", { plan: t(`pricing.plans.${plan.id}.label`) })
+        : activeSub
+          ? t("pricing.upgradeTo", { plan: t(`pricing.plans.${plan.id}.label`) })
+          : t("pricing.chooseNamedPlan", { plan: t(`pricing.plans.${plan.id}.label`) })}
+    </Button>;
   }
 
   return <main className="workspace-page pricing-page">
-    <div className="page-title"><div><span className="section-label">{t("pricing.section")}</span><h1>{t("pricing.title")}</h1><p>{t("pricing.subtitle")}</p></div></div>
+    <header className="pricing-hero">
+      <span className="section-label">{t("pricing.section")}</span>
+      <h1>{t("pricing.title")}</h1>
+      <p>{t("pricing.subtitle")}</p>
+    </header>
+
     {checkoutState === "success" && <p className="pricing-banner pricing-banner-success" role="status">{t("pricing.checkoutSuccess")}</p>}
     {checkoutState === "cancelled" && <p className="pricing-banner" role="status">{t("pricing.checkoutCancelled")}</p>}
+    {scheduledChange && <p className="pricing-banner pricing-banner-success" role="status">{t("pricing.changeScheduled", { date: scheduledChange })}</p>}
     {error && <p className="inline-error" role="alert">{error}</p>}
 
     {activeSub && <Card className="current-plan-card"><Card.Content>
       <div className="current-plan-info">
         <span className="section-label">{t("pricing.currentPlanTitle")}</span>
-        <strong>{t(`pricing.plans.${activeSub.plan}.label`)}</strong>
+        <strong>{t(`pricing.plans.${activeSub.plan}.label`)} · {t(`pricing.intervals.${activeSub.interval}`)}</strong>
         <span className="current-plan-credits"><CoinsIcon size={15} />{t("pricing.creditsRemaining", { count: status.credits.total })}</span>
-        <span className="current-plan-renew">
-          {activeSub.cancelAtPeriodEnd
-            ? t("pricing.cancelsOn", { date: formatDate(activeSub.currentPeriodEnd) })
-            : t("pricing.nextReset", { date: formatDate(activeSub.currentPeriodEnd) })}
-        </span>
+        <span className="current-plan-renew">{activeSub.cancelAtPeriodEnd ? t("pricing.cancelsOn", { date: formatDate(activeSub.currentPeriodEnd) }) : t("pricing.nextCreditReset", { date: formatDate(status.credits.monthlyResetAt) })}</span>
       </div>
       <Button variant="outline" isPending={pendingPortal} onPress={manageBilling}>{t("pricing.manageSubscription")}</Button>
     </Card.Content></Card>}
 
-    <h2 className="pricing-subheading">{t("pricing.subscriptionSection")}</h2>
-    <div className="pricing-packs">
-      {PLANS.map((plan) => (
-        <Card key={plan.id} className="pricing-pack">
-          <Card.Content>
-            <span className="pack-price">{plan.price}<small>{t("pricing.perMonth")}</small></span>
-            <strong className="plan-label">{t(`pricing.plans.${plan.id}.label`)}</strong>
-            <span className="pack-credits"><CoinsIcon size={16} />{t("pricing.planCredits", { count: plan.credits })}</span>
-            {planAction(plan)}
-          </Card.Content>
-        </Card>
-      ))}
-    </div>
+    <section className="pricing-plans-section" aria-label={t("pricing.subscriptionSection")}>
+      <div className="pricing-section-heading">
+        <div className="billing-toggle" role="tablist" aria-label={t("pricing.billingPeriod")}>
+          <button type="button" role="tab" aria-selected={interval === "month"} onClick={() => setInterval("month")}>{t("pricing.monthly")}</button>
+          <button type="button" role="tab" aria-selected={interval === "year"} onClick={() => setInterval("year")}>{t("pricing.yearly")}<em>{t("pricing.twoMonthsFree")}</em></button>
+        </div>
+      </div>
 
-    <h2 className="pricing-subheading">{t("pricing.onetimeSection")}</h2>
-    <div className="pricing-packs">
-      {PACKS.map((pack) => (
-        <Card key={pack.id} className="pricing-pack">
-          <Card.Content>
-            <span className="pack-price">{pack.price}</span>
-            <span className="pack-credits"><CoinsIcon size={16} />{t("pricing.packCredits", { count: pack.credits })}</span>
-            <Button
-              className="primary-button"
-              fullWidth
-              isPending={pendingPack === pack.id}
-              onPress={() => buyPack(pack.id)}
-            >
-              {t("pricing.buy")}
-            </Button>
-          </Card.Content>
-        </Card>
-      ))}
-    </div>
+      <div className="pricing-plan-grid">{PLANS.map((plan) => {
+        const price = plan.id === "free" ? null : plan[interval];
+        return <Card key={plan.id} className={`pricing-plan-card${plan.featured ? " featured" : ""}`}><Card.Content>
+          {plan.featured && <span className="popular-badge">{t("pricing.popular")}</span>}
+          <div className="plan-card-heading"><strong>{t(`pricing.plans.${plan.id}.label`)}</strong><p>{t(`pricing.plans.${plan.id}.audience`)}</p></div>
+          <div className="plan-price"><span>{price?.price || "$0"}</span>{price && <small>{t(`pricing.priceUnits.${price.unit}`)}</small>}</div>
+          {price?.equivalent ? <p className="annual-equivalent">{t("pricing.equivalent", { price: price.equivalent })}</p> : <p className="annual-equivalent">{t(plan.id === "free" ? "pricing.noCard" : "pricing.billedMonthly")}</p>}
+          <div className="plan-credit-summary"><CoinsIcon size={17} /><strong>{t(plan.id === "free" ? "pricing.signupCredits" : "pricing.monthlyCredits", { count: plan.credits })}</strong></div>
+          <ul className="plan-details">
+            <li><CheckIcon size={15} />{t("pricing.zEstimate", { count: plan.zImages })}</li>
+            <li><CheckIcon size={15} />{t("pricing.wanEstimate", { count: plan.wanImages })}</li>
+            <li><CheckIcon size={15} />{t(plan.id === "free" ? "pricing.permanentCreditNote" : "pricing.monthlyResetNote")}</li>
+          </ul>
+          {plan.featured && <p className="plan-value-note">{t("pricing.proValue")}</p>}
+          <div className="plan-card-action">{planAction(plan)}</div>
+        </Card.Content></Card>;
+      })}</div>
+    </section>
+
+    <section className="pricing-benefits" aria-label={t("pricing.includedTitle")}>{BENEFITS.map((key) => <div key={key}><span><CheckIcon size={15} /></span><div><strong>{t(`pricing.benefits.${key}.title`)}</strong><p>{t(`pricing.benefits.${key}.body`)}</p></div></div>)}</section>
+
+    <section className="topup-section" aria-labelledby="topup-heading">
+      <div className="topup-copy"><span className="section-label">{t("pricing.topupEyebrow")}</span><h2 id="topup-heading">{t("pricing.onetimeSection")}</h2><p>{t("pricing.topupBody")}</p></div>
+      <div className="topup-grid">{PACKS.map((pack) => <Card key={pack.id} className={`topup-card${pack.best ? " best" : ""}`}><Card.Content>
+        {pack.best && <span className="topup-best">{t("pricing.bestValue")}</span>}
+        <span className="topup-price">{pack.price}</span><strong><CoinsIcon size={16} />{t("pricing.packCredits", { count: pack.credits })}</strong>
+        <Button className={pack.best ? "primary-button" : "topup-button"} variant={pack.best ? undefined : "secondary"} fullWidth isPending={pendingPack === pack.id} onPress={() => buyPack(pack.id)}>{t("pricing.buyCredits", { count: pack.credits })}</Button>
+      </Card.Content></Card>)}</div>
+    </section>
+
+    <section className="pricing-faq" aria-labelledby="faq-heading">
+      <div className="pricing-faq-heading"><span className="section-label">{t("pricing.faqEyebrow")}</span><h2 id="faq-heading">{t("pricing.faqTitle")}</h2><p>{t("pricing.faqSubtitle")}</p></div>
+      <Accordion className="pricing-accordion" variant="surface">{FAQS.map((key) => <Accordion.Item key={key} id={key}>
+        <Accordion.Heading><Accordion.Trigger>{t(`pricing.faq.${key}.question`)}<Accordion.Indicator /></Accordion.Trigger></Accordion.Heading>
+        <Accordion.Panel><Accordion.Body>{t(`pricing.faq.${key}.answer`)}</Accordion.Body></Accordion.Panel>
+      </Accordion.Item>)}</Accordion>
+    </section>
   </main>;
 }
