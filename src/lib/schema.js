@@ -95,3 +95,34 @@ export const generationJobs = sqliteTable(
     index("idx_jobs_user_status").on(table.userId, table.status),
   ]
 );
+
+// ── 积分账本（Phase 2）────────────────────────────────────
+// 月度积分（订阅赠送，不结转）+ 永久积分（充值/注册赠送，不过期）分两个字段存，
+// 每个用户一行，一号位主键，插入用 onConflictDoNothing 保证注册赠送幂等。
+export const creditAccounts = sqliteTable("credit_accounts", {
+  userId: text("user_id").primaryKey(),
+  monthlyBalance: integer("monthly_balance").notNull().default(0),
+  permanentBalance: integer("permanent_balance").notNull().default(0),
+  monthlyResetAt: text("monthly_reset_at"), // Phase 4（订阅）接入后才会用
+});
+
+// 每一笔积分变动都记一行，bucket 区分扣/退的是月度还是永久，reason 区分事件类型
+// （signup_bonus / generation_hold / generation_refund / ...）。refType+refId 关联到具体的
+// job/order，退款时靠它精确查回原来扣了哪个桶多少，不靠重新计算。
+export const creditLedger = sqliteTable(
+  "credit_ledger",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    delta: integer("delta").notNull(), // 正数入账，负数消费
+    bucket: text("bucket").notNull(), // 'monthly' | 'permanent'
+    reason: text("reason").notNull(),
+    refType: text("ref_type"),
+    refId: text("ref_id"),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    index("idx_credit_ledger_user").on(table.userId),
+    index("idx_credit_ledger_ref").on(table.refType, table.refId),
+  ]
+);

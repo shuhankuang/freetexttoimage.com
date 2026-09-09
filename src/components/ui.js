@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   Check,
+  Coins,
   Compass,
   Copy,
   Download,
@@ -29,6 +30,7 @@ function appIcon(Glyph, defaultSize) {
 }
 
 export const SparkIcon = appIcon(Sparkle, 18);
+export const CoinsIcon = appIcon(Coins, 15);
 export const CheckIcon = appIcon(Check, 14);
 export const SparklesIcon = appIcon(Sparkles, 16);
 export const ArrowIcon = appIcon(ArrowRight, 17);

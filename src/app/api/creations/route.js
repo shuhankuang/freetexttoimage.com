@@ -51,7 +51,13 @@ export async function POST(request) {
     });
     return NextResponse.json(creation, { status: 201 });
   } catch (err) {
-    // 缺配置（KIE_API_KEY / S3_*）→ 503；模型服务侧失败 → 502
+    // 积分不足 → 402；缺配置（KIE_API_KEY / S3_*）→ 503；模型服务侧失败 → 502
+    if (err?.code === "INSUFFICIENT_CREDITS") {
+      return NextResponse.json(
+        { error: err.message, code: "INSUFFICIENT_CREDITS", cost: err.cost, balance: err.balance },
+        { status: 402 }
+      );
+    }
     const status = err?.code === "CONFIG" ? 503 : 502;
     return NextResponse.json(
       { error: err?.message || "Generation service is unavailable. Please try again." },

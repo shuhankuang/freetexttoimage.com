@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, Card, Label, Spinner, TextArea } from "@heroui/react";
 import SettingSelect from "@/components/setting-select";
 import InspirationGallery from "@/components/inspiration-gallery";
 import ResultViewer from "@/components/result-viewer";
 import { useI18n } from "@/i18n/provider";
-import { ArrowIcon, CheckIcon, DiceIcon, ImagePlusIcon, NoCardIcon, SparkIcon, SparklesIcon } from "@/components/ui";
+import { ArrowIcon, CheckIcon, CoinsIcon, DiceIcon, ImagePlusIcon, NoCardIcon, SparkIcon, SparklesIcon } from "@/components/ui";
 
 const suggestions = ["A glass house in a misty pine forest at dawn", "An editorial portrait lit by a soft red neon sign", "A quiet coastal village painted in loose watercolors"];
 const FALLBACK_RATIOS = ["1:1", "4:3", "3:4", "16:9", "9:16"];
@@ -22,7 +23,7 @@ export default function ImageStudio({ models = [], defaultModel = "z-image" }) {
   const router = useRouter(); const fileInput = useRef(null);
   const { messages, path, t } = useI18n();
   const [prompt, setPrompt] = useState(""); const [model, setModel] = useState(defaultModel); const [ratio, setRatio] = useState("1:1");
-  const [reference, setReference] = useState(null); const [pending, setPending] = useState(false); const [result, setResult] = useState(null); const [error, setError] = useState("");
+  const [reference, setReference] = useState(null); const [pending, setPending] = useState(false); const [result, setResult] = useState(null); const [error, setError] = useState(""); const [creditsShort, setCreditsShort] = useState(false);
 
   // —— 当前模型的能力声明（来自 /studio/page.js 注入的注册表；加模型自动生效）——
   const modelOptions = models.map(({ id, label }) => ({ value: id, label }));
@@ -45,7 +46,7 @@ export default function ImageStudio({ models = [], defaultModel = "z-image" }) {
   function surprise() { setPrompt(suggestions[Math.floor(Math.random() * suggestions.length)]); setError(""); }
   async function generate() {
     if (!prompt.trim()) { setError(t("studio.errors.promptRequired")); return; }
-    setPending(true); setError("");
+    setPending(true); setError(""); setCreditsShort(false);
     try {
       // 1) 提交生成任务 → 拿回 status=processing 的 creation
       const response = await fetch("/api/creations", {
@@ -54,6 +55,13 @@ export default function ImageStudio({ models = [], defaultModel = "z-image" }) {
         body: JSON.stringify({ prompt: prompt.trim(), model, ratio }),
       });
       if (response.status === 401) { router.replace(path("/login")); return; }
+      if (response.status === 402) {
+        const body = await response.json().catch(() => ({}));
+        // 余额不足：保留 prompt，不当成通用生成失败处理。
+        setError(t("studio.errors.insufficientCredits", { cost: body.cost ?? "?", balance: body.balance ?? 0 }));
+        setCreditsShort(true);
+        return;
+      }
       if (!response.ok) {
         throw new Error(t("studio.errors.generate"));
       }
@@ -68,6 +76,8 @@ export default function ImageStudio({ models = [], defaultModel = "z-image" }) {
       setError(knownErrors.includes(err?.message) ? err.message : t("studio.errors.generate"));
     } finally {
       setPending(false);
+      // 无论成功/失败/余额不足，积分状态都可能变了（扣款确认或失败退款），通知顶栏刷新。
+      window.dispatchEvent(new Event("credits:refresh"));
     }
   }
   async function waitForCreation(id) {
@@ -91,10 +101,13 @@ export default function ImageStudio({ models = [], defaultModel = "z-image" }) {
       <TextArea id="image-prompt" maxLength={maxPrompt} fullWidth rows={3} value={prompt} onChange={(event) => { setPrompt(event.target.value); setError(""); }} placeholder={t("studio.placeholder")} className="generator-textarea rounded-none" />
       <div className="generator-meta"><input ref={fileInput} hidden type="file" accept="image/png,image/jpeg,image/webp" onChange={attach} /><Button variant="ghost" onPress={() => fileInput.current.click()}><ImagePlusIcon />{t("studio.addReference")}</Button><span>{prompt.length} / {maxPrompt}</span></div>
       {reference && <div className="reference-preview"><Image src={reference.url} alt={t("studio.referencePreview")} width={64} height={64} unoptimized /><div><strong>{reference.name}</strong><span>{t("studio.referenceImage")}</span></div><Button size="sm" variant="ghost" onPress={() => setReference(null)}>{t("studio.remove")}</Button></div>}
-      {error && <p className="inline-error" role="alert">{error}</p>}
+      {error && <p className="inline-error" role="alert">{error}{creditsShort && <Link href={path("/pricing")}> {t("studio.viewPricing")}</Link>}</p>}
     </Card.Content><Card.Footer className="generator-footer">
       <div className="generator-settings"><SettingSelect className="style-select" label={t("studio.model")} value={model} onChange={selectModel} options={modelOptions} /><SettingSelect className="ratio-select" label={t("studio.aspectRatio")} value={ratio} onChange={setRatio} options={ratioOptions} /><span className="image-count"><SparkIcon size={15} />{t("studio.imageCount")}</span></div>
-      <Button size="lg" className="primary-button" isPending={pending} onPress={generate}>{pending ? <><Spinner color="current" size="sm" /> {t("studio.creating")}</> : <><SparkIcon /> {t("studio.generate")} <ArrowIcon /></>}</Button>
+      <div className="generator-submit">
+        <span className="submit-cost"><CoinsIcon size={18} />{activeSpec.creditCost || 1}</span>
+        <Button size="lg" className="primary-button" isPending={pending} onPress={generate}>{pending ? <><Spinner color="current" size="sm" /> {t("studio.creating")}</> : <><SparkIcon /> {t("studio.generate")} <ArrowIcon /></>}</Button>
+      </div>
     </Card.Footer></Card>
     <div className="studio-footnote"><span className="ft-item"><CheckIcon size={14} />{t("studio.freeToTry")}</span><span className="ft-dot">·</span><span className="ft-item"><NoCardIcon size={15} />{t("studio.noCard")}</span><span className="ft-dot">·</span><span className="ft-item"><SparklesIcon size={14} />{t("studio.quality")}</span></div>
     <InspirationGallery onChoose={choosePrompt} />

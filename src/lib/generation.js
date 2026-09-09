@@ -6,6 +6,7 @@ import { creations, generationJobs } from "@/lib/schema";
 import { getCreation, updateCreationSucceeded, updateCreationStatus } from "@/lib/creations";
 import { getProvider, DEFAULT_MODEL } from "@/lib/models";
 import { publicObjectUrl, uploadObject, s3Configured } from "@/lib/storage";
+import { deductCredits, refundCredits, getBalance } from "@/lib/credits";
 
 const THUMBNAIL_WIDTH = 640; // 网格列按宽度布局；固定宽度并保留原比例，避免裁掉生成内容
 
@@ -74,13 +75,16 @@ async function applyCreationStatus({ userId, creationId, jobId, status, image, i
 async function failJob(jobId, message) {
   const job = await jobRow(jobId);
   if (!job || job.status !== "processing") return;
-  await applyCreationStatus({
+  const applied = await applyCreationStatus({
     userId: job.userId,
     creationId: job.creationId,
     jobId,
     status: "failed",
     error: message,
   });
+  // 只有真正把 job 判死的那个调用者退款——原子闭锁保证同一个 job 不会有两个调用者都拿到 applied=true，
+  // 天然避免双重退款，不需要另外加锁。
+  if (applied) await refundCredits(jobId);
 }
 
 async function touchJob(jobId, error = null) {
@@ -217,38 +221,57 @@ export async function createJob(user, { prompt, style, ratio, model = DEFAULT_MO
     );
   }
   const provider = getProvider(model);
-  const externalTaskId = await provider.createTask({
-    prompt,
-    aspectRatio: ratio || "1:1",
-    callBackUrl: callbackUrl(),
-  });
+  const cost = provider.creditCost || 1;
 
   const now = iso();
   const creationId = crypto.randomUUID();
   const jobId = crypto.randomUUID();
 
-  await db.insert(creations).values({
-    id: creationId,
-    userId: user.id,
-    title: prompt.trim().split(/\s+/).slice(0, 5).join(" "),
-    prompt: prompt.trim(),
-    style: style || null,
-    ratio: ratio || null,
-    image: null,
-    imageKey: null,
-    status: "processing",
-    model,
-    createdAt: now,
-  });
-  await insertJob({
-    id: jobId,
-    creationId,
-    userId: user.id,
-    provider: provider.id,
-    model,
-    externalTaskId,
-    now,
-  });
+  // 先扣款、后调 KIE：调用 KIE 是要花我们自己钱的外部请求，不能让付不起积分的用户先把这笔钱花出去。
+  const held = await deductCredits(user.id, cost, { jobId });
+  if (!held) {
+    const err = new Error("Not enough credits.");
+    err.code = "INSUFFICIENT_CREDITS";
+    err.cost = cost;
+    err.balance = (await getBalance(user.id)).total;
+    throw err;
+  }
+
+  // 扣款之后、job 真正建起来之前的这一段都算「还没开始生成」——任何一步失败（KIE 调用失败、
+  // 建 creation/job 行时数据库瞬时失败）都退款，不能让积分在没有对应任务的情况下凭空消失。
+  try {
+    const externalTaskId = await provider.createTask({
+      prompt,
+      aspectRatio: ratio || "1:1",
+      callBackUrl: callbackUrl(),
+    });
+
+    await db.insert(creations).values({
+      id: creationId,
+      userId: user.id,
+      title: prompt.trim().split(/\s+/).slice(0, 5).join(" "),
+      prompt: prompt.trim(),
+      style: style || null,
+      ratio: ratio || null,
+      image: null,
+      imageKey: null,
+      status: "processing",
+      model,
+      createdAt: now,
+    });
+    await insertJob({
+      id: jobId,
+      creationId,
+      userId: user.id,
+      provider: provider.id,
+      model,
+      externalTaskId,
+      now,
+    });
+  } catch (err) {
+    await refundCredits(jobId);
+    throw err;
+  }
 
   startPollLoop(jobId); // 兜底轮询，异步进行
   return getCreation(user.id, creationId);

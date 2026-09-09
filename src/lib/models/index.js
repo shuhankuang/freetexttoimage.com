@@ -27,10 +27,11 @@ export function getProvider(model) {
 
 // 返回可序列化的模型清单，供 /studio 渲染生成器控件。
 export function listProviders() {
-  return Object.values(providers).map(({ id, label, promptMax, aspectRatios }) => ({
+  return Object.values(providers).map(({ id, label, promptMax, aspectRatios, creditCost }) => ({
     id,
     label,
     promptMax: promptMax || 2000,
     aspectRatios: aspectRatios?.length ? aspectRatios : FALLBACK_ASPECT_RATIOS,
+    creditCost: creditCost || 1,
   }));
 }

@@ -65,13 +65,14 @@ function extractResultUrls(resultJson) {
 }
 
 // 工厂：共享 createTask/getTask 管道；每模型声明自己的 input 与 UI 能力。
-function makeKieProvider({ id, label, fixedInput = {}, nsfw = false, promptMax, aspectRatios }) {
+function makeKieProvider({ id, label, fixedInput = {}, nsfw = false, promptMax, aspectRatios, creditCost = 1 }) {
   return {
     id,
     label,
     // —— 前端会用到的能力元数据（listProviders 透传给 /studio）——
     promptMax,
     aspectRatios,
+    creditCost, // 生成成功扣多少积分，createJob（generation.js）用它去扣款
 
     async createTask({ prompt, aspectRatio, callBackUrl }) {
       const body = await request("/api/v1/jobs/createTask", {
@@ -123,6 +124,7 @@ export const kieZImage = makeKieProvider({
   nsfw: false,
   promptMax: 1000,
   aspectRatios: ["1:1", "4:3", "3:4", "16:9", "9:16"],
+  creditCost: 1,
 });
 
 export const kieWanImage = makeKieProvider({
@@ -136,4 +138,5 @@ export const kieWanImage = makeKieProvider({
   },
   promptMax: 2000,
   aspectRatios: ["1:1", "4:3", "16:9", "9:16"],
+  creditCost: 4,
 });
