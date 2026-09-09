@@ -1,8 +1,8 @@
 import Stripe from "stripe";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { stripeEvents, stripeCustomers, subscriptions } from "@/lib/schema";
-import { grantPermanentCredits, resetMonthlyCredits } from "@/lib/credits";
+import { stripeEvents, stripeCustomers, subscriptions, creditLedger } from "@/lib/schema";
+import { grantPermanentCredits, resetMonthlyCredits, getBalance } from "@/lib/credits";
 
 // Stripe 集成：一次性积分充值（mode=payment）+ 订阅（mode=subscription）。
 //
@@ -266,4 +266,60 @@ async function upsertSubscriptionRow(userId, sub, plan) {
       .values({ userId, ...row, createdAt: iso() })
       .onConflictDoNothing({ target: subscriptions.userId });
   }
+}
+
+// ── 对账 / 自愈（Phase 5）─────────────────────────────────
+// 复用 generation.js ensurePolling 的思路：不起独立后台进程，用户访问账单相关页面时，
+// 如果本地订阅状态"陈旧"（超过一小时没被 webhook 更新过）就顺手拉一次 Stripe API 核对，
+// 状态不一致就纠正；如果发现最新一张发票已付款但本地没有对应的积分发放记录（webhook 真的丢了，
+// 不只是慢），一并补发，不用等用户发现自己"充了钱没到账"再来问。
+const SUBSCRIPTION_STALE_MS = 60 * 60 * 1000;
+
+export async function ensureSubscriptionFresh(userId) {
+  const [row] = await db.select().from(subscriptions).where(eq(subscriptions.userId, userId));
+  if (!row || row.status !== "active") return row; // 没订阅过，或已经是终态，不用高频核对
+  if (Date.now() - new Date(row.updatedAt).getTime() <= SUBSCRIPTION_STALE_MS) return row;
+
+  try {
+    const sub = await stripe().subscriptions.retrieve(row.stripeSubscriptionId, { expand: ["latest_invoice"] });
+    const plan = planFromPriceId(sub.items?.data?.[0]?.price?.id) || row.plan;
+    await upsertSubscriptionRow(userId, sub, plan);
+
+    const invoice = sub.latest_invoice;
+    if (invoice && invoice.status === "paid" && SUBSCRIPTION_PLANS[plan]) {
+      const already = await db
+        .select()
+        .from(creditLedger)
+        .where(and(eq(creditLedger.refType, "stripe_invoice"), eq(creditLedger.refId, invoice.id), eq(creditLedger.reason, "subscription_renewal")));
+      if (already.length === 0) {
+        await resetMonthlyCredits(userId, SUBSCRIPTION_PLANS[plan].credits, {
+          reason: "subscription_renewal",
+          refType: "stripe_invoice",
+          refId: invoice.id,
+        });
+      }
+    }
+  } catch (err) {
+    console.error("[billing] subscription reconcile failed:", err?.message || err); // Stripe 瞬时故障，先用本地数据，下次再核对
+  }
+
+  const [fresh] = await db.select().from(subscriptions).where(eq(subscriptions.userId, userId));
+  return fresh;
+}
+
+// 账单状态一次性拉齐：先自愈再读，前端账户/账单页用这一个接口就够。
+export async function getBillingStatus(userId) {
+  const subscription = await ensureSubscriptionFresh(userId);
+  const credits = await getBalance(userId);
+  return {
+    credits,
+    subscription: subscription
+      ? {
+          plan: subscription.plan,
+          status: subscription.status,
+          currentPeriodEnd: subscription.currentPeriodEnd,
+          cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+        }
+      : null,
+  };
 }
