@@ -67,7 +67,7 @@ export default function AppShell({ children, publicView = false }) {
       {children}
     </div>
     <Modal.Backdrop isOpen={logoutOpen} onOpenChange={(open) => { if (!open) setLogoutOpen(false); }}>
-      <Modal.Container size="sm"><Modal.Dialog className="logout-dialog"><Modal.CloseTrigger aria-label={t("shell.cancel")} /><Modal.Body><Modal.Heading>{t("shell.logoutTitle")}</Modal.Heading><p>{t("shell.logoutBody")}</p><div className="logout-actions"><Button variant="danger" onPress={logout}>{t("shell.signOut")} <LogoutIcon /></Button><Button variant="outline" slot="close">{t("shell.cancel")}</Button></div></Modal.Body></Modal.Dialog></Modal.Container>
+      <Modal.Container size="sm"><Modal.Dialog className="logout-dialog"><Modal.CloseTrigger aria-label={t("shell.cancel")} /><Modal.Body><Modal.Heading>{t("shell.logoutTitle")}</Modal.Heading><p>{t("shell.logoutBody")}</p><div className="logout-actions"><Button variant="danger" onPress={logout} className="rounded-xl">{t("shell.signOut")} <LogoutIcon /></Button><Button className="rounded-xl" variant="outline" slot="close">{t("shell.cancel")}</Button></div></Modal.Body></Modal.Dialog></Modal.Container>
     </Modal.Backdrop>
   </div>;
 }
