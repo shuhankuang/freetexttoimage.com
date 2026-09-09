@@ -31,11 +31,15 @@ export async function GET(request, { params }) {
 
   if (!record.image_key) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  // ?size=thumb 命中缩略图 key；没有缩略图（旧数据/生成失败）时自动回退原图，不做历史回填。
+  const wantsThumb = new URL(request.url).searchParams.get("size") === "thumb";
+  const key = wantsThumb && record.thumbnail_key ? record.thumbnail_key : record.image_key;
+
   try {
-    const buffer = await getObjectBuffer(record.image_key);
+    const buffer = await getObjectBuffer(key);
     return new Response(new Uint8Array(buffer), {
       headers: {
-        "Content-Type": mimeForKey(record.image_key),
+        "Content-Type": mimeForKey(key),
         "Content-Length": String(buffer.length),
         // 私有桶 + 鉴权代理，返回的是同一登录用户可见的静态内容，可放心长缓存
         "Cache-Control": "private, max-age=86400",

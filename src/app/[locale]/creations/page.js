@@ -45,7 +45,7 @@ function CreationTile({ item, position, total, onOpen, t }) {
       >
         {item.image ? (
           <Image
-            src={item.image}
+            src={item.thumbnail || item.image}
             alt={item.title || item.prompt || t("creations.generatedImageAlt")}
             fill
             sizes="(max-width: 359px) 100vw, (max-width: 999px) 50vw, (max-width: 1399px) 33vw, 25vw"

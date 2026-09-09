@@ -1,18 +1,29 @@
 import { db } from "@/lib/db";
 import { listProviders } from "@/lib/models";
+import { publicObjectUrl } from "@/lib/storage";
 import { Buffer } from "node:buffer";
 
 // creations 表服务端访问层。只被 route handler / server 代码 import。
 
 // 返回给客户端/内部用的常规列。
-// image_key 是私有桶 object key，不暴露给客户端，代理路由单独取。
-const columns = "id, user_id, title, prompt, style, ratio, image, status, model, created_at AS createdAt";
+// object key 只在服务端用于生成公开 URL，不原样暴露给客户端。
+const columns = "id, user_id, title, prompt, style, ratio, image, image_key, thumbnail_key, status, model, created_at AS createdAt";
 
 // 作品行里的 model 存的是 provider id（如 "z-image"）。
 // 客户端要展示的是人类可读的标签（如 "Z-Image"），这里在服务端一次性装饰好，
 // 标签的单一来源仍是模型注册表（src/lib/models）——改配置不用迁库。
 const MODEL_LABELS = new Map(listProviders().map((p) => [p.id, p.label]));
-const decorate = (row) => (row ? { ...row, model: MODEL_LABELS.get(row.model) || row.model || null } : row);
+function fileName(key) {
+  return key?.split("/").at(-1) || null;
+}
+
+const decorate = (row) => {
+  if (!row) return row;
+  const { image_key: imageKey, thumbnail_key: thumbnailKey, ...creation } = row;
+  const image = publicObjectUrl(fileName(imageKey)) || creation.image;
+  const thumbnail = publicObjectUrl(fileName(thumbnailKey)) || (thumbnailKey && creation.image ? `${creation.image}?size=thumb` : null);
+  return { ...creation, image, thumbnail, model: MODEL_LABELS.get(row.model) || row.model || null };
+};
 
 const DEFAULT_PAGE_SIZE = 24;
 const MAX_PAGE_SIZE = 48;
@@ -84,12 +95,13 @@ export function getCreationRecord(userId, id) {
 }
 
 // 生成成功：写入 S3 key + 对外代理 URL，并把 creation 推进到 succeeded。
-export function updateCreationSucceeded(userId, id, { image, imageKey }) {
+// thumbnailKey 可为空——缩略图生成是尽力而为，失败不影响原图落盘。
+export function updateCreationSucceeded(userId, id, { image, imageKey, thumbnailKey = null }) {
   db.prepare(
     `UPDATE creations
-     SET image = ?, image_key = ?, status = 'succeeded'
+     SET image = ?, image_key = ?, thumbnail_key = ?, status = 'succeeded'
      WHERE user_id = ? AND id = ? AND status = 'processing'`
-  ).run(image, imageKey, userId, id);
+  ).run(image, imageKey, thumbnailKey, userId, id);
 }
 
 export function updateCreationStatus(userId, id, status) {

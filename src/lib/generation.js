@@ -1,8 +1,11 @@
 import { Buffer } from "node:buffer";
+import sharp from "sharp";
 import { db } from "@/lib/db";
 import { getCreation, updateCreationSucceeded, updateCreationStatus } from "@/lib/creations";
 import { getProvider, DEFAULT_MODEL } from "@/lib/models";
-import { uploadObject, s3Configured } from "@/lib/storage";
+import { publicObjectUrl, uploadObject, s3Configured } from "@/lib/storage";
+
+const THUMBNAIL_WIDTH = 640; // 网格列按宽度布局；固定宽度并保留原比例，避免裁掉生成内容
 
 // 图像生成编排层：把「一次生成」串成  creation(status) + generation_jobs + provider + S3 落盘。
 // 双通道触发最终落盘，且 finalize 幂等：
@@ -39,11 +42,11 @@ function insertJob({ id, creationId, userId, provider, model, externalTaskId, no
 }
 
 // 状态迁移：creation 与 job 一起、带 status 守卫地推进。返回是否真的应用了。
-const applyCreationStatus = db.transaction(({ userId, creationId, jobId, status, image, imageKey, error }) => {
+const applyCreationStatus = db.transaction(({ userId, creationId, jobId, status, image, imageKey, thumbnailKey, error }) => {
   const job = jobRow(jobId);
   if (!job || job.status !== "processing") return false;
   if (status === "succeeded") {
-    updateCreationSucceeded(userId, creationId, { image, imageKey });
+    updateCreationSucceeded(userId, creationId, { image, imageKey, thumbnailKey });
   } else {
     updateCreationStatus(userId, creationId, status);
   }
@@ -87,18 +90,43 @@ async function finalizeJob(jobId, urls) {
   const contentType = image.contentType?.startsWith("image/")
     ? image.contentType
     : mimeForExt(ext);
-  const key = `creations/${job.user_id}/${job.creation_id}.${ext}`;
-  await uploadObject(key, image.buffer, contentType);
+  const key = `${job.creation_id}.${ext}`;
+  await uploadObject(key, image.buffer, contentType); // 原图必须成功，失败交给上层重试
+
+  const thumbnailKey = await buildThumbnail(job, image.buffer); // 尽力而为，失败不影响原图落盘
 
   const applied = applyCreationStatus({
     userId: job.user_id,
     creationId: job.creation_id,
     jobId,
     status: "succeeded",
-    image: `/api/images/${job.creation_id}`,
+    image: publicObjectUrl(key) || `/api/images/${job.creation_id}`,
     imageKey: key,
+    thumbnailKey,
   });
   return applied;
+}
+
+// 缩略图生成/上传失败都只记日志、返回 null——不能让锦上添花的缩略图拖垮主图交付。
+async function buildThumbnail(job, buffer) {
+  let thumbBuffer;
+  try {
+    thumbBuffer = await sharp(buffer)
+      .resize({ width: THUMBNAIL_WIDTH, withoutEnlargement: true })
+      .webp({ quality: 75 })
+      .toBuffer();
+  } catch (err) {
+    console.error("[generation] thumbnail render failed:", err?.message || err);
+    return null;
+  }
+  const thumbnailKey = `${job.creation_id}_thumb.webp`;
+  try {
+    await uploadObject(thumbnailKey, thumbBuffer, "image/webp");
+    return thumbnailKey;
+  } catch (err) {
+    console.error("[generation] thumbnail upload failed:", err?.message || err);
+    return null;
+  }
 }
 
 // ── 轮询兜底 ──────────────────────────────────────────────

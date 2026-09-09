@@ -15,6 +15,15 @@ export const s3Configured = Boolean(
     (process.env.S3_ENDPOINT || process.env.S3_BUCKET)
 );
 
+const publicBaseUrl = (process.env.S3_PUBLIC_URL || "").replace(/\/+$/, "");
+
+// 公开桶的下载地址。key 逐段编码，保留目录分隔符；未配置时由调用方回退鉴权代理。
+export function publicObjectUrl(key) {
+  if (!publicBaseUrl || !key) return null;
+  const encodedKey = String(key).split("/").map(encodeURIComponent).join("/");
+  return `${publicBaseUrl}/${encodedKey}`;
+}
+
 // SigV4 签名 region。显式 S3_REGION 优先；否则从 B2 endpoint 的 host 推导
 // （如 https://bucket.s3.us-east-005.backblazeb2.com → us-east-005），
 // 免得用户不填时退回 us-east-1 导致 SignatureDoesNotMatch。
@@ -59,4 +68,8 @@ export async function uploadObject(key, data, contentType = "application/octet-s
 export async function getObjectBuffer(key) {
   const arrayBuffer = await s3().getObjectArrayBuffer(key);
   return Buffer.from(arrayBuffer);
+}
+
+export async function deleteObject(key) {
+  return s3().deleteObject(key);
 }

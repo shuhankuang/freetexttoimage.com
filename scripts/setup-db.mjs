@@ -47,6 +47,7 @@ function ensureCreationsTable() {
       ratio TEXT,
       image TEXT,
       image_key TEXT,
+      thumbnail_key TEXT,
       status TEXT NOT NULL DEFAULT 'processing',
       model TEXT,
       created_at TEXT NOT NULL
@@ -56,6 +57,8 @@ function ensureCreationsTable() {
   // 老库（接入 KIE 前）没有 status / image_key 列，这里补齐。
   let added = addColumnIfMissing("creations", "status", "status TEXT NOT NULL DEFAULT 'processing'");
   added = addColumnIfMissing("creations", "image_key", "image_key TEXT") || added;
+  // 缩略图 key：可为空——旧数据/生成失败时前端自动回退原图，不做历史回填。
+  added = addColumnIfMissing("creations", "thumbnail_key", "thumbnail_key TEXT") || added;
   // 作品用的模型 provider id（历史详情弹窗要显示“哪个模型生成的”）。
   added = addColumnIfMissing("creations", "model", "model TEXT") || added;
   // 老库里的作品直接引用 /gallery/*.jpg（本地静态图，已“完成”）→ 标 succeeded。
@@ -96,8 +99,9 @@ function ensureGenerationJobsTable() {
 
 async function main() {
   await migrateAuthTables();
-  ensureCreationsTable();
+  // creations 的历史 model 回填会查询 generation_jobs，新库必须先建任务表。
   ensureGenerationJobsTable();
+  ensureCreationsTable();
   console.log("\n数据库准备完成 → sqlite.db");
   process.exit(0);
 }
