@@ -22,6 +22,7 @@ export default function AppShell({ children, publicView = false }) {
   const homePath = path("/");
   const studioPath = path("/studio");
   const creationsPath = path("/creations");
+  const pricingPath = path("/pricing");
   const loginPath = path("/login");
 
   useEffect(() => {
@@ -53,7 +54,11 @@ export default function AppShell({ children, publicView = false }) {
     try { await authClient.signOut(); } finally { router.replace(homePath); }
   }
 
-  const pageTitle = pathname === creationsPath ? t("shell.creations") : t("shell.imageStudio");
+  const pageTitle = pathname === creationsPath
+    ? t("shell.creations")
+    : pathname === pricingPath
+      ? t("shell.pricing")
+      : t("shell.imageStudio");
 
   return <div className="app-frame">
     <aside className="app-sidebar">
@@ -63,6 +68,7 @@ export default function AppShell({ children, publicView = false }) {
         <Link className={pathname === homePath ? "active" : ""} href={homePath}><CompassIcon />{t("shell.explore")}</Link>
         <Link className={pathname === studioPath ? "active" : ""} href={studioPath}><ImageIcon />{t("shell.create")}</Link>
         <Link className={pathname === creationsPath ? "active" : ""} href={creationsPath}><GridIcon />{t("shell.creations")}</Link>
+        <Link className={pathname === pricingPath ? "active" : ""} href={pricingPath}><CoinsIcon />{t("shell.pricing")}</Link>
       </nav>
       <div className="sidebar-note">
         <span><SparklesIcon /></span>
