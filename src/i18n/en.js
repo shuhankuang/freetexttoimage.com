@@ -5,6 +5,7 @@ const en = {
     loginTitle: "Sign in or create an account",
   },
   language: { label: "Language", english: "English", japanese: "日本語" },
+  legal: { terms: "Terms", privacy: "Privacy", navigation: "Legal pages" },
   shell: {
     eyebrow: "YOUR CREATIVE SPACE",
     navigation: "Workspace navigation",

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@heroui/react";
 import { ArrowIcon, GridIcon, Logo, SparkIcon } from "@/components/ui";
 import { useI18n } from "@/i18n/provider";
@@ -31,6 +32,6 @@ export default function InspirationGallery({ onChoose }) {
       const title = t(`inspiration.items.${item.id}`);
       return <button key={item.id} className="inspiration-tile" style={{ "--tile-height": `${item.height}px` }} onClick={() => onChoose(item.prompt)} aria-label={t("inspiration.usePromptLabel", { title })}><Image src={`/gallery/${item.id}.jpg`} alt={title} fill sizes="(max-width: 620px) 45vw, (max-width: 1100px) 28vw, 22vw" priority={index < 4} /><span className="tile-arrow"><ArrowIcon /></span><span className="tile-caption"><span>{categoryLabel(item.category)}</span><strong>{title}</strong><span className="tile-action">{t("inspiration.usePrompt")} <ArrowIcon /></span></span></button>;
     })}</div>
-    <footer className="studio-footer"><span className="footer-brand"><Logo href={path("/")} label={t("shell.homeLabel")} /><span>{t("inspiration.footer")}</span></span><span>{t("inspiration.credit")}</span></footer>
+    <footer className="studio-footer"><span className="footer-brand"><Logo href={path("/")} label={t("shell.homeLabel")} /><span>{t("inspiration.footer")}</span></span><nav aria-label={t("legal.navigation")}><Link href={path("/terms")}>{t("legal.terms")}</Link><Link href={path("/privacy")}>{t("legal.privacy")}</Link></nav></footer>
   </section>;
 }

@@ -5,6 +5,7 @@ const ja = {
     loginTitle: "ログインまたはアカウント作成",
   },
   language: { label: "言語", english: "English", japanese: "日本語" },
+  legal: { terms: "利用規約", privacy: "プライバシー", navigation: "法的情報" },
   shell: {
     eyebrow: "あなたのクリエイティブスペース",
     navigation: "ワークスペースナビゲーション",
