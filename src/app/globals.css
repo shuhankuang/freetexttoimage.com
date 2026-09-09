@@ -267,8 +267,9 @@ body { font-family: Arial, Helvetica, sans-serif; }
 .result-meta-line span { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 16px; }
 .result-meta-line b { color: #969b8e; font-weight: 500; }
 .result-controls { width: 100%; margin-top: auto; display: flex; align-items: stretch; gap: 10px; }
-.result-download { min-width: 0; min-height: 46px; flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 9px; border: 1px solid var(--accent); border-radius: 9px; background: var(--accent); color: white; font-size: 13px; font-weight: 600; transition: filter .15s; }
+.result-download { min-width: 0; min-height: 46px; flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 9px; border: 1px solid var(--accent); border-radius: 9px; background: var(--accent); color: white; font-size: 13px; font-weight: 600; cursor: pointer; transition: filter .15s, opacity .15s; }
 .result-download:hover { filter: brightness(.94); }
+.result-download:disabled { cursor: wait; opacity: .76; }
 .result-actions { display: flex; flex: 0 0 46px; }
 .result-actions .button { width: 46px; min-width: 46px; height: 46px; padding: 0; border-radius: 9px !important; }
 @media (max-width: 760px) {

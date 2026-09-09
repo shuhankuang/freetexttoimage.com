@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Spinner } from "@heroui/react";
 import { CheckIcon, CopyIcon, DownloadIcon } from "@/components/ui";
 import { useI18n } from "@/i18n/provider";
 
@@ -45,6 +46,7 @@ function formatDate(value, locale) {
 
 export default function ResultInfo({ prompt, model, ratio, createdAt, image, downloadUrl, actions }) {
   const [copied, setCopied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const { locale, t } = useI18n();
 
   async function handleCopy() {
@@ -52,6 +54,30 @@ export default function ResultInfo({ prompt, model, ratio, createdAt, image, dow
     if (await copyText(prompt)) {
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
+    }
+  }
+
+  async function handleDownload() {
+    const source = downloadUrl || image;
+    if (!source || downloading) return;
+    setDownloading(true);
+    try {
+      const response = await fetch(source);
+      if (!response.ok) throw new Error(`Download failed (${response.status})`);
+      const blobUrl = URL.createObjectURL(await response.blob());
+      const disposition = response.headers.get("content-disposition") || "";
+      const fileName = /filename="([^"]+)"/i.exec(disposition)?.[1] || "image-freetexttoimage";
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+    } catch (error) {
+      console.error("[download] image download failed:", error?.message || error);
+    } finally {
+      setDownloading(false);
     }
   }
 
@@ -87,7 +113,7 @@ export default function ResultInfo({ prompt, model, ratio, createdAt, image, dow
         {(image || actions) && (
           <div className="result-controls">
             {actions && <div className="result-actions">{actions}</div>}
-            {image && <a className="result-download" href={downloadUrl || image} download><DownloadIcon />{t("result.download")}</a>}
+            {image && <button type="button" className="result-download" onClick={handleDownload} disabled={downloading} aria-busy={downloading}>{downloading ? <Spinner size="sm" color="current" /> : <DownloadIcon />}{t("result.download")}</button>}
           </div>
         )}
       </div>

@@ -18,7 +18,8 @@ function mimeForKey(key) {
 
 function downloadName(key) {
   const fileName = key?.split("/").at(-1)?.replace(/[^a-z0-9._-]/gi, "-") || "image";
-  return `freetexttoimage-${fileName}`;
+  const match = /^(.*?)(\.[a-z0-9]+)$/i.exec(fileName);
+  return match ? `${match[1]}-freetexttoimage${match[2]}` : `${fileName}-freetexttoimage`;
 }
 
 export async function GET(request, { params }) {
