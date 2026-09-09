@@ -68,5 +68,5 @@ export function GoogleIcon({ size = 18 }) {
   );
 }
 
-// 品牌字标不是图标库资产，保持为可访问的真实文本。
-export function Logo({ href = "/", label = `${BRAND_NAME} home` }) { return <Link href={href} className="logo" aria-label={label}><span>f</span><strong>FreeText<span className="logo-connector">to</span>Image<i>.</i></strong></Link>; }
+// 图形标记复用 app/icon.svg；链接已有完整 aria-label，避免重复朗读装饰图形。
+export function Logo({ href = "/", label = `${BRAND_NAME} home` }) { return <Link href={href} className="logo" aria-label={label}><span className="logo-mark" aria-hidden="true" /><strong>Free<span className="logo-text">Text</span><span className="logo-connector">to</span>Image<i>.</i></strong></Link>; }
