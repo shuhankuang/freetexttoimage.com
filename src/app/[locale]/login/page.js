@@ -21,7 +21,11 @@ export default function LoginPage() {
   const studioPath = path("/studio");
 
   useEffect(() => {
-    if (!isPending && session) router.replace(studioPath);
+    if (isPending || !session) return;
+    // 只接受站内相对路径（"/" 开头且不是 "//"），防止 ?redirect= 被用来跳到外部站点。
+    const requested = new URLSearchParams(window.location.search).get("redirect");
+    const target = requested && requested.startsWith("/") && !requested.startsWith("//") ? requested : studioPath;
+    router.replace(target);
   }, [isPending, session, router, studioPath]);
 
   useEffect(() => {
@@ -32,18 +36,25 @@ export default function LoginPage() {
     }
   }, [loginPath, t]);
 
+  // 只接受站内相对路径（"/" 开头且不是 "//"），防止 ?redirect= 被用来跳到外部站点。
+  function redirectTarget() {
+    const requested = new URLSearchParams(window.location.search).get("redirect");
+    return requested && requested.startsWith("/") && !requested.startsWith("//") ? requested : studioPath;
+  }
+
   async function submit(event) {
     event.preventDefault();
     setPending(true);
     setError("");
     const data = new FormData(event.currentTarget);
     const email = data.get("email")?.toString().trim() || "";
+    const target = redirectTarget();
 
     try {
       const { error: authError } = await authClient.signIn.magicLink({
         email,
-        callbackURL: studioPath,
-        newUserCallbackURL: studioPath,
+        callbackURL: target,
+        newUserCallbackURL: target,
         errorCallbackURL: loginPath,
         metadata: { locale },
       });
@@ -61,7 +72,7 @@ export default function LoginPage() {
 
   async function google() {
     setError("");
-    const { error: authError } = await authClient.signIn.social({ provider: "google", callbackURL: studioPath });
+    const { error: authError } = await authClient.signIn.social({ provider: "google", callbackURL: redirectTarget() });
     if (authError) setError(t("auth.errors.google"));
   }
 

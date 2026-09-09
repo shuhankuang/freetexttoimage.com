@@ -22,7 +22,8 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "s3mini": "^1.0.1",
-    "sharp": "^0.35.4"
+    "sharp": "^0.35.4",
+    "stripe": "^22.6.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

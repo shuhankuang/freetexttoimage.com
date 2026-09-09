@@ -127,6 +127,16 @@ const en = {
     close: "Close image viewer",
     imageAlt: "Generated image",
   },
+  pricing: {
+    section: "CREDITS",
+    title: "Top up your credits.",
+    subtitle: "One-time credit packs. Credits never expire.",
+    packCredits: "{count} credits",
+    buy: "Buy",
+    checkoutSuccess: "Payment received — your credits will show up in a moment.",
+    checkoutCancelled: "Checkout cancelled. No charge was made.",
+    errors: { checkout: "Couldn't start checkout. Please try again." },
+  },
   auth: {
     eyebrow: "YOUR CREATIVE SPACE",
     heroTitle: "Make room for",

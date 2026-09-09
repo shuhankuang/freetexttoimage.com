@@ -127,6 +127,16 @@ const ja = {
     close: "画像ビューアを閉じる",
     imageAlt: "生成された画像",
   },
+  pricing: {
+    section: "クレジット",
+    title: "クレジットをチャージ。",
+    subtitle: "一度きりのクレジットパック。有効期限はありません。",
+    packCredits: "{count} クレジット",
+    buy: "購入する",
+    checkoutSuccess: "お支払いを確認しました。まもなくクレジットが反映されます。",
+    checkoutCancelled: "決済がキャンセルされました。課金はされていません。",
+    errors: { checkout: "決済を開始できませんでした。もう一度お試しください。" },
+  },
   auth: {
     eyebrow: "あなたのクリエイティブスペース",
     heroTitle: "もっと自由に、",

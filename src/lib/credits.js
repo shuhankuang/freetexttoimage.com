@@ -33,6 +33,36 @@ export async function grantSignupBonus(userId) {
   });
 }
 
+// 永久积分入账（一次性充值 / 以后的退款追回场景复用）。加法更新天然并发安全，不需要 CAS；
+// 幂等靠调用方保证——Stripe 充值场景下靠 stripe_events 那层原子闭锁保证同一个 event 只处理一次，
+// 这里不重复做一层判断。账户理论上注册时就建好了，rowsAffected=0（不存在）时兜底建一行。
+export async function grantPermanentCredits(userId, amount, { reason, refType = null, refId = null }) {
+  if (!amount || amount <= 0) return;
+
+  const result = await db
+    .update(creditAccounts)
+    .set({ permanentBalance: sql`${creditAccounts.permanentBalance} + ${amount}` })
+    .where(eq(creditAccounts.userId, userId));
+
+  if ((result.rowsAffected ?? 0) === 0) {
+    await db
+      .insert(creditAccounts)
+      .values({ userId, monthlyBalance: 0, permanentBalance: amount })
+      .onConflictDoNothing({ target: creditAccounts.userId });
+  }
+
+  await db.insert(creditLedger).values({
+    id: crypto.randomUUID(),
+    userId,
+    delta: amount,
+    bucket: "permanent",
+    reason,
+    refType,
+    refId,
+    createdAt: iso(),
+  });
+}
+
 export async function getBalance(userId) {
   const [account] = await db.select().from(creditAccounts).where(eq(creditAccounts.userId, userId));
   const monthlyBalance = account?.monthlyBalance ?? 0;

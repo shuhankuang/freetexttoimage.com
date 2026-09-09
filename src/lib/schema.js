@@ -126,3 +126,13 @@ export const creditLedger = sqliteTable(
     index("idx_credit_ledger_ref").on(table.refType, table.refId),
   ]
 );
+
+// ── Stripe（Phase 3+）─────────────────────────────────────
+// webhook 幂等：Stripe 会重复投递同一个 event，处理前先插这一行（主键 = event id，
+// onConflictDoNothing），插不进去说明已经处理过，直接跳过——跟 credit_ledger 的退款闭锁
+// 是同一个模式，靠主键唯一约束做原子闭锁，不是「先查有没有处理过」。
+export const stripeEvents = sqliteTable("stripe_events", {
+  id: text("id").primaryKey(), // Stripe event id，如 evt_xxx
+  type: text("type").notNull(),
+  createdAt: text("created_at").notNull(),
+});
