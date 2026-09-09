@@ -17,32 +17,33 @@ import {
   Trash2,
   User,
 } from "lucide-react";
+import { BRAND_NAME } from "@/lib/brand";
 
 // lucide 图标统一套一层薄包装：
 // 保持原手写 SVG 的细线性风格（stroke 1.7）与各图标原本的默认尺寸，
 // 使所有调用处（<SparkIcon size={15}/> 等）用法与观感都不变。
-function formaIcon(Glyph, defaultSize) {
-  return function FormaGlyph({ size = defaultSize, strokeWidth = 1.7, ...props }) {
+function appIcon(Glyph, defaultSize) {
+  return function AppGlyph({ size = defaultSize, strokeWidth = 1.7, ...props }) {
     return <Glyph size={size} strokeWidth={strokeWidth} {...props} />;
   };
 }
 
-export const SparkIcon = formaIcon(Sparkle, 18);
-export const CheckIcon = formaIcon(Check, 14);
-export const SparklesIcon = formaIcon(Sparkles, 16);
-export const ArrowIcon = formaIcon(ArrowRight, 17);
-export const CompassIcon = formaIcon(Compass, 20);
-export const GridIcon = formaIcon(LayoutGrid, 20);
-export const ImageIcon = formaIcon(ImageGlyph, 20);
-export const UserIcon = formaIcon(User, 20);
-export const LogoutIcon = formaIcon(LogOut, 20);
-export const TrashIcon = formaIcon(Trash2, 17);
-export const PlusIcon = formaIcon(Plus, 18);
-export const DiceIcon = formaIcon(Dices, 15);
-export const ImagePlusIcon = formaIcon(ImagePlus, 16);
-export const CopyIcon = formaIcon(Copy, 14);
-export const DownloadIcon = formaIcon(Download, 17);
-export const LanguageIcon = formaIcon(Languages, 17);
+export const SparkIcon = appIcon(Sparkle, 18);
+export const CheckIcon = appIcon(Check, 14);
+export const SparklesIcon = appIcon(Sparkles, 16);
+export const ArrowIcon = appIcon(ArrowRight, 17);
+export const CompassIcon = appIcon(Compass, 20);
+export const GridIcon = appIcon(LayoutGrid, 20);
+export const ImageIcon = appIcon(ImageGlyph, 20);
+export const UserIcon = appIcon(User, 20);
+export const LogoutIcon = appIcon(LogOut, 20);
+export const TrashIcon = appIcon(Trash2, 17);
+export const PlusIcon = appIcon(Plus, 18);
+export const DiceIcon = appIcon(Dices, 15);
+export const ImagePlusIcon = appIcon(ImagePlus, 16);
+export const CopyIcon = appIcon(Copy, 14);
+export const DownloadIcon = appIcon(Download, 17);
+export const LanguageIcon = appIcon(Languages, 17);
 
 // “无需信用卡”：lucide CreditCard 本体画一条对角斜杠，比单独放一张卡更表意
 export function NoCardIcon({ size = 15, strokeWidth = 1.7 }) {
@@ -67,5 +68,5 @@ export function GoogleIcon({ size = 18 }) {
   );
 }
 
-// 品牌字标（forma.），非 lucide 图标，保留原样
-export function Logo({ href = "/", label = "Forma home" }) { return <Link href={href} className="logo" aria-label={label}><span>f</span><strong>forma<i>.</i></strong></Link>; }
+// 品牌字标不是图标库资产，保持为可访问的真实文本。
+export function Logo({ href = "/", label = `${BRAND_NAME} home` }) { return <Link href={href} className="logo" aria-label={label}><span>F</span><strong>FreeText<span className="logo-connector">to</span>Image<i>.</i></strong></Link>; }

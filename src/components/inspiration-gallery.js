@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Button } from "@heroui/react";
 import { ArrowIcon, GridIcon, SparkIcon } from "@/components/ui";
 import { useI18n } from "@/i18n/provider";
+import { BRAND_NAME } from "@/lib/brand";
 
 const inspiration = [
   { id: "dunes", category: "landscape", height: 340, prompt: "Sculptural terracotta desert formations beneath a pale blue sky, warm afternoon light, minimalist cinematic landscape photography." },
@@ -31,6 +32,6 @@ export default function InspirationGallery({ onChoose }) {
       const title = t(`inspiration.items.${item.id}`);
       return <button key={item.id} className="inspiration-tile" style={{ "--tile-height": `${item.height}px` }} onClick={() => onChoose(item.prompt)} aria-label={t("inspiration.usePromptLabel", { title })}><Image src={`/gallery/${item.id}.jpg`} alt={title} fill sizes="(max-width: 620px) 45vw, (max-width: 1100px) 28vw, 22vw" priority={index < 4} /><span className="tile-arrow"><ArrowIcon /></span><span className="tile-caption"><span>{categoryLabel(item.category)}</span><strong>{title}</strong><span className="tile-action">{t("inspiration.usePrompt")} <ArrowIcon /></span></span></button>;
     })}</div>
-    <footer className="studio-footer"><span><strong>forma.</strong> {t("inspiration.footer")}</span><span>{t("inspiration.credit")}</span></footer>
+    <footer className="studio-footer"><span><strong>{BRAND_NAME}</strong> {t("inspiration.footer")}</span><span>{t("inspiration.credit")}</span></footer>
   </section>;
 }

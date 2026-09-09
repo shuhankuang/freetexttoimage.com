@@ -1,14 +1,14 @@
 const en = {
   meta: {
-    title: "Forma — AI Image Workspace",
-    description: "Create AI images and keep every prompt in one focused workspace.",
+    title: "FreeTexttoImage — Free AI Image Generator",
+    description: "Create AI images from text for free and keep every prompt in one focused workspace.",
     loginTitle: "Sign in or create an account",
   },
   language: { label: "Language", english: "English", japanese: "日本語" },
   shell: {
     eyebrow: "YOUR CREATIVE SPACE",
     navigation: "Workspace navigation",
-    homeLabel: "Forma home",
+    homeLabel: "FreeTexttoImage home",
     explore: "Explore",
     create: "Create",
     creations: "My creations",
@@ -25,7 +25,7 @@ const en = {
     getStarted: "Get started",
     free: "free",
     opening: "Opening your workspace…",
-    logoutTitle: "Sign out of Forma?",
+    logoutTitle: "Sign out of FreeTexttoImage?",
     logoutBody: "Your creations stay saved in this workspace. You’ll just need to sign in again to create or edit.",
     cancel: "Cancel",
   },

@@ -26,9 +26,9 @@ button, input, textarea { font: inherit; }
 .primary-button:hover { filter: brightness(.94); }
 .link-button { min-height: 42px; padding: 0 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 .link-button.large { min-height: 52px; padding-inline: 23px; }
-.logo { display: inline-flex; align-items: center; gap: 10px; font-size: 26px; letter-spacing: -1.1px; }
-.logo > span { width: 32px; height: 36px; display: grid; place-items: center; border-radius: 10px; background: var(--accent); color: white; font: italic 700 29px Georgia, serif; }
-.logo strong { font-weight: 750; }.logo i { color: var(--accent); font-style: normal; }
+.logo { display: inline-flex; align-items: center; gap: 9px; min-width: 0; font-size: 18px; letter-spacing: -.75px; }
+.logo > span { flex: none; width: 32px; height: 36px; display: grid; place-items: center; border-radius: 10px; background: var(--accent); color: white; font: 700 22px/1 Georgia, serif; }
+.logo strong { min-width: 0; font-weight: 750; white-space: nowrap; }.logo-connector { color: #7b8769; }.logo i { color: var(--accent); font-style: normal; }
 .eyebrow, .section-label { display: inline-flex; align-items: center; gap: 8px; color: #737a68; font-size: 12px; font-weight: 650; letter-spacing: 1.6px; }
 
 /* Public site */
@@ -127,12 +127,12 @@ button, input, textarea { font: inherit; }
   .creation-wall { gap: 10px; }.creation-column { gap: 10px; }.creation-image { height: auto; border-radius: 9px; }
 }
 
-/* Forma's editorial studio identity, shared by the public and signed-in views. */
+/* FreeTexttoImage editorial studio identity, shared by public and signed-in views. */
 :root { --background: #faf9f6; --foreground: #292e26; --accent: #dc633c; --border: #e6e7dd; }
 body { font-family: Arial, Helvetica, sans-serif; }
 .app-frame { grid-template-columns: 252px minmax(0, 1fr); }
 .app-sidebar { background: #f4f3ee; padding: 35px 20px 20px; }
-.app-sidebar .logo { margin: 3px 12px 48px; font-size: 31px; }
+.app-sidebar .logo { margin: 3px 12px 48px; font-size: 18px; }
 .sidebar-eyebrow { color: #818779; font-size: 11px; letter-spacing: 1.3px; margin: 0 12px 17px; }
 .app-sidebar nav a { font-size: 14px; font-weight: 400; }
 .app-sidebar nav a.active { background: #e9eae1; color: #57664a; font-weight: 500; }

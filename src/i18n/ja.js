@@ -1,14 +1,14 @@
 const ja = {
   meta: {
-    title: "Forma — AI画像ワークスペース",
-    description: "言葉からAI画像を生成し、プロンプトと作品をひとつの場所に保存できます。",
+    title: "FreeTexttoImage — 無料AI画像生成ツール",
+    description: "テキストから無料でAI画像を生成し、プロンプトと作品をひとつの場所に保存できます。",
     loginTitle: "ログインまたはアカウント作成",
   },
   language: { label: "言語", english: "English", japanese: "日本語" },
   shell: {
     eyebrow: "あなたのクリエイティブスペース",
     navigation: "ワークスペースナビゲーション",
-    homeLabel: "Formaホーム",
+    homeLabel: "FreeTexttoImageホーム",
     explore: "見つける",
     create: "作成する",
     creations: "マイ作品",
@@ -25,7 +25,7 @@ const ja = {
     getStarted: "無料で始める",
     free: "",
     opening: "ワークスペースを開いています…",
-    logoutTitle: "Formaからログアウトしますか？",
+    logoutTitle: "FreeTexttoImageからログアウトしますか？",
     logoutBody: "作品はこのワークスペースに保存されたままです。作成や編集を再開するには、もう一度ログインしてください。",
     cancel: "キャンセル",
   },

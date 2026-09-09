@@ -275,7 +275,7 @@ async function downloadImage(url) {
     try {
       const res = await fetch(url, {
         signal: ctrl.signal,
-        headers: { "User-Agent": "Forma/1.0", Accept: "image/*,*/*" },
+        headers: { "User-Agent": "FreeTexttoImage/1.0", Accept: "image/*,*/*" },
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const buffer = Buffer.from(await res.arrayBuffer());

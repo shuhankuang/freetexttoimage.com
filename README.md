@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# FreeTexttoImage
 
-## Getting Started
+FreeTexttoImage is a focused AI image workspace built with Next.js 16 and HeroUI. Users can generate images from text, browse inspiration, and keep their generated work in a private library.
 
-First, run the development server:
+## Features
+
+- Text-to-image generation through configurable model providers
+- English routes at `/` and Japanese routes under `/ja`
+- Passwordless authentication with Postmark Magic Links
+- Optional Google sign-in
+- Responsive masonry gallery and full-screen result viewer
+- Private S3-compatible image storage
+
+## Local development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+pnpm db:setup
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+Copy `.env.example` to `.env.local` and configure the services you use. Magic Link login requires a Postmark server token and a verified sender address:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+POSTMARK_SERVER_TOKEN=
+POSTMARK_FROM_EMAIL="FreeTexttoImage <hello@example.com>"
+POSTMARK_MESSAGE_STREAM=outbound
+```
 
-## Learn More
+Google authentication, image generation, and S3-compatible storage remain optional integrations documented in `.env.example`.
 
-To learn more about Next.js, take a look at the following resources:
+## Commands
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+pnpm lint       # Run ESLint
+pnpm build      # Create a production build
+pnpm db:setup   # Prepare Better Auth and generation tables
+pnpm start      # Start the production server
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Set `FREETEXTTOIMAGE_DB_PATH` to override the default local `sqlite.db` path. The previous `FORMA_DB_PATH` variable remains supported for existing deployments.
