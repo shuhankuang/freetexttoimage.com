@@ -1,6 +1,8 @@
 import { Buffer } from "node:buffer";
 import sharp from "sharp";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
+import { creations, generationJobs } from "@/lib/schema";
 import { getCreation, updateCreationSucceeded, updateCreationStatus } from "@/lib/creations";
 import { getProvider, DEFAULT_MODEL } from "@/lib/models";
 import { publicObjectUrl, uploadObject, s3Configured } from "@/lib/storage";
@@ -11,7 +13,9 @@ const THUMBNAIL_WIDTH = 640; // 网格列按宽度布局；固定宽度并保留
 // 双通道触发最终落盘，且 finalize 幂等：
 //   1) 回调快通道 —— KIE 完成后 POST /api/webhooks/kie → handleCallback → finalizeJob
 //   2) 轮询兜底 —— createJob 起 startPollLoop，进程内退避轮询 provider.getTask → finalizeJob
-// 竞态时无论哪个先到，finalize 的 status 守卫保证只落盘一次。
+// 竞态时无论哪个先到，都靠 applyCreationStatus 里对 generation_jobs 的原子条件 UPDATE 只放行一次
+// （Turso 是走 HTTP 的远程库，没有 better-sqlite3 那种本地同步事务可用，所以原子性由这条
+//  `UPDATE ... WHERE status = 'processing'` + 受影响行数判断来保证，不是靠事务包裹）。
 
 const BASE_DELAY_MS = 2000;
 const MAX_DELAY_MS = 15000;
@@ -29,64 +33,67 @@ function callbackUrl() {
   return `${app.replace(/\/+$/, "")}/api/webhooks/kie`;
 }
 
-function jobRow(id) {
-  return db.prepare(`SELECT * FROM generation_jobs WHERE id = ?`).get(id);
+async function jobRow(id) {
+  const [row] = await db.select().from(generationJobs).where(eq(generationJobs.id, id));
+  return row;
 }
 
-function insertJob({ id, creationId, userId, provider, model, externalTaskId, now }) {
-  db.prepare(
-    `INSERT INTO generation_jobs
-       (id, creation_id, user_id, provider, model, external_task_id, status, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, 'processing', ?, ?)`
-  ).run(id, creationId, userId, provider, model, externalTaskId, now, now);
+async function insertJob({ id, creationId, userId, provider, model, externalTaskId, now }) {
+  await db.insert(generationJobs).values({
+    id,
+    creationId,
+    userId,
+    provider,
+    model,
+    externalTaskId,
+    status: "processing",
+    createdAt: now,
+    updatedAt: now,
+  });
 }
 
-// 状态迁移：creation 与 job 一起、带 status 守卫地推进。返回是否真的应用了。
-const applyCreationStatus = db.transaction(({ userId, creationId, jobId, status, image, imageKey, thumbnailKey, error }) => {
-  const job = jobRow(jobId);
-  if (!job || job.status !== "processing") return false;
+// 状态迁移：先原子闭锁 generation_jobs（只有仍是 processing 时这条 UPDATE 才会命中），
+// 受影响行数为 0 说明已经被另一条并发路径（webhook / 轮询）抢先终结，直接放弃、不再动 creation。
+// 闭锁成功后才写 creation——此时只有一个调用者能走到这一步，不会重复落盘。
+async function applyCreationStatus({ userId, creationId, jobId, status, image, imageKey, thumbnailKey, error }) {
+  const jobResult = await db
+    .update(generationJobs)
+    .set({ status, error: error || null, updatedAt: iso() })
+    .where(and(eq(generationJobs.id, jobId), eq(generationJobs.status, "processing")));
+
+  if ((jobResult.rowsAffected ?? 0) === 0) return false;
+
   if (status === "succeeded") {
-    updateCreationSucceeded(userId, creationId, { image, imageKey, thumbnailKey });
+    await updateCreationSucceeded(userId, creationId, { image, imageKey, thumbnailKey });
   } else {
-    updateCreationStatus(userId, creationId, status);
+    await updateCreationStatus(userId, creationId, status);
   }
-  db.prepare(`UPDATE generation_jobs SET status = ?, error = ?, updated_at = ? WHERE id = ?`).run(
-    status,
-    error || null,
-    iso(),
-    jobId
-  );
   return true;
-});
+}
 
 async function failJob(jobId, message) {
-  const job = jobRow(jobId);
+  const job = await jobRow(jobId);
   if (!job || job.status !== "processing") return;
-  applyCreationStatus({
-    userId: job.user_id,
-    creationId: job.creation_id,
+  await applyCreationStatus({
+    userId: job.userId,
+    creationId: job.creationId,
     jobId,
     status: "failed",
     error: message,
   });
 }
 
-function touchJob(jobId, error = null) {
-  if (error) {
-    db.prepare(`UPDATE generation_jobs SET error = ?, updated_at = ? WHERE id = ? AND status = 'processing'`).run(
-      error,
-      iso(),
-      jobId
-    );
-    return;
-  }
-  db.prepare(`UPDATE generation_jobs SET updated_at = ? WHERE id = ? AND status = 'processing'`).run(iso(), jobId);
+async function touchJob(jobId, error = null) {
+  await db
+    .update(generationJobs)
+    .set(error ? { error, updatedAt: iso() } : { updatedAt: iso() })
+    .where(and(eq(generationJobs.id, jobId), eq(generationJobs.status, "processing")));
 }
 
 // ── 最终落盘（幂等，双通道共用）──────────────────────────────
 async function finalizeJob(jobId, urls) {
-  const job = jobRow(jobId);
-  if (!job || job.status !== "processing") return false;
+  const job = await jobRow(jobId);
+  if (!job || job.status !== "processing") return false; // 早退出，纯优化：省一次下载，不是正确性保证
 
   if (!urls || urls.length === 0) {
     await failJob(jobId, "The model finished but returned no image.");
@@ -98,17 +105,17 @@ async function finalizeJob(jobId, urls) {
   const contentType = image.contentType?.startsWith("image/")
     ? image.contentType
     : mimeForExt(ext);
-  const key = `${job.creation_id}.${ext}`;
+  const key = `${job.creationId}.${ext}`;
   await uploadObject(key, image.buffer, contentType); // 原图必须成功，失败交给上层重试
 
   const thumbnailKey = await buildThumbnail(job, image.buffer); // 尽力而为，失败不影响原图落盘
 
-  const applied = applyCreationStatus({
-    userId: job.user_id,
-    creationId: job.creation_id,
+  const applied = await applyCreationStatus({
+    userId: job.userId,
+    creationId: job.creationId,
     jobId,
     status: "succeeded",
-    image: publicObjectUrl(key) || `/api/images/${job.creation_id}`,
+    image: publicObjectUrl(key) || `/api/images/${job.creationId}`,
     imageKey: key,
     thumbnailKey,
   });
@@ -127,7 +134,7 @@ async function buildThumbnail(job, buffer) {
     console.error("[generation] thumbnail render failed:", err?.message || err);
     return null;
   }
-  const thumbnailKey = `${job.creation_id}_thumb.webp`;
+  const thumbnailKey = `${job.creationId}_thumb.webp`;
   try {
     await uploadObject(thumbnailKey, thumbBuffer, "image/webp");
     return thumbnailKey;
@@ -158,7 +165,7 @@ function scheduleTick(jobId, startedAt, attempt) {
 }
 
 async function pollTick(jobId, startedAt, attempt) {
-  const job = jobRow(jobId);
+  const job = await jobRow(jobId);
   if (!job || job.status !== "processing") return stopPollLoop(jobId);
 
   if (Date.now() - startedAt > MAX_TOTAL_MS) {
@@ -167,36 +174,37 @@ async function pollTick(jobId, startedAt, attempt) {
   }
 
   try {
-    const info = await getProvider(job.model).getTask(job.external_task_id);
+    const info = await getProvider(job.model).getTask(job.externalTaskId);
     if (info.status === "succeeded") {
       const applied = await finalizeJob(jobId, info.resultUrls);
       if (applied) return stopPollLoop(jobId);
       // 没落盘：可能是 S3/下载瞬时失败或并发被抢先 → 查一下，仍 processing 就继续退避重试
-      const cur = jobRow(jobId);
+      const cur = await jobRow(jobId);
       if (!cur || cur.status !== "processing") return stopPollLoop(jobId);
     } else if (info.status === "failed") {
       await failJob(jobId, info.error || "Image generation failed. Please try again.");
       return stopPollLoop(jobId);
     } else {
-      touchJob(jobId);
+      await touchJob(jobId);
     }
   } catch (err) {
     if (err?.code === "CONFIG") {
       await failJob(jobId, err.message);
       return stopPollLoop(jobId);
     }
-    touchJob(jobId, err?.message || String(err)); // 记录最近一次瞬时错误，继续退避重试
+    await touchJob(jobId, err?.message || String(err)); // 记录最近一次瞬时错误，继续退避重试
   }
   scheduleTick(jobId, startedAt, attempt + 1);
 }
 
 // 进程重启后自愈：GET 发现卡在 processing 且 updated_at 陈旧时调用，重启一条轮询。
-export function ensurePolling(creationId) {
-  const job = db
-    .prepare(`SELECT * FROM generation_jobs WHERE creation_id = ? AND status = 'processing'`)
-    .get(creationId);
+export async function ensurePolling(creationId) {
+  const [job] = await db
+    .select()
+    .from(generationJobs)
+    .where(and(eq(generationJobs.creationId, creationId), eq(generationJobs.status, "processing")));
   if (!job || activePolls.has(job.id)) return;
-  if (Date.now() - new Date(job.updated_at).getTime() > JOB_STALE_MS) {
+  if (Date.now() - new Date(job.updatedAt).getTime() > JOB_STALE_MS) {
     startPollLoop(job.id);
   }
 }
@@ -218,21 +226,21 @@ export async function createJob(user, { prompt, style, ratio, model = DEFAULT_MO
   const now = iso();
   const creationId = crypto.randomUUID();
   const jobId = crypto.randomUUID();
-  db.prepare(
-    `INSERT INTO creations
-       (id, user_id, title, prompt, style, ratio, image, image_key, status, model, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, 'processing', ?, ?)`
-  ).run(
-    creationId,
-    user.id,
-    prompt.trim().split(/\s+/).slice(0, 5).join(" "),
-    prompt.trim(),
-    style || null,
-    ratio || null,
+
+  await db.insert(creations).values({
+    id: creationId,
+    userId: user.id,
+    title: prompt.trim().split(/\s+/).slice(0, 5).join(" "),
+    prompt: prompt.trim(),
+    style: style || null,
+    ratio: ratio || null,
+    image: null,
+    imageKey: null,
+    status: "processing",
     model,
-    now
-  );
-  insertJob({
+    createdAt: now,
+  });
+  await insertJob({
     id: jobId,
     creationId,
     userId: user.id,
@@ -251,9 +259,10 @@ export async function handleCallback(payload = {}) {
   const taskId = payload?.taskId || payload?.data?.taskId;
   if (!taskId) return { reason: "missing-task" };
 
-  const job = db
-    .prepare(`SELECT * FROM generation_jobs WHERE external_task_id = ?`)
-    .get(String(taskId));
+  const [job] = await db
+    .select()
+    .from(generationJobs)
+    .where(eq(generationJobs.externalTaskId, String(taskId)));
   if (!job) return { reason: "unknown-task" };
   if (job.status !== "processing") return { reason: "already-settled" };
 
@@ -271,7 +280,7 @@ export async function handleCallback(payload = {}) {
   } catch (err) {
     // 告诉 webhook 路由返回 503，请求上游重试；轮询兜底也会继续。
     console.error("[generation] callback finalize error:", err?.message || err);
-    touchJob(job.id, err?.message || String(err));
+    await touchJob(job.id, err?.message || String(err));
     return { reason: "retryable-error" };
   }
   return { reason: "still-processing" };

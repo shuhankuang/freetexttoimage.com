@@ -40,4 +40,4 @@ pnpm db:setup   # Prepare Better Auth and generation tables
 pnpm start      # Start the production server
 ```
 
-Set `FREETEXTTOIMAGE_DB_PATH` to override the default local `sqlite.db` path. The previous `FORMA_DB_PATH` variable remains supported for existing deployments.
+Data lives in Turso (libsql). Set `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` in `.env.local` before running `pnpm db:setup`; use separate databases for local development and production.

@@ -27,21 +27,21 @@ export async function GET(request, { params }) {
   if (!session) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const { id } = await params; // Next 16：动态路由参数是 async
-  const record = getCreationRecord(session.user.id, id);
+  const record = await getCreationRecord(session.user.id, id);
   if (!record) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   // 老数据：直接重定向到本地静态图
-  if (!record.image_key && record.image?.startsWith("/gallery/")) {
+  if (!record.imageKey && record.image?.startsWith("/gallery/")) {
     return NextResponse.redirect(new URL(record.image, request.url));
   }
 
-  if (!record.image_key) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!record.imageKey) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   // ?size=thumb 命中缩略图 key；没有缩略图（旧数据/生成失败）时自动回退原图，不做历史回填。
   const { searchParams } = new URL(request.url);
   const wantsThumb = searchParams.get("size") === "thumb";
   const wantsDownload = searchParams.get("download") === "1";
-  const key = wantsThumb && record.thumbnail_key ? record.thumbnail_key : record.image_key;
+  const key = wantsThumb && record.thumbnailKey ? record.thumbnailKey : record.imageKey;
 
   try {
     const buffer = await getObjectBuffer(key);

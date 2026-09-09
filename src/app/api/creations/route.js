@@ -14,7 +14,7 @@ export async function GET(request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { searchParams } = new URL(request.url);
   try {
-    return NextResponse.json(listCreationsPage(user.id, {
+    return NextResponse.json(await listCreationsPage(user.id, {
       limit: searchParams.get("limit"),
       cursor: searchParams.get("cursor"),
     }));
