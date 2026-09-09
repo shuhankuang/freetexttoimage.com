@@ -7,7 +7,7 @@ import { Button, Dropdown, Modal, Spinner } from "@heroui/react";
 import { authClient } from "@/lib/auth-client";
 import LanguageSwitcher from "@/components/language-switcher";
 import { useI18n } from "@/i18n/provider";
-import { ArrowIcon, CoinsIcon, CompassIcon, GridIcon, ImageIcon, Logo, LogoutIcon, SparklesIcon, UserIcon } from "@/components/ui";
+import { CoinsIcon, CompassIcon, GridIcon, ImageIcon, Logo, LogoutIcon, SparklesIcon, UserIcon } from "@/components/ui";
 
 export default function AppShell({ children, publicView = false }) {
   const rawPathname = usePathname();
@@ -23,6 +23,7 @@ export default function AppShell({ children, publicView = false }) {
   const studioPath = path("/studio");
   const creationsPath = path("/creations");
   const pricingPath = path("/pricing");
+  const profilePath = path("/profile");
   const loginPath = path("/login");
 
   useEffect(() => {
@@ -31,7 +32,7 @@ export default function AppShell({ children, publicView = false }) {
 
   // 顶栏积分余额：登录后拉一次；生成流程结束后 image-studio 会 dispatch "credits:refresh" 通知刷新。
   useEffect(() => {
-    if (!user) return; // 未登录时 sidebar-account 走 guest 分支，不渲染积分，credits 状态留着无妨
+    if (!user) return;
     let cancelled = false;
     function refresh() {
       fetch("/api/credits")
@@ -58,6 +59,8 @@ export default function AppShell({ children, publicView = false }) {
     ? t("shell.creations")
     : pathname === pricingPath
       ? t("shell.pricing")
+      : pathname === profilePath
+        ? t("shell.profileBilling")
       : t("shell.imageStudio");
 
   return <div className="app-frame">
@@ -76,7 +79,6 @@ export default function AppShell({ children, publicView = false }) {
         <p>{t("shell.noteBody").split("\n").map((line, index) => <span key={line}>{index > 0 && <br />}{line}</span>)}</p>
         <Link href={user ? studioPath : loginPath}>{t("shell.startCreating")} <span>→</span></Link>
       </div>
-      {user ? <div className="sidebar-account"><span className="account-avatar"><UserIcon /></span><div><strong>{user.name || t("shell.workspaceFallback")}</strong><span>{user.email}</span></div><Button isIconOnly variant="ghost" aria-label={t("shell.signOut")} onPress={() => setLogoutOpen(true)}><LogoutIcon /></Button></div> : <Link className="sidebar-account account-guest" href={loginPath}><span className="account-avatar"><UserIcon /></span><div><strong>{t("shell.signIn")}</strong><span>{t("shell.saveEvery")}</span></div><ArrowIcon /></Link>}
     </aside>
     <div className="app-main">
       <header className="app-header">
@@ -92,8 +94,14 @@ export default function AppShell({ children, publicView = false }) {
               <Dropdown.Popover placement="bottom end" className="user-menu-popover">
                 <Dropdown.Menu
                   aria-label={t("shell.account")}
-                  onAction={(key) => { if (key === "logout") setLogoutOpen(true); }}
+                  onAction={(key) => {
+                    if (key === "profile") router.push(profilePath);
+                    if (key === "logout") setLogoutOpen(true);
+                  }}
                 >
+                  <Dropdown.Item id="profile" textValue={t("shell.profileBilling")}>
+                    <UserIcon /><span>{t("shell.profileBilling")}</span>
+                  </Dropdown.Item>
                   <Dropdown.Item id="logout" textValue={t("shell.signOut")}>
                     <LogoutIcon /><span>{t("shell.signOut")}</span>
                   </Dropdown.Item>
