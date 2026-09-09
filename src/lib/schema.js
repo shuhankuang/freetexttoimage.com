@@ -136,3 +136,28 @@ export const stripeEvents = sqliteTable("stripe_events", {
   type: text("type").notNull(),
   createdAt: text("created_at").notNull(),
 });
+
+// userId ↔ Stripe customer 的稳定映射（Phase 4 订阅需要一个稳定 customer 才能复用/升级/开 Portal；
+// 一次性充值那条路径没有用到这张表，走的是 Checkout 的 customer_email）。
+export const stripeCustomers = sqliteTable(
+  "stripe_customers",
+  {
+    userId: text("user_id").primaryKey(),
+    stripeCustomerId: text("stripe_customer_id").notNull(),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [index("idx_stripe_customers_customer").on(table.stripeCustomerId)]
+);
+
+// 每个用户最多一条订阅记录（userId 主键，天然保证不会有两条并存）。status 是 Stripe 订阅状态
+// 原样存（active/past_due/canceled/...）；credits 授予不在这张表发生，靠 invoice.paid 那条路径。
+export const subscriptions = sqliteTable("subscriptions", {
+  userId: text("user_id").primaryKey(),
+  stripeSubscriptionId: text("stripe_subscription_id").notNull(),
+  plan: text("plan").notNull(), // 'basic' | 'pro'
+  status: text("status").notNull(),
+  currentPeriodEnd: text("current_period_end"),
+  cancelAtPeriodEnd: integer("cancel_at_period_end", { mode: "boolean" }).notNull().default(false),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});

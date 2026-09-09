@@ -63,6 +63,37 @@ export async function grantPermanentCredits(userId, amount, { reason, refType = 
   });
 }
 
+// 月度积分发放/重置（订阅 invoice.paid 时调用）。是"设为 X"不是"加 X"——月度积分不结转，
+// 上个周期没花完的会被覆盖掉，ledger 记的 delta 是净变化量（可能是负数，代表没花完的部分被清零），
+// 保留审计轨迹。幂等靠外层 stripe_events 的原子闭锁保证同一张发票只处理一次，这里不用再 CAS。
+export async function resetMonthlyCredits(userId, amount, { reason, refType = null, refId = null }) {
+  const [account] = await db.select().from(creditAccounts).where(eq(creditAccounts.userId, userId));
+  const previous = account?.monthlyBalance ?? 0;
+  const delta = amount - previous;
+
+  if (account) {
+    await db.update(creditAccounts).set({ monthlyBalance: amount }).where(eq(creditAccounts.userId, userId));
+  } else {
+    await db
+      .insert(creditAccounts)
+      .values({ userId, monthlyBalance: amount, permanentBalance: 0 })
+      .onConflictDoNothing({ target: creditAccounts.userId });
+  }
+
+  if (delta !== 0) {
+    await db.insert(creditLedger).values({
+      id: crypto.randomUUID(),
+      userId,
+      delta,
+      bucket: "monthly",
+      reason,
+      refType,
+      refId,
+      createdAt: iso(),
+    });
+  }
+}
+
 export async function getBalance(userId) {
   const [account] = await db.select().from(creditAccounts).where(eq(creditAccounts.userId, userId));
   const monthlyBalance = account?.monthlyBalance ?? 0;
