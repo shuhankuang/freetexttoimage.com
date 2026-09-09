@@ -7,9 +7,11 @@ import { Button, Dropdown, Modal, Spinner } from "@heroui/react";
 import { authClient } from "@/lib/auth-client";
 import LanguageSwitcher from "@/components/language-switcher";
 import { useI18n } from "@/i18n/provider";
-import { CoinsIcon, CompassIcon, GridIcon, ImageIcon, Logo, LogoutIcon, SparklesIcon, UserIcon } from "@/components/ui";
+import { CoinsIcon, GridIcon, ImageIcon, Logo, LogoutIcon, ModelsIcon, PaletteIcon, SparklesIcon, TemplateIcon, UserIcon } from "@/components/ui";
 
-export default function AppShell({ children, publicView = false }) {
+const SHOW_EXPLORE_NAV = false;
+
+export default function AppShell({ children, publicView = false, showMyCreations = false }) {
   const rawPathname = usePathname();
   const pathname = rawPathname.replace(/^\/en(?=\/|$)/, "") || "/";
   const router = useRouter();
@@ -24,6 +26,7 @@ export default function AppShell({ children, publicView = false }) {
   const creationsPath = path("/creations");
   const pricingPath = path("/pricing");
   const profilePath = path("/profile");
+  const explorePath = path("/explore");
   const loginPath = path("/login");
 
   useEffect(() => {
@@ -61,17 +64,29 @@ export default function AppShell({ children, publicView = false }) {
       ? t("shell.pricing")
       : pathname === profilePath
         ? t("shell.profileBilling")
+        : pathname.startsWith(`${explorePath}/`)
+          ? t("shell.explore")
       : t("shell.imageStudio");
 
   return <div className="app-frame">
     <aside className="app-sidebar">
       <Logo href={homePath} label={t("shell.homeLabel")} />
-      <span className="sidebar-eyebrow">{t("shell.eyebrow")}</span>
       <nav aria-label={t("shell.navigation")}>
-        <Link className={pathname === homePath ? "active" : ""} href={homePath}><CompassIcon />{t("shell.explore")}</Link>
-        <Link className={pathname === studioPath ? "active" : ""} href={studioPath}><ImageIcon />{t("shell.create")}</Link>
-        <Link className={pathname === creationsPath ? "active" : ""} href={creationsPath}><GridIcon />{t("shell.creations")}</Link>
-        <Link className={pathname === pricingPath ? "active" : ""} href={pricingPath}><CoinsIcon />{t("shell.pricing")}</Link>
+        <span className="sidebar-nav-label">{t("shell.workspace")}</span>
+        <div className="sidebar-nav-group">
+          <Link className={pathname === homePath || pathname === studioPath ? "active" : ""} href={homePath}><ImageIcon />{t("shell.create")}</Link>
+          {showMyCreations && <Link className={pathname === creationsPath ? "active" : ""} href={creationsPath}><GridIcon />{t("shell.creations")}</Link>}
+          <Link className={pathname === pricingPath ? "active" : ""} href={pricingPath}><CoinsIcon />{t("shell.pricing")}</Link>
+        </div>
+
+        {SHOW_EXPLORE_NAV && <>
+          <span className="sidebar-nav-label">{t("shell.explore")}</span>
+          <div className="sidebar-nav-group">
+            <Link className={pathname === `${explorePath}/models` ? "active" : ""} href={`${explorePath}/models`}><ModelsIcon />{t("shell.exploreModels")}</Link>
+            <Link className={pathname === `${explorePath}/styles` ? "active" : ""} href={`${explorePath}/styles`}><PaletteIcon />{t("shell.exploreStyles")}</Link>
+            <Link className={pathname === `${explorePath}/templates` ? "active" : ""} href={`${explorePath}/templates`}><TemplateIcon />{t("shell.exploreTemplates")}</Link>
+          </div>
+        </>}
       </nav>
       <div className="sidebar-note">
         <span><SparklesIcon /></span>

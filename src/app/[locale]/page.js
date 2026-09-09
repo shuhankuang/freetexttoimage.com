@@ -1,4 +1,4 @@
-import AppShell from "@/components/app-shell";
+import ServerAppShell from "@/components/server-app-shell";
 import ImageStudio from "@/components/image-studio";
 import { DEFAULT_MODEL, listProviders } from "@/lib/models";
 
@@ -13,5 +13,5 @@ export async function generateMetadata({ params }) {
 }
 
 export default function HomePage() {
-  return <AppShell publicView><ImageStudio models={listProviders()} defaultModel={DEFAULT_MODEL} /></AppShell>;
+  return <ServerAppShell publicView><ImageStudio models={listProviders()} defaultModel={DEFAULT_MODEL} /></ServerAppShell>;
 }

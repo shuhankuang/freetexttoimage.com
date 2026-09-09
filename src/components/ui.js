@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   ArrowRight,
+  Boxes,
   Check,
   Coins,
   Compass,
@@ -10,8 +11,10 @@ import {
   Image as ImageGlyph,
   ImagePlus,
   LayoutGrid,
+  LayoutTemplate,
   Languages,
   LogOut,
+  Palette,
   Plus,
   Sparkle,
   Sparkles,
@@ -36,6 +39,9 @@ export const SparklesIcon = appIcon(Sparkles, 16);
 export const ArrowIcon = appIcon(ArrowRight, 17);
 export const CompassIcon = appIcon(Compass, 20);
 export const GridIcon = appIcon(LayoutGrid, 20);
+export const ModelsIcon = appIcon(Boxes, 20);
+export const PaletteIcon = appIcon(Palette, 20);
+export const TemplateIcon = appIcon(LayoutTemplate, 20);
 export const ImageIcon = appIcon(ImageGlyph, 20);
 export const UserIcon = appIcon(User, 20);
 export const LogoutIcon = appIcon(LogOut, 20);
