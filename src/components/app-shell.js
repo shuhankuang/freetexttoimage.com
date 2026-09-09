@@ -61,7 +61,7 @@ export default function AppShell({ children, publicView = false }) {
         <span className="header-trail">{t("shell.workspace")} <i>/</i> <strong>{pageTitle}</strong></span>
         <div className="header-actions">
           <LanguageSwitcher />
-          {user ? <Button isIconOnly variant="ghost" aria-label={t("shell.signOut")} onPress={() => setLogoutOpen(true)}><LogoutIcon /></Button> : <div className="header-auth"><Link className="header-signin" href={loginPath}>{t("shell.signIn")}</Link><Link className="header-cta" href={`${loginPath}?mode=signup`}>{t("shell.getStarted")}{t("shell.free") && <em>{t("shell.free")}</em>}</Link></div>}
+          {user ? <Button isIconOnly variant="ghost" aria-label={t("shell.signOut")} onPress={() => setLogoutOpen(true)}><LogoutIcon /></Button> : <div className="header-auth"><Link className="header-signin" href={loginPath}>{t("shell.signIn")}</Link><Link className="header-cta" href={loginPath}>{t("shell.getStarted")}{t("shell.free") && <em>{t("shell.free")}</em>}</Link></div>}
         </div>
       </header>
       {children}
