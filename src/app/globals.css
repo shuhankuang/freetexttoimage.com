@@ -27,7 +27,7 @@ button, input, textarea { font: inherit; }
 .link-button { min-height: 42px; padding: 0 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 .link-button.large { min-height: 52px; padding-inline: 23px; }
 .logo { display: inline-flex; align-items: center; gap: 9px; min-width: 0; height: 32px; font-size: 18px; letter-spacing: -.75px; }
-.logo > span { flex: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; padding-top: 1px; border-radius: 9px; background: var(--accent); color: white; font: 800 23px/1 "Avenir Next", "Trebuchet MS", Arial, sans-serif; letter-spacing: 0; text-align: center; }
+.logo > span { flex: none; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; padding-top: 2px; border-radius: 6px; background: var(--accent); color: white; font: 700 22px/1 "Arial Rounded MT Bold", "Helvetica Neue", Arial, sans-serif; letter-spacing: 0; text-align: center; text-indent: -1px; }
 .logo strong { min-width: 0; height: 32px; display: inline-flex; align-items: center; font-weight: 750; line-height: 1; white-space: nowrap; }.logo-connector { color: #7b8769; }.logo i { color: var(--accent); font-style: normal; }
 .eyebrow, .section-label { display: inline-flex; align-items: center; gap: 8px; color: #737a68; font-size: 12px; font-weight: 650; letter-spacing: 1.6px; }
 
