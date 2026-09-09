@@ -47,6 +47,7 @@ export default function ResultViewer({ item, isOpen, onOpenChange, actions }) {
                   ratio={item.ratio}
                   createdAt={item.createdAt}
                   image={item.image}
+                  downloadUrl={item.id ? `/api/images/${encodeURIComponent(item.id)}?download=1` : item.image}
                   actions={actions}
                 />
               </div>

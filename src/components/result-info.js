@@ -43,7 +43,7 @@ function formatDate(value, locale) {
   }).format(d);
 }
 
-export default function ResultInfo({ prompt, model, ratio, createdAt, image, actions }) {
+export default function ResultInfo({ prompt, model, ratio, createdAt, image, downloadUrl, actions }) {
   const [copied, setCopied] = useState(false);
   const { locale, t } = useI18n();
 
@@ -87,7 +87,7 @@ export default function ResultInfo({ prompt, model, ratio, createdAt, image, act
         {(image || actions) && (
           <div className="result-controls">
             {actions && <div className="result-actions">{actions}</div>}
-            {image && <a className="result-download" href={image} download><DownloadIcon />{t("result.download")}</a>}
+            {image && <a className="result-download" href={downloadUrl || image} download><DownloadIcon />{t("result.download")}</a>}
           </div>
         )}
       </div>

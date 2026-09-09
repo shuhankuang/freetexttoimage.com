@@ -16,6 +16,11 @@ function mimeForKey(key) {
   return MIME_BY_EXT[ext] || "application/octet-stream";
 }
 
+function downloadName(key) {
+  const fileName = key?.split("/").at(-1)?.replace(/[^a-z0-9._-]/gi, "-") || "image";
+  return `freetexttoimage-${fileName}`;
+}
+
 export async function GET(request, { params }) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -32,7 +37,9 @@ export async function GET(request, { params }) {
   if (!record.image_key) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   // ?size=thumb 命中缩略图 key；没有缩略图（旧数据/生成失败）时自动回退原图，不做历史回填。
-  const wantsThumb = new URL(request.url).searchParams.get("size") === "thumb";
+  const { searchParams } = new URL(request.url);
+  const wantsThumb = searchParams.get("size") === "thumb";
+  const wantsDownload = searchParams.get("download") === "1";
   const key = wantsThumb && record.thumbnail_key ? record.thumbnail_key : record.image_key;
 
   try {
@@ -43,6 +50,7 @@ export async function GET(request, { params }) {
         "Content-Length": String(buffer.length),
         // 私有桶 + 鉴权代理，返回的是同一登录用户可见的静态内容，可放心长缓存
         "Cache-Control": "private, max-age=86400",
+        ...(wantsDownload ? { "Content-Disposition": `attachment; filename="${downloadName(key)}"` } : {}),
       },
     });
   } catch (err) {
