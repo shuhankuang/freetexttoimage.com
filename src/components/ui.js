@@ -69,4 +69,4 @@ export function GoogleIcon({ size = 18 }) {
 }
 
 // 品牌字标不是图标库资产，保持为可访问的真实文本。
-export function Logo({ href = "/", label = `${BRAND_NAME} home` }) { return <Link href={href} className="logo" aria-label={label}><span>F</span><strong>FreeText<span className="logo-connector">to</span>Image<i>.</i></strong></Link>; }
+export function Logo({ href = "/", label = `${BRAND_NAME} home` }) { return <Link href={href} className="logo" aria-label={label}><span>f</span><strong>FreeText<span className="logo-connector">to</span>Image<i>.</i></strong></Link>; }

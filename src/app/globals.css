@@ -27,7 +27,7 @@ button, input, textarea { font: inherit; }
 .link-button { min-height: 42px; padding: 0 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 .link-button.large { min-height: 52px; padding-inline: 23px; }
 .logo { display: inline-flex; align-items: center; gap: 9px; min-width: 0; font-size: 18px; letter-spacing: -.75px; }
-.logo > span { flex: none; width: 32px; height: 36px; display: grid; place-items: center; border-radius: 10px; background: var(--accent); color: white; font: 700 22px/1 Georgia, serif; }
+.logo > span { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 9px; background: var(--accent); color: white; font: 800 23px/1 "Avenir Next", "Trebuchet MS", Arial, sans-serif; letter-spacing: -1px; }
 .logo strong { min-width: 0; font-weight: 750; white-space: nowrap; }.logo-connector { color: #7b8769; }.logo i { color: var(--accent); font-style: normal; }
 .eyebrow, .section-label { display: inline-flex; align-items: center; gap: 8px; color: #737a68; font-size: 12px; font-weight: 650; letter-spacing: 1.6px; }
 
@@ -45,7 +45,7 @@ button, input, textarea { font: inherit; }
 .example { margin: 0; height: 360px; overflow: hidden; border-radius: 18px; background: #e6e7df; }.example-2 { height: 440px; }.example img { width: 100%; height: 100%; object-fit: cover; }
 .three-steps { max-width: 1120px; margin: auto; padding: 74px 32px 96px; border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(3, 1fr); gap: 58px; }
 .three-steps span { color: #a2a698; font-size: 12px; }.three-steps h2 { margin: 15px 0 10px; font: 400 27px Georgia, serif; }.three-steps p { margin: 0; color: #787d72; line-height: 1.7; font-size: 15px; }
-.public-footer { max-width: 1220px; margin: auto; padding: 26px 32px 40px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; color: #8b8f84; font-size: 13px; }.public-footer .logo { font-size: 20px; }.public-footer .logo > span { width: 27px; height: 30px; font-size: 23px; }
+.public-footer { max-width: 1220px; margin: auto; padding: 26px 32px 40px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; color: #8b8f84; font-size: 13px; }.public-footer .logo { font-size: 20px; }.public-footer .logo > span { width: 30px; height: 30px; font-size: 21px; border-radius: 8px; }
 
 /* Authentication */
 .auth-page { position: relative; min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; }
