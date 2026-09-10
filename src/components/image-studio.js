@@ -10,6 +10,7 @@ import InspirationGallery from "@/components/inspiration-gallery";
 import ResultViewer from "@/components/result-viewer";
 import { useI18n } from "@/i18n/provider";
 import { ArrowIcon, CheckIcon, CoinsIcon, DiceIcon, ImagePlusIcon, NoCardIcon, SparkIcon, SparklesIcon } from "@/components/ui";
+import Hero from "@/components/blocks/hero";
 
 const suggestions = ["A glass house in a misty pine forest at dawn", "An editorial portrait lit by a soft red neon sign", "A quiet coastal village painted in loose watercolors"];
 const FALLBACK_RATIOS = ["1:1", "4:3", "3:4", "16:9", "9:16"];
@@ -105,7 +106,13 @@ export default function ImageStudio({ models = [], defaultModel = "z-image", how
   }
   function choosePrompt(value) { setPrompt(value); setError(""); document.getElementById("image-prompt")?.focus({ preventScroll: true }); window.scrollTo({ top: 0, behavior: "smooth" }); }
   return <main className="workspace-page image-studio">
-    <div className="creative-heading"><h1 className="section-label">{t("studio.section")}</h1><h2>{t("studio.title")} <em>{t("studio.titleAccent")}</em><SparkIcon className="title-flower" size={24} /></h2><p>{t("studio.subtitle")}</p></div>
+    <Hero
+      label={t("studio.section")}
+      title={t("studio.title")}
+      accent={t("studio.titleAccent")}
+      subtitle={t("studio.subtitle")}
+      icon={<SparkIcon className="title-flower" size={24} />}
+    />
     <Card className="generator-card"><Card.Content>
       <div className="composer-heading"><Label htmlFor="image-prompt" className="prompt-label"><SparkIcon />{t("studio.promptLabel")}</Label><Button variant="ghost" onPress={surprise}><DiceIcon />{t("studio.surprise")}</Button></div>
       <TextArea id="image-prompt" maxLength={maxPrompt} fullWidth rows={3} value={prompt} onChange={(event) => { setPrompt(event.target.value); setError(""); }} placeholder={t("studio.placeholder")} className="generator-textarea rounded-none" />

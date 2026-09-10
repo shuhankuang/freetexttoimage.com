@@ -9,6 +9,10 @@ import { useI18n } from "@/i18n/provider";
 import {
   ArrowIcon, CheckIcon, CopyIcon, ImageIcon, ImagePlusIcon, SparkIcon, TrashIcon,
 } from "@/components/ui";
+import Steps from "@/components/blocks/steps";
+import Hero from "@/components/blocks/hero";
+
+const GUIDE_STEP_KEYS = ["upload", "analyze", "create"];
 
 const MAX_SOURCE_BYTES = 10 * 1024 * 1024;
 const MAX_REQUEST_BYTES = 3.5 * 1024 * 1024;
@@ -123,11 +127,13 @@ export default function ImageToPrompt() {
   }
 
   return <main className="workspace-page image-prompt-page">
-    <header className="creative-heading image-prompt-hero">
-      <span className="section-label"><span className="tiny-dot" />{t("imageToPrompt.section")}</span>
-      <h1>{t("imageToPrompt.title")} <em>{t("imageToPrompt.titleAccent")}</em></h1>
-      <p>{t("imageToPrompt.subtitle")}</p>
-    </header>
+    <Hero
+      className="image-prompt-hero"
+      label={t("imageToPrompt.section")}
+      title={t("imageToPrompt.title")}
+      accent={t("imageToPrompt.titleAccent")}
+      subtitle={t("imageToPrompt.subtitle")}
+    />
 
     <div className="image-prompt-workspace">
       <Card className="image-prompt-card image-upload-card"><Card.Content>
@@ -196,12 +202,13 @@ export default function ImageToPrompt() {
 
     {error && <p className="image-prompt-error" role="alert">{error}</p>}
 
-    <div className="image-prompt-guide" aria-label={t("imageToPrompt.guideLabel")}>
-      {["upload", "analyze", "create"].map((key, index) => <div key={key}>
-        <span className="workflow-step-marker">0{index + 1}</span>
-        <p><strong>{t(`imageToPrompt.guide.${key}Title`)}</strong><small>{t(`imageToPrompt.guide.${key}Body`)}</small></p>
-      </div>)}
-    </div>
+    <Steps
+      label={t("imageToPrompt.guideLabel")}
+      steps={GUIDE_STEP_KEYS.map((key) => ({
+        title: t(`imageToPrompt.guide.${key}Title`),
+        body: t(`imageToPrompt.guide.${key}Body`),
+      }))}
+    />
     <p className="image-prompt-note">{t("imageToPrompt.note")} <Link href={path("/privacy")}>{t("imageToPrompt.privacy")}</Link></p>
   </main>;
 }
