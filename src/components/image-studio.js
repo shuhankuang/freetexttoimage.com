@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, Card, Label, Spinner, TextArea } from "@heroui/react";
 import ImageSettingsPopover from "@/components/image-settings-popover";
 import ModelPickerPopover from "@/components/model-picker-popover";
+import { MODEL_SELECT_EVENT } from "@/components/model-showcase-button";
 import InspirationGallery from "@/components/inspiration-gallery";
 import ResultViewer from "@/components/result-viewer";
 import { useI18n } from "@/i18n/provider";
@@ -73,14 +74,26 @@ export default function ImageStudio({ models = [], defaultModel = "z-image", how
   }, [maxPrompt, settingsRestored]);
 
   // 切模型时把超长 prompt 截到新上限、把不支持的比例复位为默认第一个。
-  function selectModel(next) {
+  const selectModel = useCallback((next) => {
     setModel(next);
     const spec = models.find((m) => m.id === next);
     const cap = spec?.promptMax || 2000;
     if (spec && prompt.length > cap) setPrompt(prompt.slice(0, cap));
     const ratios = spec?.aspectRatios;
     if (ratios && !ratios.includes(ratio)) setRatio(ratios[0]);
-  }
+  }, [models, prompt, ratio]);
+
+  useEffect(() => {
+    function selectShowcaseModel(event) {
+      const nextModel = event.detail?.model;
+      if (!models.some((item) => item.id === nextModel)) return;
+      selectModel(nextModel);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    window.addEventListener(MODEL_SELECT_EVENT, selectShowcaseModel);
+    return () => window.removeEventListener(MODEL_SELECT_EVENT, selectShowcaseModel);
+  }, [models, selectModel]);
 
   useEffect(() => () => { if (reference?.url?.startsWith("blob:")) URL.revokeObjectURL(reference.url); }, [reference]);
   function attach(event) { const file = event.target.files?.[0]; if (!file) return; if (file.size > 10 * 1024 * 1024) { setError(t("studio.errors.referenceSize")); return; } setReference({ name: file.name, url: URL.createObjectURL(file) }); setError(""); }

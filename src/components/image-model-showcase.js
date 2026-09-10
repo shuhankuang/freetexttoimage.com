@@ -1,7 +1,9 @@
 import "server-only";
 import Image from "next/image";
 import Hero from "@/components/blocks/hero";
+import ModelShowcaseButton from "@/components/model-showcase-button";
 import { getDictionary } from "@/i18n/dictionaries";
+import { listProviders } from "@/lib/models";
 
 const MODEL_FAMILIES = [
   { id: "openai", provider: "OpenAI", icon: "/icons/openai.png", preview: "/model-images/openai.webp", models: ["GPT Image 2.5"] },
@@ -14,6 +16,7 @@ const MODEL_FAMILIES = [
 
 export default async function ImageModelShowcase({ locale }) {
   const messages = await getDictionary(locale);
+  const modelIds = new Map(listProviders().map((model) => [model.label, model.id]));
 
   return <section className="model-showcase" aria-labelledby="model-showcase-title">
     <Hero headingId="model-showcase-title" className="section-heading model-showcase-heading" label={messages.modelShowcase.section} title={messages.modelShowcase.title} accent={messages.modelShowcase.titleAccent} subtitle={messages.modelShowcase.subtitle} />
@@ -27,7 +30,7 @@ export default async function ImageModelShowcase({ locale }) {
         </header>
         <p className="model-family-description">{messages.modelShowcase.descriptions[family.id]}</p>
         <div className="model-family-list">
-          {family.models.map((model) => <span key={model}>{model}</span>)}
+          {family.models.map((model) => <ModelShowcaseButton key={model} modelId={modelIds.get(model)}>{model}</ModelShowcaseButton>)}
         </div>
       </li>)}
     </ol>
