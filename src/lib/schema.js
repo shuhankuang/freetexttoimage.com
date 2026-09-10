@@ -1,7 +1,7 @@
 import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
 
-// Drizzle schema — 字段/类型逐一对照当前 sqlite.db 的实际列（用 PRAGMA table_info + 抽样行核实过，
-// 不是凭记忆写的模板）。better-auth 四张表由 getMigrations（Kysely）建出来，日期列实际存的是
+// Drizzle schema — 字段/类型已经按迁移前的实际表结构核对，并由 drizzle/ 迁移记录维护。
+// better-auth 四张表的日期列实际存的是
 // ISO 字符串（TEXT），不是 epoch 整数，所以这里用 text()，不是 integer(mode:'timestamp')。
 
 export const user = sqliteTable("user", {

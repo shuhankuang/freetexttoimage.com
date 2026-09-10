@@ -7,3 +7,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+## Localization workflow
+
+- 界面和文案修改先仅更新英文版本。
+- 只有在用户确认英文版并明确要求同步后，才更新日语或其他语言；不要自行同步。

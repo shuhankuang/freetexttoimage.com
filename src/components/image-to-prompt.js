@@ -2,10 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button, Card, Spinner, TextArea } from "@heroui/react";
+import { Button, Card, Spinner } from "@heroui/react";
 import { useI18n } from "@/i18n/provider";
-import { ArrowIcon, CopyIcon, ImagePlusIcon, SparkIcon, TrashIcon } from "@/components/ui";
+import {
+  ArrowIcon, CheckIcon, CopyIcon, ImageIcon, ImagePlusIcon, SparkIcon, TrashIcon,
+} from "@/components/ui";
 
 const MAX_SOURCE_BYTES = 10 * 1024 * 1024;
 const MAX_REQUEST_BYTES = 3.5 * 1024 * 1024;
@@ -13,6 +16,11 @@ const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 function canvasBlob(canvas, quality) {
   return new Promise((resolve) => canvas.toBlob(resolve, "image/webp", quality));
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 async function prepareImage(file) {
@@ -46,7 +54,7 @@ export default function ImageToPrompt() {
   useEffect(() => () => { if (image?.preview) URL.revokeObjectURL(image.preview); }, [image]);
 
   async function selectFile(file) {
-    if (!file) return;
+    if (!file || pending || preparing) return;
     setError("");
     setPrompt("");
     setCopied(false);
@@ -57,7 +65,7 @@ export default function ImageToPrompt() {
       const processed = await prepareImage(file);
       setImage((current) => {
         if (current?.preview) URL.revokeObjectURL(current.preview);
-        return { file: processed, name: file.name, preview: URL.createObjectURL(file) };
+        return { file: processed, name: file.name, size: file.size, preview: URL.createObjectURL(file) };
       });
     } catch {
       setError(t("imageToPrompt.errors.read"));
@@ -115,7 +123,7 @@ export default function ImageToPrompt() {
   }
 
   return <main className="workspace-page image-prompt-page">
-    <header className="image-prompt-hero">
+    <header className="creative-heading image-prompt-hero">
       <span className="section-label"><span className="tiny-dot" />{t("imageToPrompt.section")}</span>
       <h1>{t("imageToPrompt.title")} <em>{t("imageToPrompt.titleAccent")}</em></h1>
       <p>{t("imageToPrompt.subtitle")}</p>
@@ -123,12 +131,22 @@ export default function ImageToPrompt() {
 
     <div className="image-prompt-workspace">
       <Card className="image-prompt-card image-upload-card"><Card.Content>
-        <div className="image-prompt-card-heading"><span>01</span><div><strong>{t("imageToPrompt.uploadTitle")}</strong><p>{t("imageToPrompt.uploadBody")}</p></div></div>
-        <input ref={inputRef} hidden type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => selectFile(event.target.files?.[0])} />
-        {image ? <div className="image-prompt-preview">
-          <Image src={image.preview} alt={t("imageToPrompt.previewAlt")} fill sizes="(max-width: 760px) 90vw, 42vw" unoptimized />
-          <div className="image-prompt-preview-bar"><span title={image.name}>{image.name}</span><Button isIconOnly size="sm" variant="secondary" aria-label={t("imageToPrompt.remove")} onPress={removeImage}><TrashIcon /></Button></div>
-        </div> : <button
+        <div className="image-prompt-card-heading">
+          <span className="workflow-step-marker">01</span>
+          <div><strong>{t("imageToPrompt.uploadTitle")}</strong><p>{t("imageToPrompt.uploadBody")}</p></div>
+        </div>
+        <input ref={inputRef} hidden type="file" accept="image/jpeg,image/png,image/webp" disabled={pending || preparing} onChange={(event) => selectFile(event.target.files?.[0])} />
+        {image ? <>
+          <div className="image-prompt-preview">
+            <Image src={image.preview} alt={t("imageToPrompt.previewAlt")} fill sizes="(max-width: 800px) 90vw, 42vw" unoptimized />
+          </div>
+          <div className="image-prompt-file">
+            <span className="image-prompt-file-icon"><ImageIcon /></span>
+            <div><strong title={image.name}>{image.name}</strong><small>{formatBytes(image.size)} · {t("imageToPrompt.fileSupport")}</small></div>
+            <Button size="sm" variant="ghost" isDisabled={pending} onPress={() => inputRef.current?.click()}>{t("imageToPrompt.replace")}</Button>
+            <Button isIconOnly size="sm" variant="secondary" isDisabled={pending} aria-label={t("imageToPrompt.remove")} onPress={removeImage}><TrashIcon /></Button>
+          </div>
+        </> : <button
           type="button"
           className={`image-prompt-dropzone${dragging ? " dragging" : ""}`}
           onClick={() => inputRef.current?.click()}
@@ -137,27 +155,53 @@ export default function ImageToPrompt() {
           onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setDragging(false); }}
           onDrop={(event) => { event.preventDefault(); setDragging(false); selectFile(event.dataTransfer.files?.[0]); }}
         >
-          <span><ImagePlusIcon size={23} /></span>
+          <span className="image-prompt-empty-icon"><ImagePlusIcon size={23} /></span>
           <strong>{preparing ? t("imageToPrompt.preparing") : t("imageToPrompt.dropTitle")}</strong>
           <small>{t("imageToPrompt.dropBody")}</small>
         </button>}
-        {error && <p className="inline-error" role="alert">{error}</p>}
         <Button fullWidth size="lg" className="primary-button image-prompt-generate" isPending={pending || preparing} isDisabled={!image || preparing} onPress={generatePrompt}>
           {pending ? <><Spinner size="sm" color="current" />{t("imageToPrompt.analyzing")}</> : <><SparkIcon />{t("imageToPrompt.generate")}<ArrowIcon /></>}
         </Button>
       </Card.Content></Card>
 
       <Card className="image-prompt-card image-prompt-result-card"><Card.Content>
-        <div className="image-prompt-card-heading"><span>02</span><div><strong>{t("imageToPrompt.resultTitle")}</strong><p>{t("imageToPrompt.resultBody")}</p></div></div>
+        <div className="image-prompt-heading-row">
+          <div className="image-prompt-card-heading">
+            <span className="workflow-step-marker">02</span>
+            <div><strong>{t("imageToPrompt.resultTitle")}</strong><p>{t("imageToPrompt.resultBody")}</p></div>
+          </div>
+          {(prompt || pending) && <span className={`image-prompt-status${pending ? " pending" : ""}`}>
+            {pending ? <Spinner size="sm" /> : <CheckIcon size={16} />}
+            {pending ? t("imageToPrompt.analyzing") : t("imageToPrompt.analyzed")}
+          </span>}
+        </div>
+
         <div className={`image-prompt-output${prompt ? " has-prompt" : ""}`}>
-          {prompt ? <TextArea aria-label={t("imageToPrompt.resultTitle")} value={prompt} readOnly fullWidth rows={12} /> : <div className="image-prompt-empty"><SparkIcon size={22} /><p>{t("imageToPrompt.empty")}</p></div>}
+          {prompt ? <>
+            <p>{prompt}</p>
+            <Button isIconOnly size="sm" variant="secondary" aria-label={copied ? t("imageToPrompt.copied") : t("imageToPrompt.copy")} onPress={copyPrompt}>
+              {copied ? <CheckIcon size={17} /> : <CopyIcon size={17} />}
+            </Button>
+          </> : <div className="image-prompt-empty">
+            <span className="image-prompt-empty-icon">{pending ? <Spinner size="sm" /> : <SparkIcon size={22} />}</span>
+            <p>{pending ? t("imageToPrompt.analyzingBody") : t("imageToPrompt.empty")}</p>
+          </div>}
         </div>
-        <div className="image-prompt-actions">
-          <Button variant="secondary" isDisabled={!prompt} onPress={copyPrompt}><CopyIcon size={16} />{copied ? t("imageToPrompt.copied") : t("imageToPrompt.copy")}</Button>
-          <Button className="primary-button" isDisabled={!prompt} onPress={createWithPrompt}>{t("imageToPrompt.usePrompt")}<ArrowIcon /></Button>
-        </div>
+
+        {prompt && <div className="image-prompt-actions">
+          <Button className="primary-button" isDisabled={pending} onPress={createWithPrompt}>{t("imageToPrompt.usePrompt")}<ArrowIcon /></Button>
+        </div>}
       </Card.Content></Card>
     </div>
-    <p className="image-prompt-note">{t("imageToPrompt.note")}</p>
+
+    {error && <p className="image-prompt-error" role="alert">{error}</p>}
+
+    <div className="image-prompt-guide" aria-label={t("imageToPrompt.guideLabel")}>
+      {["upload", "analyze", "create"].map((key, index) => <div key={key}>
+        <span className="workflow-step-marker">0{index + 1}</span>
+        <p><strong>{t(`imageToPrompt.guide.${key}Title`)}</strong><small>{t(`imageToPrompt.guide.${key}Body`)}</small></p>
+      </div>)}
+    </div>
+    <p className="image-prompt-note">{t("imageToPrompt.note")} <Link href={path("/privacy")}>{t("imageToPrompt.privacy")}</Link></p>
   </main>;
 }
