@@ -23,7 +23,7 @@ export default async function ImageModelShowcase({ locale }) {
         <span className="model-family-preview"><Image src={family.preview} alt="" fill sizes="84px" /></span>
         <header className="model-family-heading">
           <Image src={family.icon} alt="" width={40} height={40} sizes="40px" />
-          <strong>{family.provider}</strong>
+          <strong style={{ fontSize: "0.85em" }}>{family.provider}</strong>
         </header>
         <p className="model-family-description">{messages.modelShowcase.descriptions[family.id]}</p>
         <div className="model-family-list">

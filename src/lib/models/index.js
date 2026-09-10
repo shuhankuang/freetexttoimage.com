@@ -46,11 +46,13 @@ export function getProvider(model) {
 
 // 返回可序列化的模型清单，供 /studio 渲染生成器控件。
 export function listProviders() {
-  return Object.values(providers).map(({ id, label, promptMax, aspectRatios, creditCost }) => ({
+  return Object.values(providers).map(({ id, label, icon, promptMax, aspectRatios, qualityLabel, creditCost }) => ({
     id,
     label,
+    icon,
     promptMax: promptMax || 2000,
     aspectRatios: aspectRatios?.length ? aspectRatios : FALLBACK_ASPECT_RATIOS,
+    qualityLabel: qualityLabel || "Standard",
     creditCost: creditCost || 1,
   }));
 }

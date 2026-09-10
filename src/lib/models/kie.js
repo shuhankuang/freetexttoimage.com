@@ -72,13 +72,15 @@ function extractResultUrls(resultJson) {
 }
 
 // 工厂：共享 createTask/getTask 管道；每模型声明自己的 input 与 UI 能力。
-function makeKieProvider({ id, label, fixedInput = {}, nsfw = false, promptMax, aspectRatios, creditCost = 1 }) {
+function makeKieProvider({ id, label, icon, fixedInput = {}, nsfw = false, promptMax, aspectRatios, qualityLabel = "Standard", creditCost = 1 }) {
   return {
     id,
     label,
+    icon,
     // —— 前端会用到的能力元数据（listProviders 透传给 /studio）——
     promptMax,
     aspectRatios,
+    qualityLabel,
     creditCost, // 生成成功扣多少积分，createJob（generation.js）用它去扣款
 
     async createTask({ prompt, aspectRatio, callBackUrl }) {
@@ -126,6 +128,7 @@ function makeKieProvider({ id, label, fixedInput = {}, nsfw = false, promptMax, 
 export const kieZImage = makeKieProvider({
   id: "z-image",
   label: "Z-Image",
+  icon: "/icons/qwen-color.png",
   // 官方参数：prompt ≤1000；aspect_ratio ∈ [1:1,4:3,3:4,16:9,9:16]；nsfw_checker 可选。
   // nsfw_checker：安全内容过滤。官方默认关。我们是公众产品，建议开；要开改 nsfw: true。
   nsfw: false,
@@ -137,6 +140,7 @@ export const kieZImage = makeKieProvider({
 export const kieWanImage = makeKieProvider({
   id: "wan/2-7-image",
   label: "Wan 2.7 Image",
+  icon: "/icons/qwen-color.png",
   fixedInput: {
     resolution: "2K",
     n: 1,
@@ -144,6 +148,7 @@ export const kieWanImage = makeKieProvider({
     seed: 0,
   },
   promptMax: 2000,
+  qualityLabel: "2K",
   aspectRatios: ["1:1", "4:3", "16:9", "9:16"],
   creditCost: 4,
 });
@@ -152,8 +157,10 @@ export const kieGptImage25 = makeKieProvider({
   // KIE 同时提供 Flare 与更高成本的 Sunburst。生成器中的 GPT Image 2.5 使用 2K Flare。
   id: "gpt-image-2-5-flare-text-to-image",
   label: "GPT Image 2.5",
+  icon: "/icons/openai.png",
   fixedInput: { resolution: "2K" },
   promptMax: 20000,
+  qualityLabel: "2K",
   aspectRatios: ["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16"],
   creditCost: 2,
 });
@@ -161,9 +168,11 @@ export const kieGptImage25 = makeKieProvider({
 export const kieGrokImagine = makeKieProvider({
   id: "grok-imagine/text-to-image",
   label: "Grok Imagine",
+  icon: "/icons/grok.png",
   // Pro 模式优先生成质量，速度会比默认 speed 模式慢。
   fixedInput: { enable_pro: true },
   promptMax: 5000,
+  qualityLabel: "Pro",
   aspectRatios: ["1:1", "3:2", "2:3", "16:9", "9:16"],
   creditCost: 2,
 });
@@ -171,8 +180,10 @@ export const kieGrokImagine = makeKieProvider({
 export const kieNanoBanana2 = makeKieProvider({
   id: "nano-banana-2",
   label: "Nano Banana 2",
+  icon: "/icons/google-color.png",
   fixedInput: { resolution: "2K", output_format: "png" },
   promptMax: 20000,
+  qualityLabel: "2K",
   aspectRatios: ["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16"],
   creditCost: 2,
 });
@@ -180,9 +191,11 @@ export const kieNanoBanana2 = makeKieProvider({
 export const kieFlux2Pro = makeKieProvider({
   id: "flux-2/pro-text-to-image",
   label: "FLUX.2 Pro",
+  icon: "/icons/bfl.png",
   // resolution 是该接口的必填字段；2K 是质量与生成成本之间的稳定档位。
   fixedInput: { resolution: "2K" },
   promptMax: 5000,
+  qualityLabel: "2K",
   aspectRatios: ["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16"],
   creditCost: 2,
 });
@@ -190,8 +203,10 @@ export const kieFlux2Pro = makeKieProvider({
 export const kieNanoBananaPro = makeKieProvider({
   id: "nano-banana-pro",
   label: "Nano Banana Pro",
+  icon: "/icons/google-color.png",
   fixedInput: { resolution: "2K", output_format: "png" },
   promptMax: 10000,
+  qualityLabel: "2K",
   aspectRatios: ["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16"],
   creditCost: 2,
 });
@@ -199,9 +214,11 @@ export const kieNanoBananaPro = makeKieProvider({
 export const kieSeedream45 = makeKieProvider({
   id: "seedream/4.5-text-to-image",
   label: "Seedream 4.5",
+  icon: "/icons/bytedance-color.png",
   // quality 是该接口的必填字段；basic 对应 2K 输出。
   fixedInput: { quality: "basic" },
   promptMax: 3000,
+  qualityLabel: "2K",
   aspectRatios: ["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16"],
   creditCost: 2,
 });

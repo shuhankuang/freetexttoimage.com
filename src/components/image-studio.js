@@ -5,7 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, Card, Label, Spinner, TextArea } from "@heroui/react";
-import SettingSelect from "@/components/setting-select";
+import ImageSettingsPopover from "@/components/image-settings-popover";
+import ModelPickerPopover from "@/components/model-picker-popover";
 import InspirationGallery from "@/components/inspiration-gallery";
 import ResultViewer from "@/components/result-viewer";
 import { useI18n } from "@/i18n/provider";
@@ -23,11 +24,11 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 export default function ImageStudio({ models = [], defaultModel = "z-image", howItWorks = null, modelShowcase = null }) {
   const router = useRouter(); const fileInput = useRef(null);
   const { messages, path, t } = useI18n();
-  const [prompt, setPrompt] = useState(""); const [model, setModel] = useState(defaultModel); const [ratio, setRatio] = useState("1:1");
+  const [prompt, setPrompt] = useState(""); const [model, setModel] = useState(defaultModel); const [ratio, setRatio] = useState("1:1"); const [imageCount, setImageCount] = useState(1);
   const [reference, setReference] = useState(null); const [pending, setPending] = useState(false); const [result, setResult] = useState(null); const [error, setError] = useState(""); const [creditsShort, setCreditsShort] = useState(false);
 
   // —— 当前模型的能力声明（来自 /studio/page.js 注入的注册表；加模型自动生效）——
-  const modelOptions = models.map(({ id, label }) => ({ value: id, label }));
+  const modelOptions = models.map(({ id, label, icon }) => ({ value: id, label, icon }));
   const activeSpec = models.find((spec) => spec.id === model) || {};
   const ratioOptions = (activeSpec.aspectRatios?.length ? activeSpec.aspectRatios : FALLBACK_RATIOS).map((value) => ({ value, label: value }));
   const maxPrompt = activeSpec.promptMax || 2000;
@@ -121,7 +122,7 @@ export default function ImageStudio({ models = [], defaultModel = "z-image", how
       {reference && <div className="reference-preview"><Image src={reference.url} alt={t("studio.referencePreview")} width={64} height={64} unoptimized /><div><strong>{reference.name}</strong><span>{t("studio.referenceImage")}</span></div><Button size="sm" variant="ghost" onPress={() => setReference(null)}>{t("studio.remove")}</Button></div>}
       {error && <p className="inline-error" role="alert">{error}{creditsShort && <Link href={path("/pricing")}> {t("studio.viewPricing")}</Link>}</p>}
     </Card.Content><Card.Footer className="generator-footer">
-      <div className="generator-settings"><SettingSelect className="style-select" label={t("studio.model")} value={model} onChange={selectModel} options={modelOptions} /><SettingSelect className="ratio-select" label={t("studio.aspectRatio")} value={ratio} onChange={setRatio} options={ratioOptions} /><span className="image-count"><SparkIcon size={15} />{t("studio.imageCount")}</span></div>
+      <div className="generator-settings"><ModelPickerPopover label={t("studio.model")} value={model} onChange={selectModel} options={modelOptions} /><ImageSettingsPopover ratios={ratioOptions.map((option) => option.value)} ratio={ratio} onRatioChange={setRatio} quality={activeSpec.qualityLabel || "Standard"} count={imageCount} onCountChange={setImageCount} /></div>
       <div className="generator-submit">
         <span className="submit-cost"><CoinsIcon size={18} />{activeSpec.creditCost || 1}</span>
         <Button size="lg" className="primary-button" isPending={pending} onPress={generate}>{pending ? <><Spinner color="current" size="sm" /> {t("studio.creating")}</> : <><SparkIcon /> {t("studio.generate")} <ArrowIcon /></>}</Button>
