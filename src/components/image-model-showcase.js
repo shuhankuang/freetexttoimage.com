@@ -12,9 +12,6 @@ const MODEL_FAMILIES = [
 ];
 
 export default async function ImageModelShowcase({ locale }) {
-  // 按项目约定，英文版确认后再补充日语文案并开放显示。
-  if (locale !== "en") return null;
-
   const messages = await getDictionary(locale);
 
   return <section className="model-showcase" aria-labelledby="model-showcase-title">

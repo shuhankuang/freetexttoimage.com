@@ -15,10 +15,7 @@ const inspiration = [
 ];
 
 export default function InspirationGallery({ onChoose }) {
-  const { locale, t } = useI18n();
-
-  // 新版图库文案确认后再同步日语；旧图库不再作为回退。
-  if (locale !== "en") return null;
+  const { t } = useI18n();
 
   return <section className="inspiration-section" aria-labelledby="inspiration-title">
     <header className="inspiration-heading inspiration-heading--hero"><span className="section-label">{t("inspiration.section")}</span><h2 id="inspiration-title">{t("inspiration.title")}</h2></header>

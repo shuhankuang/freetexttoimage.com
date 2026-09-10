@@ -8,11 +8,6 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-## Localization workflow
-
-- 界面和文案修改先仅更新英文版本。
-- 只有在用户确认英文版并明确要求同步后，才更新日语或其他语言；不要自行同步。
-
 ## Component boundaries
 
 - 默认使用 Server Components。仅当组件需要客户端状态、事件处理、Effect、自定义客户端 Hook 或浏览器 API 时，才添加 `"use client"`。
