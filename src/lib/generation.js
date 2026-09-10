@@ -222,6 +222,19 @@ export async function createJob(user, { prompt, style, ratio, model = DEFAULT_MO
     );
   }
   const provider = getProvider(model);
+  const normalizedPrompt = typeof prompt === "string" ? prompt.trim() : "";
+  const promptMax = provider.promptMax || 2000;
+  if (!normalizedPrompt || normalizedPrompt.length > promptMax) {
+    const error = new Error(`Prompt must be between 1 and ${promptMax} characters for ${provider.label}.`);
+    error.code = "INVALID_INPUT";
+    throw error;
+  }
+  const normalizedRatio = ratio || provider.aspectRatios?.[0] || "1:1";
+  if (provider.aspectRatios?.length && !provider.aspectRatios.includes(normalizedRatio)) {
+    const error = new Error(`${provider.label} does not support the ${normalizedRatio} aspect ratio.`);
+    error.code = "INVALID_INPUT";
+    throw error;
+  }
   const cost = provider.creditCost || 1;
 
   // 年付订阅在年内没有月度 invoice；真正扣款前按订阅锚点刷新本月额度。
@@ -245,18 +258,18 @@ export async function createJob(user, { prompt, style, ratio, model = DEFAULT_MO
   // 建 creation/job 行时数据库瞬时失败）都退款，不能让积分在没有对应任务的情况下凭空消失。
   try {
     const externalTaskId = await provider.createTask({
-      prompt,
-      aspectRatio: ratio || "1:1",
+      prompt: normalizedPrompt,
+      aspectRatio: normalizedRatio,
       callBackUrl: callbackUrl(),
     });
 
     await db.insert(creations).values({
       id: creationId,
       userId: user.id,
-      title: prompt.trim().split(/\s+/).slice(0, 5).join(" "),
-      prompt: prompt.trim(),
+      title: normalizedPrompt.split(/\s+/).slice(0, 5).join(" "),
+      prompt: normalizedPrompt,
       style: style || null,
-      ratio: ratio || null,
+      ratio: normalizedRatio,
       image: null,
       imageKey: null,
       status: "processing",

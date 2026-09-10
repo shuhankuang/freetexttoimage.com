@@ -47,6 +47,13 @@ async function request(path, init = {}) {
     err.transient = res.status >= 500; // 5xx 瞬时，4xx 多半是参数/鉴权问题，别反复重试
     throw err;
   }
+  // KIE 的业务错误有时仍以 HTTP 200 返回，真正状态放在 body.code。
+  // 若只检查 res.ok，参数错误会被误报成“没有 taskId”，也会丢掉上游的具体错误信息。
+  if (body?.code != null && Number(body.code) !== 200) {
+    const err = new Error(`KIE request failed (${body.code}): ${body?.msg || body?.message || "Unknown error"}`);
+    err.transient = [408, 429, 455, 500].includes(Number(body.code));
+    throw err;
+  }
   return body;
 }
 
@@ -139,4 +146,62 @@ export const kieWanImage = makeKieProvider({
   promptMax: 2000,
   aspectRatios: ["1:1", "4:3", "16:9", "9:16"],
   creditCost: 4,
+});
+
+export const kieGptImage25 = makeKieProvider({
+  // KIE 同时提供 Flare 与更高成本的 Sunburst。生成器中的 GPT Image 2.5 使用 2K Flare。
+  id: "gpt-image-2-5-flare-text-to-image",
+  label: "GPT Image 2.5",
+  fixedInput: { resolution: "2K" },
+  promptMax: 20000,
+  aspectRatios: ["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16"],
+  creditCost: 2,
+});
+
+export const kieGrokImagine = makeKieProvider({
+  id: "grok-imagine/text-to-image",
+  label: "Grok Imagine",
+  // Pro 模式优先生成质量，速度会比默认 speed 模式慢。
+  fixedInput: { enable_pro: true },
+  promptMax: 5000,
+  aspectRatios: ["1:1", "3:2", "2:3", "16:9", "9:16"],
+  creditCost: 2,
+});
+
+export const kieNanoBanana2 = makeKieProvider({
+  id: "nano-banana-2",
+  label: "Nano Banana 2",
+  fixedInput: { resolution: "2K", output_format: "png" },
+  promptMax: 20000,
+  aspectRatios: ["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16"],
+  creditCost: 2,
+});
+
+export const kieFlux2Pro = makeKieProvider({
+  id: "flux-2/pro-text-to-image",
+  label: "FLUX.2 Pro",
+  // resolution 是该接口的必填字段；2K 是质量与生成成本之间的稳定档位。
+  fixedInput: { resolution: "2K" },
+  promptMax: 5000,
+  aspectRatios: ["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16"],
+  creditCost: 2,
+});
+
+export const kieNanoBananaPro = makeKieProvider({
+  id: "nano-banana-pro",
+  label: "Nano Banana Pro",
+  fixedInput: { resolution: "2K", output_format: "png" },
+  promptMax: 10000,
+  aspectRatios: ["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16"],
+  creditCost: 2,
+});
+
+export const kieSeedream45 = makeKieProvider({
+  id: "seedream/4.5-text-to-image",
+  label: "Seedream 4.5",
+  // quality 是该接口的必填字段；basic 对应 2K 输出。
+  fixedInput: { quality: "basic" },
+  promptMax: 3000,
+  aspectRatios: ["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16"],
+  creditCost: 2,
 });

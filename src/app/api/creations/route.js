@@ -39,7 +39,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const prompt = typeof body?.prompt === "string" ? body.prompt.trim().slice(0, 2000) : "";
+  const prompt = typeof body?.prompt === "string" ? body.prompt.trim() : "";
   if (!prompt) return NextResponse.json({ error: "prompt is required" }, { status: 400 });
 
   try {
@@ -52,13 +52,16 @@ export async function POST(request) {
     return NextResponse.json(creation, { status: 201 });
   } catch (err) {
     // 积分不足 → 402；缺配置（KIE_API_KEY / S3_*）→ 503；模型服务侧失败 → 502
+    if (err?.code === "INVALID_INPUT" || err?.code === "INVALID_MODEL") {
+      return NextResponse.json({ error: err.message, code: err.code }, { status: 400 });
+    }
     if (err?.code === "INSUFFICIENT_CREDITS") {
       return NextResponse.json(
         { error: err.message, code: "INSUFFICIENT_CREDITS", cost: err.cost, balance: err.balance },
         { status: 402 }
       );
     }
-    const status = err?.code === "CONFIG" ? 503 : 502;
+    const status = err?.code === "CONFIG" || err?.code === "KIE_CONFIG" ? 503 : 502;
     return NextResponse.json(
       { error: err?.message || "Generation service is unavailable. Please try again." },
       { status }

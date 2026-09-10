@@ -4,10 +4,10 @@ import Hero from "@/components/blocks/hero";
 import { getDictionary } from "@/i18n/dictionaries";
 
 const MODEL_FAMILIES = [
-  { id: "openai", provider: "OpenAI", icon: "/icons/openai.png", preview: "/model-images/openai.webp", models: ["GPT Image 2", "GPT Image 1.5"] },
+  { id: "openai", provider: "OpenAI", icon: "/icons/openai.png", preview: "/model-images/openai.webp", models: ["GPT Image 2.5"] },
   { id: "google", provider: "Google", icon: "/icons/google-color.png", preview: "/model-images/google.webp", models: ["Nano Banana 2", "Nano Banana Pro"] },
   { id: "bfl", provider: "Black Forest Labs", icon: "/icons/bfl.png", preview: "/model-images/bfl.webp", models: ["FLUX.2 Pro"] },
-  { id: "bytedance", provider: "ByteDance", icon: "/icons/bytedance-color.png", preview: "/model-images/bytedance.webp", models: ["Seedream 5.0 Lite", "Seedream 4.5"] },
+  { id: "bytedance", provider: "ByteDance", icon: "/icons/bytedance-color.png", preview: "/model-images/bytedance.webp", models: ["Seedream 4.5"] },
   { id: "qwen", provider: "Qwen", icon: "/icons/qwen-color.png", preview: "/model-images/qwen.webp", models: ["Z-Image", "Wan 2.7 Image"] },
   { id: "grok", provider: "Grok", icon: "/icons/grok.png", preview: "/model-images/grok.webp", models: ["Grok Imagine"] },
 ];
