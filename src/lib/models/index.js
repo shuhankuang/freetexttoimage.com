@@ -18,14 +18,14 @@ import {
 } from "./kie.js";
 
 const providers = {
+  "gpt-image-2-5-flare-text-to-image": kieGptImage25,
+  "nano-banana-2": kieNanoBanana2,
+  "nano-banana-pro": kieNanoBananaPro,
+  "flux-2/pro-text-to-image": kieFlux2Pro,
+  "seedream/4.5-text-to-image": kieSeedream45,
   "z-image": kieZImage,
   "wan/2-7-image": kieWanImage,
-  "gpt-image-2-5-flare-text-to-image": kieGptImage25,
   "grok-imagine/text-to-image": kieGrokImagine,
-  "nano-banana-2": kieNanoBanana2,
-  "flux-2/pro-text-to-image": kieFlux2Pro,
-  "nano-banana-pro": kieNanoBananaPro,
-  "seedream/4.5-text-to-image": kieSeedream45,
 };
 
 // 默认模型：Z-Image（更快更省）。想换默认就改这里。

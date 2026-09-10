@@ -18,6 +18,7 @@ const FALLBACK_RATIOS = ["1:1", "4:3", "3:4", "16:9", "9:16"];
 
 const POLL_INTERVAL_MS = 2000;
 const POLL_MAX_ATTEMPTS = 150; // ~5 分钟，与服务端观察窗口一致
+const SETTINGS_STORAGE_KEY = "freetexttoimage:image-settings:v1";
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -25,6 +26,7 @@ export default function ImageStudio({ models = [], defaultModel = "z-image", how
   const router = useRouter(); const fileInput = useRef(null);
   const { messages, path, t } = useI18n();
   const [prompt, setPrompt] = useState(""); const [model, setModel] = useState(defaultModel); const [ratio, setRatio] = useState("1:1"); const [imageCount, setImageCount] = useState(1);
+  const [settingsRestored, setSettingsRestored] = useState(false);
   const [reference, setReference] = useState(null); const [pending, setPending] = useState(false); const [result, setResult] = useState(null); const [error, setError] = useState(""); const [creditsShort, setCreditsShort] = useState(false);
 
   // —— 当前模型的能力声明（来自 /studio/page.js 注入的注册表；加模型自动生效）——
@@ -33,7 +35,34 @@ export default function ImageStudio({ models = [], defaultModel = "z-image", how
   const ratioOptions = (activeSpec.aspectRatios?.length ? activeSpec.aspectRatios : FALLBACK_RATIOS).map((value) => ({ value, label: value }));
   const maxPrompt = activeSpec.promptMax || 2000;
 
+  // 浏览器本地只保存真实可用的模型与比例。恢复时重新对照服务端能力清单，
+  // 避免模型下线或比例调整后继续提交已经失效的旧值。
   useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        const saved = JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) || "null");
+        const savedSpec = models.find((spec) => spec.id === saved?.model);
+        if (savedSpec) {
+          const savedRatios = savedSpec.aspectRatios?.length ? savedSpec.aspectRatios : FALLBACK_RATIOS;
+          setModel(savedSpec.id);
+          setRatio(savedRatios.includes(saved?.ratio) ? saved.ratio : savedRatios[0]);
+        }
+      } catch {
+        localStorage.removeItem(SETTINGS_STORAGE_KEY);
+      } finally {
+        setSettingsRestored(true);
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [models]);
+
+  useEffect(() => {
+    if (!settingsRestored) return;
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify({ model, ratio }));
+  }, [model, ratio, settingsRestored]);
+
+  useEffect(() => {
+    if (!settingsRestored) return;
     const draft = sessionStorage.getItem("freetexttoimage:draft-prompt");
     if (!draft) return;
     const timer = window.setTimeout(() => {
@@ -41,7 +70,7 @@ export default function ImageStudio({ models = [], defaultModel = "z-image", how
       sessionStorage.removeItem("freetexttoimage:draft-prompt");
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [maxPrompt]);
+  }, [maxPrompt, settingsRestored]);
 
   // 切模型时把超长 prompt 截到新上限、把不支持的比例复位为默认第一个。
   function selectModel(next) {
