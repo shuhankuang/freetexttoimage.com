@@ -31,6 +31,16 @@ export default function ImageStudio({ models = [], defaultModel = "z-image" }) {
   const ratioOptions = (activeSpec.aspectRatios?.length ? activeSpec.aspectRatios : FALLBACK_RATIOS).map((value) => ({ value, label: value }));
   const maxPrompt = activeSpec.promptMax || 2000;
 
+  useEffect(() => {
+    const draft = sessionStorage.getItem("freetexttoimage:draft-prompt");
+    if (!draft) return;
+    const timer = window.setTimeout(() => {
+      setPrompt(draft.slice(0, maxPrompt));
+      sessionStorage.removeItem("freetexttoimage:draft-prompt");
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [maxPrompt]);
+
   // 切模型时把超长 prompt 截到新上限、把不支持的比例复位为默认第一个。
   function selectModel(next) {
     setModel(next);

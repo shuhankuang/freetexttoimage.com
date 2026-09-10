@@ -7,7 +7,7 @@ import { Button, Dropdown, Modal, Spinner } from "@heroui/react";
 import { authClient } from "@/lib/auth-client";
 import LanguageSwitcher from "@/components/language-switcher";
 import { useI18n } from "@/i18n/provider";
-import { CoinsIcon, GridIcon, ImageIcon, Logo, LogoutIcon, ModelsIcon, PaletteIcon, SparklesIcon, TemplateIcon, UserIcon } from "@/components/ui";
+import { CoinsIcon, GridIcon, ImageIcon, ImagePromptIcon, Logo, LogoutIcon, ModelsIcon, PaletteIcon, SparklesIcon, TemplateIcon, UserIcon } from "@/components/ui";
 
 const SHOW_EXPLORE_NAV = false;
 
@@ -24,6 +24,7 @@ export default function AppShell({ children, publicView = false, showMyCreations
   const homePath = path("/");
   const studioPath = path("/studio");
   const creationsPath = path("/creations");
+  const imageToPromptPath = path("/image-to-prompt");
   const pricingPath = path("/pricing");
   const profilePath = path("/profile");
   const explorePath = path("/explore");
@@ -60,6 +61,8 @@ export default function AppShell({ children, publicView = false, showMyCreations
 
   const pageTitle = pathname === creationsPath
     ? t("shell.creations")
+    : pathname === imageToPromptPath
+      ? t("shell.imageToPrompt")
     : pathname === pricingPath
       ? t("shell.pricing")
       : pathname === profilePath
@@ -75,6 +78,7 @@ export default function AppShell({ children, publicView = false, showMyCreations
         <span className="sidebar-nav-label">{t("shell.workspace")}</span>
         <div className="sidebar-nav-group">
           <Link className={pathname === homePath || pathname === studioPath ? "active" : ""} href={homePath}><ImageIcon />{t("shell.create")}</Link>
+          <Link className={pathname === imageToPromptPath ? "active" : ""} href={imageToPromptPath}><ImagePromptIcon />{t("shell.imageToPrompt")}</Link>
           {showMyCreations && <Link className={pathname === creationsPath ? "active" : ""} href={creationsPath}><GridIcon />{t("shell.creations")}</Link>}
           <Link className={pathname === pricingPath ? "active" : ""} href={pricingPath}><CoinsIcon />{t("shell.pricing")}</Link>
         </div>

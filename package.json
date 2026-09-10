@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "db:generate": "drizzle-kit generate",
-    "db:setup": "node scripts/setup-db.mjs"
+    "db:setup": "node scripts/setup-db.mjs",
+    "stripe:setup:production": "node scripts/setup-stripe-production.mjs"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "1.7.3",

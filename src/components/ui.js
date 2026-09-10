@@ -16,6 +16,7 @@ import {
   LogOut,
   Palette,
   Plus,
+  ScanSearch,
   Sparkle,
   Sparkles,
   Trash2,
@@ -49,6 +50,7 @@ export const TrashIcon = appIcon(Trash2, 17);
 export const PlusIcon = appIcon(Plus, 18);
 export const DiceIcon = appIcon(Dices, 15);
 export const ImagePlusIcon = appIcon(ImagePlus, 16);
+export const ImagePromptIcon = appIcon(ScanSearch, 20);
 export const CopyIcon = appIcon(Copy, 14);
 export const DownloadIcon = appIcon(Download, 17);
 export const LanguageIcon = appIcon(Languages, 17);
