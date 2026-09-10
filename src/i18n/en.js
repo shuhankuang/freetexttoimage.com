@@ -1,7 +1,7 @@
 const en = {
   meta: {
     title: "FreeTexttoImage — Free AI Image Generator",
-    description: "Create AI images from text for free and keep every prompt in one focused workspace.",
+    description: "Create high-quality AI images from text in seconds. Choose an AI model, style, and aspect ratio, then generate images for free with FreeTexttoImage.",
     loginTitle: "Sign in or create an account",
   },
   language: { label: "Language", english: "English", japanese: "日本語" },
@@ -93,7 +93,7 @@ const en = {
     section: "FREE AI TEXT TO IMAGE GENERATOR",
     title: "Turn Text Into Images.",
     titleAccent: "Bring Your Ideas to Life.",
-    subtitle: "Create high-quality AI images from any text prompt in seconds.",
+    subtitle: "Create high-quality AI images from text in seconds — free to start.",
     promptLabel: "Describe the image you want to create",
     surprise: "Surprise me",
     placeholder: "A sun-drenched villa on the edge of a quiet sea, soft linen curtains dancing in the breeze...",

@@ -105,7 +105,7 @@ export default function ImageStudio({ models = [], defaultModel = "z-image" }) {
   }
   function choosePrompt(value) { setPrompt(value); setError(""); document.getElementById("image-prompt")?.focus({ preventScroll: true }); window.scrollTo({ top: 0, behavior: "smooth" }); }
   return <main className="workspace-page image-studio">
-    <div className="creative-heading"><span className="section-label"><span className="tiny-dot" />{t("studio.section")}</span><h1>{t("studio.title")} <em>{t("studio.titleAccent")}</em><SparkIcon className="title-flower" size={24} /></h1><p>{t("studio.subtitle")}</p></div>
+    <div className="creative-heading"><h1 className="section-label">{t("studio.section")}</h1><h2>{t("studio.title")} <em>{t("studio.titleAccent")}</em><SparkIcon className="title-flower" size={24} /></h2><p>{t("studio.subtitle")}</p></div>
     <Card className="generator-card"><Card.Content>
       <div className="composer-heading"><Label htmlFor="image-prompt" className="prompt-label"><SparkIcon />{t("studio.promptLabel")}</Label><Button variant="ghost" onPress={surprise}><DiceIcon />{t("studio.surprise")}</Button></div>
       <TextArea id="image-prompt" maxLength={maxPrompt} fullWidth rows={3} value={prompt} onChange={(event) => { setPrompt(event.target.value); setError(""); }} placeholder={t("studio.placeholder")} className="generator-textarea rounded-none" />
