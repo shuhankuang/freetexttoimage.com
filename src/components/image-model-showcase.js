@@ -1,31 +1,31 @@
 import "server-only";
 import Image from "next/image";
+import Hero from "@/components/blocks/hero";
 import { getDictionary } from "@/i18n/dictionaries";
 
 const MODEL_FAMILIES = [
-  { provider: "Qwen", icon: "/icons/qwen-color.png", models: ["Z-Image", "Wan 2.7 Image"] },
-  { provider: "Black Forest Labs", icon: "/icons/bfl.png", models: ["FLUX.2 Pro"] },
-  { provider: "Google", icon: "/icons/google-color.png", models: ["Nano Banana 2", "Nano Banana Pro"] },
-  { provider: "ByteDance", icon: "/icons/bytedance-color.png", models: ["Seedream 5.0 Lite", "Seedream 4.5"] },
-  { provider: "OpenAI", icon: "/icons/openai.png", models: ["GPT Image 2", "GPT Image 1.5"] },
-  { provider: "Grok", icon: "/icons/grok.png", models: ["Grok Imagine"] },
+  { id: "openai", provider: "OpenAI", icon: "/icons/openai.png", preview: "/model-images/openai.webp", models: ["GPT Image 2", "GPT Image 1.5"] },
+  { id: "google", provider: "Google", icon: "/icons/google-color.png", preview: "/model-images/google.webp", models: ["Nano Banana 2", "Nano Banana Pro"] },
+  { id: "bfl", provider: "Black Forest Labs", icon: "/icons/bfl.png", preview: "/model-images/bfl.webp", models: ["FLUX.2 Pro"] },
+  { id: "bytedance", provider: "ByteDance", icon: "/icons/bytedance-color.png", preview: "/model-images/bytedance.webp", models: ["Seedream 5.0 Lite", "Seedream 4.5"] },
+  { id: "qwen", provider: "Qwen", icon: "/icons/qwen-color.png", preview: "/model-images/qwen.webp", models: ["Z-Image", "Wan 2.7 Image"] },
+  { id: "grok", provider: "Grok", icon: "/icons/grok.png", preview: "/model-images/grok.webp", models: ["Grok Imagine"] },
 ];
 
 export default async function ImageModelShowcase({ locale }) {
   const messages = await getDictionary(locale);
 
   return <section className="model-showcase" aria-labelledby="model-showcase-title">
-    <header className="model-showcase-heading">
-      <span className="section-label">{messages.modelShowcase.section}</span>
-      <h2 id="model-showcase-title">{messages.modelShowcase.title}</h2>
-    </header>
+    <Hero headingId="model-showcase-title" className="section-heading model-showcase-heading" label={messages.modelShowcase.section} title={messages.modelShowcase.title} accent={messages.modelShowcase.titleAccent} subtitle={messages.modelShowcase.subtitle} />
     <ol className="model-showcase-grid">
       {MODEL_FAMILIES.map((family, index) => <li className="model-family" key={family.provider}>
         <span className="model-family-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+        <span className="model-family-preview"><Image src={family.preview} alt="" fill sizes="84px" /></span>
         <header className="model-family-heading">
           <Image src={family.icon} alt="" width={40} height={40} sizes="40px" />
           <strong>{family.provider}</strong>
         </header>
+        <p className="model-family-description">{messages.modelShowcase.descriptions[family.id]}</p>
         <div className="model-family-list">
           {family.models.map((model) => <span key={model}>{model}</span>)}
         </div>

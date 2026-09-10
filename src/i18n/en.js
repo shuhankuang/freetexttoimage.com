@@ -131,7 +131,9 @@ const en = {
   },
   inspiration: {
     section: "TEXT-TO-IMAGE EXAMPLES",
-    title: "See Real Text Prompts Turn Into AI-Generated Images",
+    title: "See Real Text Prompts",
+    titleAccent: "Turn Into AI-Generated Images",
+    subtitle: "Choose an example, reuse its prompt, and make the idea your own.",
     usePrompt: "Use this prompt",
     usePromptLabel: "Use prompt: {title}",
     footer: "A little imagination goes a long way.",
@@ -148,7 +150,17 @@ const en = {
   },
   modelShowcase: {
     section: "AI IMAGE MODELS",
-    title: "Create with Leading AI Image Models",
+    title: "Create with Leading",
+    titleAccent: "AI Image Models",
+    subtitle: "Different creative strengths. A more expansive canvas.",
+    descriptions: {
+      qwen: "Flexible generation and editing for everyday creative work.",
+      bfl: "Precise, high-fidelity visuals for polished production.",
+      google: "Versatile creation with strong prompt understanding.",
+      bytedance: "Commercial-ready images with consistent subjects.",
+      openai: "Detailed generation with reliable text rendering.",
+      grok: "Fast, expressive visuals for timely creative ideas.",
+    },
   },
   creations: {
     loading: "Loading your creations…",

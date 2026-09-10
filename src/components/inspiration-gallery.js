@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { ArrowIcon } from "@/components/ui";
+import Hero from "@/components/blocks/hero";
 import { useI18n } from "@/i18n/provider";
 
 const inspiration = [
@@ -18,7 +19,7 @@ export default function InspirationGallery({ onChoose }) {
   const { t } = useI18n();
 
   return <section className="inspiration-section" aria-labelledby="inspiration-title">
-    <header className="inspiration-heading inspiration-heading--hero"><span className="section-label">{t("inspiration.section")}</span><h2 id="inspiration-title">{t("inspiration.title")}</h2></header>
+    <Hero headingId="inspiration-title" className="section-heading inspiration-heading--hero" label={t("inspiration.section")} title={t("inspiration.title")} accent={t("inspiration.titleAccent")} subtitle={t("inspiration.subtitle")} />
     <div className="inspiration-masonry">{inspiration.map((item, index) => {
       const title = t(`inspiration.items.${item.id}`);
       return <button key={item.id} className="inspiration-tile ratio-tile" style={{ "--tile-ratio": item.ratio }} onClick={() => onChoose(item.prompt)} aria-label={t("inspiration.usePromptLabel", { title })}><Image src={item.src} alt={item.alt} fill sizes="(max-width: 620px) 45vw, (max-width: 1100px) 28vw, 30vw" priority={index < 4} /><span className="tile-arrow"><ArrowIcon /></span><span className="tile-caption"><span>{t(`inspiration.categories.${item.category}`)}</span><strong>{title}</strong><span className="tile-action">{t("inspiration.usePrompt")} <ArrowIcon /></span></span></button>;

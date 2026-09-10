@@ -107,6 +107,7 @@ export default function ImageStudio({ models = [], defaultModel = "z-image", how
   function choosePrompt(value) { setPrompt(value); setError(""); document.getElementById("image-prompt")?.focus({ preventScroll: true }); window.scrollTo({ top: 0, behavior: "smooth" }); }
   return <main className="workspace-page image-studio">
     <Hero
+      headingLevel="h1"
       label={t("studio.section")}
       title={t("studio.title")}
       accent={t("studio.titleAccent")}

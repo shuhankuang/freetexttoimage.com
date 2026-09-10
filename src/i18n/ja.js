@@ -131,7 +131,9 @@ const ja = {
   },
   inspiration: {
     section: "テキストから画像の作例",
-    title: "実際のプロンプトから生まれたAI画像を見る",
+    title: "実際のプロンプトから生まれた",
+    titleAccent: "AI画像を見る",
+    subtitle: "気になる作例を選び、プロンプトを使って自分らしくアレンジできます。",
     usePrompt: "このプロンプトを使う",
     usePromptLabel: "「{title}」のプロンプトを使う",
     footer: "少しの想像力が、大きな可能性を生みます。",
@@ -148,7 +150,17 @@ const ja = {
   },
   modelShowcase: {
     section: "AI画像モデル",
-    title: "主要なAI画像モデルで、アイデアをかたちに",
+    title: "主要なAI画像モデルで",
+    titleAccent: "アイデアをかたちに",
+    subtitle: "それぞれの強みから、表現に合うモデルを選べます。",
+    descriptions: {
+      qwen: "日常の制作に使いやすい、柔軟な生成と編集。",
+      bfl: "精密で高品質なビジュアルを安定して生成。",
+      google: "高いプロンプト理解力で、幅広い表現に対応。",
+      bytedance: "人物の一貫性に強い、商用レベルの画像生成。",
+      openai: "細部と文字表現に強い、高品質な画像生成。",
+      grok: "旬のアイデアを素早くビジュアルに。",
+    },
   },
   creations: {
     loading: "作品を読み込んでいます…",

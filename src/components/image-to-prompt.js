@@ -128,6 +128,7 @@ export default function ImageToPrompt() {
 
   return <main className="workspace-page image-prompt-page">
     <Hero
+      headingLevel="h1"
       className="image-prompt-hero"
       label={t("imageToPrompt.section")}
       title={t("imageToPrompt.title")}
