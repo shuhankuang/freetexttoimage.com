@@ -11,7 +11,7 @@ import { CoinsIcon, GridIcon, ImageIcon, ImagePromptIcon, Logo, LogoutIcon, Mode
 
 const SHOW_EXPLORE_NAV = false;
 
-export default function AppShell({ children, publicView = false, showMyCreations = false }) {
+export default function AppShell({ children, footer, publicView = false, showMyCreations = false }) {
   const rawPathname = usePathname();
   const pathname = rawPathname.replace(/^\/en(?=\/|$)/, "") || "/";
   const router = useRouter();
@@ -133,6 +133,7 @@ export default function AppShell({ children, publicView = false, showMyCreations
         </div>
       </header>
       {children}
+      {footer}
     </div>
     <Modal.Backdrop isOpen={logoutOpen} onOpenChange={(open) => { if (!open) setLogoutOpen(false); }}>
       <Modal.Container size="sm"><Modal.Dialog className="logout-dialog"><Modal.CloseTrigger aria-label={t("shell.cancel")} /><Modal.Body><Modal.Heading>{t("shell.logoutTitle")}</Modal.Heading><p>{t("shell.logoutBody")}</p><div className="logout-actions"><Button variant="danger" onPress={logout} className="rounded-xl">{t("shell.signOut")} <LogoutIcon /></Button><Button className="rounded-xl" variant="outline" slot="close">{t("shell.cancel")}</Button></div></Modal.Body></Modal.Dialog></Modal.Container>

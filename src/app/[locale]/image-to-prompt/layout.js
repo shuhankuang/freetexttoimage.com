@@ -1,5 +1,6 @@
 import ServerAppShell from "@/components/server-app-shell";
 
-export default function ImageToPromptLayout({ children }) {
-  return <ServerAppShell publicView>{children}</ServerAppShell>;
+export default async function ImageToPromptLayout({ children, params }) {
+  const { locale } = await params;
+  return <ServerAppShell publicView locale={locale}>{children}</ServerAppShell>;
 }

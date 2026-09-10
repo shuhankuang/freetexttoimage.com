@@ -20,7 +20,7 @@ const POLL_MAX_ATTEMPTS = 150; // ~5 分钟，与服务端观察窗口一致
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export default function ImageStudio({ models = [], defaultModel = "z-image", howItWorks = null }) {
+export default function ImageStudio({ models = [], defaultModel = "z-image", howItWorks = null, modelShowcase = null }) {
   const router = useRouter(); const fileInput = useRef(null);
   const { messages, path, t } = useI18n();
   const [prompt, setPrompt] = useState(""); const [model, setModel] = useState(defaultModel); const [ratio, setRatio] = useState("1:1");
@@ -129,6 +129,7 @@ export default function ImageStudio({ models = [], defaultModel = "z-image", how
     <div className="studio-footnote"><span className="ft-item"><CheckIcon size={14} />{t("studio.freeToTry")}</span><span className="ft-dot">·</span><span className="ft-item"><NoCardIcon size={15} />{t("studio.noCard")}</span><span className="ft-dot">·</span><span className="ft-item"><SparklesIcon size={14} />{t("studio.quality")}</span></div>
     {howItWorks}
     <InspirationGallery onChoose={choosePrompt} />
+    {modelShowcase}
     <ResultViewer item={result} isOpen={!!result} onOpenChange={(open) => { if (!open) setResult(null); }} />
   </main>;
 }

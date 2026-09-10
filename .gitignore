@@ -47,3 +47,6 @@ sqlite.db
 sqlite.db-journal
 sqlite.db-wal
 sqlite.db-shm
+
+# source gallery exports (optimized WebP derivatives are committed)
+public/gallery/examples/ChatGPT Image *.png

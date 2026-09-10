@@ -1,8 +1,9 @@
 import { headers } from "next/headers";
 import AppShell from "@/components/app-shell";
+import AppFooter from "@/components/app-footer";
 import { auth } from "@/lib/auth";
 
-export default async function ServerAppShell({ children, ...props }) {
+export default async function ServerAppShell({ children, locale, ...props }) {
   let showMyCreations = false;
 
   try {
@@ -12,5 +13,5 @@ export default async function ServerAppShell({ children, ...props }) {
     // 公开页面在认证服务暂时不可用时仍按游客模式渲染。
   }
 
-  return <AppShell {...props} showMyCreations={showMyCreations}>{children}</AppShell>;
+  return <AppShell {...props} showMyCreations={showMyCreations} footer={<AppFooter locale={locale} />}>{children}</AppShell>;
 }

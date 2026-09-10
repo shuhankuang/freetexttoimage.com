@@ -1,37 +1,30 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { Button } from "@heroui/react";
-import { ArrowIcon, GridIcon, Logo, SparkIcon } from "@/components/ui";
+import { ArrowIcon } from "@/components/ui";
 import { useI18n } from "@/i18n/provider";
 
 const inspiration = [
-  { id: "dunes", category: "landscape", height: 340, prompt: "Sculptural terracotta desert formations beneath a pale blue sky, warm afternoon light, minimalist cinematic landscape photography." },
-  { id: "portrait", category: "portrait", height: 270, prompt: "An intimate editorial portrait in soft blue studio light, warm skin tones, shallow depth of field, fine film grain." },
-  { id: "architecture", category: "architecture", height: 290, prompt: "A serene contemporary living space, natural linen, sculptural furniture, sunlit neutral tones, architectural photography." },
-  { id: "mountain", category: "landscape", height: 330, prompt: "A dramatic alpine mountain peak rising into clouds, rugged rock textures, cool blue shadows, epic adventure photography." },
-  { id: "flowers", category: "nature", height: 360, prompt: "Delicate wildflowers against a blue sky, dreamy botanical photography, diffused morning light, poetic atmosphere." },
-  { id: "coast", category: "landscape", height: 270, prompt: "Endless turquoise ocean waves, misty horizon, textured water, dreamy coastal landscape, cinematic color grading." },
-  { id: "forest", category: "nature", height: 315, prompt: "Sunlight filtering through an ancient woodland, towering trees, emerald green moss, atmospheric forest photography." },
+  { id: "anime", category: "anime", ratio: "4 / 5", src: "/gallery/examples/01-futuristic-anime-character.webp", alt: "AI-generated anime character in a futuristic city", prompt: "A young space explorer standing in a futuristic city at sunset, detailed anime illustration, glowing signs, cinematic lighting, expressive character design." },
+  { id: "product", category: "product", ratio: "1 / 1", src: "/gallery/examples/02-luxury-product-photography.webp", alt: "AI-generated luxury perfume product photography", prompt: "A luxury perfume bottle on polished black stone, dramatic studio lighting, soft reflections, dark elegant background, premium commercial product photography." },
+  { id: "interior", category: "interior", ratio: "16 / 9", src: "/gallery/examples/03-modern-interior.webp", alt: "AI-generated minimalist modern living room interior", prompt: "A warm minimalist living room with floor-to-ceiling windows, natural wood furniture, soft morning sunlight, neutral colors, modern architecture, realistic interior photography." },
+  { id: "fantasy", category: "fantasy", ratio: "16 / 9", src: "/gallery/examples/04-floating-fantasy-city.webp", alt: "AI-generated fantasy floating city above the clouds", prompt: "An ancient floating city above the clouds, giant waterfalls falling into the sky, golden sunset, dramatic atmosphere, epic fantasy concept art, highly detailed." },
+  { id: "food", category: "food", ratio: "4 / 5", src: "/gallery/examples/05-editorial-food-photography.webp", alt: "AI-generated strawberry cake food photography", prompt: "A strawberry cake on a handmade ceramic plate inside a quiet Japanese cafe, soft window light, natural shadows, shallow depth of field, editorial food photography." },
+  { id: "poster", category: "poster", ratio: "4 / 5", src: "/gallery/examples/06-futuristic-music-poster.webp", alt: "AI-generated futuristic music festival poster design", prompt: "A futuristic electronic music festival poster, bold geometric typography, abstract glowing shapes, dark atmospheric background, modern editorial graphic design." },
+  { id: "trending", category: "trending", ratio: "4 / 5", src: "/gallery/examples/07-trending-visual.webp", alt: "AI-generated festive European street at Christmas", prompt: "A charming European street at Christmas, warm shop windows, festive wreaths and string lights, softly falling snow, reflections on wet cobblestones, people strolling through the market, cozy cinematic atmosphere, highly detailed." },
 ];
 
-const categories = ["all", "landscape", "portrait", "architecture", "nature"];
-
 export default function InspirationGallery({ onChoose }) {
-  const { path, t } = useI18n();
-  const [category, setCategory] = useState("all");
-  const filtered = inspiration.filter((item) => category === "all" || item.category === category);
-  const categoryLabel = (value) => value === "all" ? t("inspiration.all") : t(`inspiration.categories.${value}`);
+  const { locale, t } = useI18n();
+
+  // 新版图库文案确认后再同步日语；旧图库不再作为回退。
+  if (locale !== "en") return null;
 
   return <section className="inspiration-section" aria-labelledby="inspiration-title">
-    <div className="inspiration-heading"><div><span className="section-label">{t("inspiration.section")}</span><h2 id="inspiration-title">{t("inspiration.title")}</h2></div><span className="gallery-caption">{t("inspiration.caption")} <SparkIcon /></span></div>
-    <div className="inspiration-toolbar"><div className="inspiration-filters">{categories.map((item) => <Button key={item} variant="ghost" aria-pressed={category === item} className={category === item ? "selected" : ""} onPress={() => setCategory(item)}>{item === "all" && <GridIcon />}{categoryLabel(item)}</Button>)}</div><span>{t("inspiration.count", { count: filtered.length })}</span></div>
-    <div className="inspiration-masonry">{filtered.map((item, index) => {
+    <header className="inspiration-heading inspiration-heading--hero"><span className="section-label">{t("inspiration.section")}</span><h2 id="inspiration-title">{t("inspiration.title")}</h2></header>
+    <div className="inspiration-masonry">{inspiration.map((item, index) => {
       const title = t(`inspiration.items.${item.id}`);
-      return <button key={item.id} className="inspiration-tile" style={{ "--tile-height": `${item.height}px` }} onClick={() => onChoose(item.prompt)} aria-label={t("inspiration.usePromptLabel", { title })}><Image src={`/gallery/${item.id}.jpg`} alt={title} fill sizes="(max-width: 620px) 45vw, (max-width: 1100px) 28vw, 22vw" priority={index < 4} /><span className="tile-arrow"><ArrowIcon /></span><span className="tile-caption"><span>{categoryLabel(item.category)}</span><strong>{title}</strong><span className="tile-action">{t("inspiration.usePrompt")} <ArrowIcon /></span></span></button>;
+      return <button key={item.id} className="inspiration-tile ratio-tile" style={{ "--tile-ratio": item.ratio }} onClick={() => onChoose(item.prompt)} aria-label={t("inspiration.usePromptLabel", { title })}><Image src={item.src} alt={item.alt} fill sizes="(max-width: 620px) 45vw, (max-width: 1100px) 28vw, 30vw" priority={index < 4} /><span className="tile-arrow"><ArrowIcon /></span><span className="tile-caption"><span>{t(`inspiration.categories.${item.category}`)}</span><strong>{title}</strong><span className="tile-action">{t("inspiration.usePrompt")} <ArrowIcon /></span></span></button>;
     })}</div>
-    <footer className="studio-footer"><span className="footer-brand"><Logo href={path("/")} label={t("shell.homeLabel")} /><span>{t("inspiration.footer")}</span></span><nav aria-label={t("legal.navigation")}><Link href={path("/pricing")}>{t("shell.pricing")}</Link><Link href={path("/terms")}>{t("legal.terms")}</Link><Link href={path("/privacy")}>{t("legal.privacy")}</Link></nav></footer>
   </section>;
 }
