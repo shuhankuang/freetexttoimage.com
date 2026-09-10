@@ -4,6 +4,7 @@ import { I18nProvider } from "@/i18n/provider";
 import { getDictionary } from "@/i18n/dictionaries";
 import { isLocale, locales } from "@/i18n/config";
 import { BRAND_NAME } from "@/lib/brand";
+import RybbitAnalytics from "@/components/rybbit-analytics";
 
 export function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -27,7 +28,10 @@ export default async function LocaleLayout({ children, params }) {
 
   return (
     <html lang={locale}>
-      <body><I18nProvider locale={locale} messages={messages}>{children}</I18nProvider></body>
+      <body>
+        <I18nProvider locale={locale} messages={messages}>{children}</I18nProvider>
+        <RybbitAnalytics />
+      </body>
     </html>
   );
 }
