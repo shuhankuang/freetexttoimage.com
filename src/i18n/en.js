@@ -1,6 +1,6 @@
 const en = {
   meta: {
-    title: "FreeTexttoImage — Free AI Image Generator",
+    title: "Free AI Text to Image Generator – Create Images from Text | FreeTextToImage",
     description: "Create high-quality AI images from text in seconds. Choose an AI model, style, and aspect ratio, then generate images for free with FreeTexttoImage.",
     loginTitle: "Sign in or create an account",
   },
@@ -110,6 +110,14 @@ const en = {
     freeToTry: "Free to try",
     noCard: "No credit card required",
     quality: "High-quality AI images",
+    howItWorks: {
+      describeTitle: "Describe your idea",
+      describeBody: "Write a text prompt describing what you want to create.",
+      settingsTitle: "Choose your settings",
+      settingsBody: "Select an AI model, aspect ratio, and image settings.",
+      generateTitle: "Generate your image",
+      generateBody: "Turn your prompt into an AI image, then refine or download it.",
+    },
     errors: {
       referenceSize: "Reference images must be smaller than 10 MB.",
       promptRequired: "Describe the image you want to create.",
