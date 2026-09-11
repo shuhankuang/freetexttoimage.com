@@ -10,7 +10,7 @@ const ja = {
   language: { label: "言語", english: "English", japanese: "日本語" },
   legal: { terms: "利用規約", privacy: "プライバシー", navigation: "法的情報" },
   footer: {
-    tagline: "アイデアや画像から新しい表現を作る、シンプルなAIツール。",
+    tagline: "AI画像ツール、テキスト画像生成、画像プロンプト生成、次のアイデアに使えるプロンプトを見つけましょう。",
     copyright: "© {year} FreeTexttoImage",
     tools: "AIツール",
     toolsNavigation: "AIツール",
@@ -168,7 +168,8 @@ const ja = {
       action: "プロンプトを生成",
       note: "無料クレジット付き · 画像は一時的に処理されます",
     },
-    note: "ログインが必要です。アップロード画像は一時保存され、作品一覧には追加されません。",
+    noteGuest: "プロンプトを生成するにはログインしてください。画像は一時的に処理され、作品一覧には保存されません。",
+    noteSignedIn: "画像は一時的に処理され、作品一覧には保存されません。",
     privacy: "プライバシーについて",
     errors: {
       type: "JPEG、PNG、WebP画像を選択してください。",

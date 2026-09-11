@@ -8,6 +8,7 @@ import Steps from "@/components/blocks/steps";
 import { getDictionary } from "@/i18n/dictionaries";
 import { localePath } from "@/i18n/config";
 import { buildPublicMetadata } from "@/lib/metadata";
+import { getServerSession } from "@/lib/server-session";
 
 const GUIDE_STEP_KEYS = ["upload", "analyze", "create"];
 const FAQ_KEYS = ["what", "how", "types", "create", "accuracy", "free"];
@@ -27,6 +28,7 @@ export default async function ImageToPromptPage({ params }) {
   const { locale } = await params;
   const messages = await getDictionary(locale);
   const copy = messages.imageToPrompt;
+  const session = await getServerSession();
 
   return <main className="workspace-page image-prompt-page">
     <Hero
@@ -38,7 +40,10 @@ export default async function ImageToPromptPage({ params }) {
       subtitle={copy.subtitle}
     />
     <ImageToPrompt />
-    <p className="image-prompt-note">{copy.note} <Link href={localePath(locale, "/privacy")}>{copy.privacy}</Link></p>
+    <p className="image-prompt-note">
+      {session?.user ? copy.noteSignedIn : copy.noteGuest}{" "}
+      <Link href={localePath(locale, "/privacy")}>{copy.privacy}</Link>
+    </p>
     <Steps
       label={copy.guideLabel}
       steps={GUIDE_STEP_KEYS.map((key) => ({

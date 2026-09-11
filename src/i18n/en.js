@@ -10,7 +10,7 @@ const en = {
   language: { label: "Language", english: "English", japanese: "日本語" },
   legal: { terms: "Terms", privacy: "Privacy", navigation: "Legal pages" },
   footer: {
-    tagline: "Simple AI tools for turning ideas and images into something new.",
+    tagline: "Explore AI image tools, text-to-image generators, image-to-prompt tools, and ready-to-use prompts for your next idea.",
     copyright: "© {year} FreeTexttoImage",
     tools: "AI Tools",
     toolsNavigation: "AI tools",
@@ -168,7 +168,8 @@ const en = {
       action: "Generate a Prompt",
       note: "Free credits included · Images are processed temporarily",
     },
-    note: "Sign in is required. Uploaded files are temporary and are not added to My creations.",
+    noteGuest: "Sign in to generate a prompt. Images are processed temporarily and aren't saved to My Creations.",
+    noteSignedIn: "Images are processed temporarily and aren't saved to My Creations.",
     privacy: "Privacy notice",
     errors: {
       type: "Choose a JPEG, PNG, or WebP image.",
