@@ -174,18 +174,16 @@ export default function ImageToPrompt() {
         </div>
 
         <div className={`image-prompt-output${prompt ? " has-prompt" : ""}`}>
-          {prompt ? <>
-            <p>{prompt}</p>
-            <Button isIconOnly size="sm" variant="secondary" aria-label={copied ? t("imageToPrompt.copied") : t("imageToPrompt.copy")} onPress={copyPrompt}>
-              {copied ? <CheckIcon size={17} /> : <CopyIcon size={17} />}
-            </Button>
-          </> : <div className="image-prompt-empty">
+          {prompt ? <p>{prompt}</p> : <div className="image-prompt-empty">
             <span className="image-prompt-empty-icon">{pending ? <Spinner size="sm" /> : <SparkIcon size={22} />}</span>
             <p>{pending ? t("imageToPrompt.analyzingBody") : t("imageToPrompt.empty")}</p>
           </div>}
         </div>
 
         {prompt && <div className="image-prompt-actions">
+          <Button variant="secondary" isDisabled={pending} onPress={copyPrompt}>
+            {copied ? <CheckIcon size={17} /> : <CopyIcon size={17} />}{copied ? t("imageToPrompt.copied") : t("imageToPrompt.copy")}
+          </Button>
           <Button className="primary-button" isDisabled={pending} onPress={createWithPrompt}>{t("imageToPrompt.usePrompt")}<ArrowIcon /></Button>
         </div>}
       </Card.Content></Card>
