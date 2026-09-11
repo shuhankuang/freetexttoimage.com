@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Button, Modal, ScrollShadow, Spinner } from "@heroui/react";
+import { Button, Modal, Spinner } from "@heroui/react";
 import { ArrowIcon, CheckIcon, CopyIcon } from "@/components/ui";
 import { useI18n } from "@/i18n/provider";
 
@@ -109,6 +109,23 @@ export default function ModelPromptGallery({ items, copy }) {
     if (loadTimerRef.current) window.clearTimeout(loadTimerRef.current);
   }, []);
 
+  useEffect(() => {
+    if (!active || active.images.length < 2) return;
+    function onKeyDown(event) {
+      if (event.key === "ArrowLeft") stepImage(-1);
+      else if (event.key === "ArrowRight") stepImage(1);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [active, activeImage]);
+
+  function stepImage(delta) {
+    if (!active || active.images.length < 2) return;
+    const currentIndex = active.images.indexOf(activeImage);
+    const nextIndex = ((currentIndex === -1 ? 0 : currentIndex) + delta + active.images.length) % active.images.length;
+    setActiveImage(active.images[nextIndex]);
+  }
+
   function open(item) {
     setCopied(false);
     setActiveImage(item.coverUrl);
@@ -153,6 +170,10 @@ export default function ModelPromptGallery({ items, copy }) {
                 <div className="model-prompt-detail-stage">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img key={activeImage} src={activeImage || active.coverUrl} alt={active.title} />
+                  {active.images.length > 1 && <>
+                    <button type="button" className="model-prompt-stage-nav prev" onClick={() => stepImage(-1)} aria-label={copy.prevImage}><ArrowIcon /></button>
+                    <button type="button" className="model-prompt-stage-nav next" onClick={() => stepImage(1)} aria-label={copy.nextImage}><ArrowIcon /></button>
+                  </>}
                 </div>
                 {active.images.length > 1 && <div className="model-prompt-thumbnails" aria-label={copy.imageGallery}>
                   {active.images.map((image, index) => <button type="button" className={image === activeImage ? "is-active" : ""} aria-pressed={image === activeImage} aria-label={copy.showImage.replace("{number}", index + 1)} onClick={() => setActiveImage(image)} key={image}>
@@ -176,9 +197,9 @@ export default function ModelPromptGallery({ items, copy }) {
                       <button type="button" onClick={handleCopy}>{copied ? <CheckIcon /> : <CopyIcon />}{copied ? copy.copied : copy.copy}</button>
                     </span>
                   </div>
-                  <ScrollShadow className="model-prompt-prompt-scroll" size={28} offset={4}>
+                  <div className="model-prompt-prompt-scroll">
                     <p>{active.prompt}</p>
-                  </ScrollShadow>
+                  </div>
                 </div>
                 <Button className="primary-button model-prompt-use" fullWidth onPress={usePrompt}>{copy.usePrompt}<ArrowIcon /></Button>
               </aside>

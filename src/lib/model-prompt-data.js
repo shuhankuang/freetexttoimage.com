@@ -39,3 +39,12 @@ export async function getModelPromptItems(model) {
     .sort((a, b) => safeTime(b.publishedAt) - safeTime(a.publishedAt) || String(b.tweetId).localeCompare(String(a.tweetId)))
     .map((item) => normalizePrompt(item, model));
 }
+
+export async function getModelPromptCount(model) {
+  if (!model?.dataFile) return 0;
+
+  const file = path.join(process.cwd(), "data", model.dataFile);
+  const raw = JSON.parse(await readFile(file, "utf8"));
+
+  return raw.filter((item) => item?.tweetId && item?.coverUrl && item?.prompt).length;
+}

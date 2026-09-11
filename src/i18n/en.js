@@ -45,6 +45,8 @@ const en = {
       imageUnavailable: "Image unavailable",
       imageGallery: "Images in this prompt",
       showImage: "Show image {number}",
+      prevImage: "Previous image",
+      nextImage: "Next image",
       showing: "Showing {visible} of {total}",
       loadMore: "Load more prompts",
       loadingMore: "Loading more…",

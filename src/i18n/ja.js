@@ -45,6 +45,8 @@ const ja = {
       imageUnavailable: "画像を読み込めません",
       imageGallery: "このプロンプトの画像",
       showImage: "画像{number}を表示",
+      prevImage: "前の画像",
+      nextImage: "次の画像",
       showing: "{total}件中{visible}件を表示",
       loadMore: "さらに読み込む",
       loadingMore: "読み込み中…",
