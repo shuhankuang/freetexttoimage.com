@@ -1,5 +1,6 @@
 import "server-only";
 
+import FaqBlock from "@/components/blocks/faq";
 import Hero from "@/components/blocks/hero";
 import PricingPlans from "@/components/pricing-plans";
 import PricingTopups from "@/components/pricing-topups";
@@ -13,15 +14,6 @@ export default async function Pricing({ locale }) {
   const messages = await getDictionary(locale);
   const copy = messages.pricing;
   const faqItems = FAQS.map((key) => copy.faq[key]);
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: faqItems.map((item) => ({
-      "@type": "Question",
-      name: item.question,
-      acceptedAnswer: { "@type": "Answer", text: item.answer },
-    })),
-  };
 
   return <main className="workspace-page pricing-page">
     <Hero
@@ -54,27 +46,14 @@ export default async function Pricing({ locale }) {
       <PricingTopups />
     </section>
 
-    <section className="pricing-faq" aria-labelledby="faq-heading">
-      <Hero
-        headingId="faq-heading"
-        className="section-heading pricing-faq-heading"
-        label={copy.faqEyebrow}
-        title={copy.faqTitle}
-        accent={copy.faqTitleAccent}
-        subtitle={copy.faqSubtitle}
-      />
-      <div className="home-faq-list">
-        {faqItems.map((item, index) => <details className="home-faq-item" key={item.question}>
-          <summary>
-            <span className="home-faq-index ml-2" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
-            <span className="home-faq-question">{item.question}</span>
-            <span className="home-faq-toggle" aria-hidden="true" />
-          </summary>
-          <p>{item.answer}</p>
-        </details>)}
-      </div>
-    </section>
-
-    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replaceAll("<", "\\u003c") }} />
+    <FaqBlock
+      id="pricing-faq"
+      className="pricing-faq"
+      items={faqItems}
+      label={copy.faqEyebrow}
+      title={copy.faqTitle}
+      accent={copy.faqTitleAccent}
+      subtitle={copy.faqSubtitle}
+    />
   </main>;
 }

@@ -2,16 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, Card, Spinner } from "@heroui/react";
 import { useI18n } from "@/i18n/provider";
 import {
   ArrowIcon, CheckIcon, CopyIcon, ImageIcon, ImagePlusIcon, SparkIcon, TrashIcon,
 } from "@/components/ui";
-import Steps from "@/components/blocks/steps";
-
-const GUIDE_STEP_KEYS = ["upload", "analyze", "create"];
 
 const MAX_SOURCE_BYTES = 10 * 1024 * 1024;
 const MAX_REQUEST_BYTES = 3.5 * 1024 * 1024;
@@ -126,7 +122,7 @@ export default function ImageToPrompt() {
   }
 
   return <>
-    <div className="image-prompt-workspace">
+    <div id="image-prompt-generator" className="image-prompt-workspace">
       <Card className="image-prompt-card image-upload-card"><Card.Content>
         <div className="image-prompt-card-heading">
           <span className="workflow-step-marker">01</span>
@@ -190,14 +186,5 @@ export default function ImageToPrompt() {
     </div>
 
     {error && <p className="image-prompt-error" role="alert">{error}</p>}
-
-    <Steps
-      label={t("imageToPrompt.guideLabel")}
-      steps={GUIDE_STEP_KEYS.map((key) => ({
-        title: t(`imageToPrompt.guide.${key}Title`),
-        body: t(`imageToPrompt.guide.${key}Body`),
-      }))}
-    />
-    <p className="image-prompt-note">{t("imageToPrompt.note")} <Link href={path("/privacy")}>{t("imageToPrompt.privacy")}</Link></p>
   </>;
 }
