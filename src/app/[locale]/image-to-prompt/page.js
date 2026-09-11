@@ -7,6 +7,7 @@ import Hero from "@/components/blocks/hero";
 import Steps from "@/components/blocks/steps";
 import { getDictionary } from "@/i18n/dictionaries";
 import { localePath } from "@/i18n/config";
+import { buildPublicMetadata } from "@/lib/metadata";
 
 const GUIDE_STEP_KEYS = ["upload", "analyze", "create"];
 const FAQ_KEYS = ["what", "how", "types", "create", "accuracy", "free"];
@@ -14,14 +15,12 @@ const FAQ_KEYS = ["what", "how", "types", "create", "accuracy", "free"];
 export async function generateMetadata({ params }) {
   const { locale } = await params;
   const messages = await getDictionary(locale);
-  return {
+  return buildPublicMetadata({
+    locale,
+    path: "/image-to-prompt",
     title: messages.imageToPrompt.metaTitle,
     description: messages.imageToPrompt.metaDescription,
-    alternates: {
-      canonical: localePath(locale, "/image-to-prompt"),
-      languages: { en: "/image-to-prompt", ja: "/ja/image-to-prompt" },
-    },
-  };
+  });
 }
 
 export default async function ImageToPromptPage({ params }) {

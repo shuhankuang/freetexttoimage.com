@@ -9,7 +9,7 @@ export const legalContent = {
     },
     terms: {
       title: "Terms of Service",
-      description: "The simple rules for using FreeTexttoImage.",
+      description: "Read the terms for using FreeTexttoImage, including account responsibilities, acceptable use, AI-generated content, and service availability.",
       intro: "By using FreeTexttoImage, you agree to these terms.",
       sections: [
         { title: "Use of the service", body: "You may use the service to create and manage AI-generated images. You are responsible for your prompts, uploaded references, generated images, and how you use them." },
@@ -21,7 +21,7 @@ export const legalContent = {
     },
     privacy: {
       title: "Privacy Policy",
-      description: "A short explanation of the information FreeTexttoImage handles.",
+      description: "Learn how FreeTexttoImage handles account details, prompts, uploaded images, generated images, service providers, and deletion requests.",
       intro: "This policy explains what information we collect and how we use it.",
       sections: [
         { title: "Information we collect", body: "We may store your email, account profile, prompts, generation settings, uploaded reference images, generated images, and basic technical information needed to operate the service." },
@@ -42,7 +42,7 @@ export const legalContent = {
     },
     terms: {
       title: "利用規約",
-      description: "FreeTexttoImageを利用するための基本的なルールです。",
+      description: "アカウントの責任、禁止事項、AI生成コンテンツ、サービス提供を含む、FreeTexttoImageの利用条件をご確認ください。",
       intro: "FreeTexttoImageを利用することで、本規約に同意したものとみなされます。",
       sections: [
         { title: "サービスの利用", body: "本サービスでは、AI画像の生成と管理ができます。プロンプト、参考画像、生成画像、およびそれらの利用については、利用者が責任を負います。" },
@@ -54,7 +54,7 @@ export const legalContent = {
     },
     privacy: {
       title: "プライバシーポリシー",
-      description: "FreeTexttoImageが取り扱う情報について簡潔に説明します。",
+      description: "FreeTexttoImageがアカウント情報、プロンプト、アップロード画像、生成画像、外部サービス、削除依頼をどう扱うか説明します。",
       intro: "本ポリシーでは、収集する情報とその利用方法を説明します。",
       sections: [
         { title: "収集する情報", body: "メールアドレス、アカウント情報、プロンプト、生成設定、参考画像、生成画像、およびサービス運営に必要な基本的な技術情報を保存する場合があります。" },

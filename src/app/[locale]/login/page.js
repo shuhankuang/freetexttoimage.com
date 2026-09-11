@@ -8,6 +8,7 @@ import { ArrowIcon, CheckIcon, GoogleIcon, Logo, SparkIcon } from "@/components/
 import LanguageSwitcher from "@/components/language-switcher";
 import { useI18n } from "@/i18n/provider";
 import { authClient } from "@/lib/auth-client";
+import { loginPathWithRedirect, safeRedirectPath } from "@/lib/auth-redirect";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,24 +23,24 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isPending || !session) return;
-    // 只接受站内相对路径（"/" 开头且不是 "//"），防止 ?redirect= 被用来跳到外部站点。
     const requested = new URLSearchParams(window.location.search).get("redirect");
-    const target = requested && requested.startsWith("/") && !requested.startsWith("//") ? requested : studioPath;
-    router.replace(target);
+    router.replace(safeRedirectPath(requested, studioPath));
   }, [isPending, session, router, studioPath]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.has("error")) {
-      setError(t("auth.errors.invalidLink"));
-      window.history.replaceState(null, "", loginPath);
+      params.delete("error");
+      const query = params.toString();
+      window.history.replaceState(null, "", `${loginPath}${query ? `?${query}` : ""}`);
+      const timer = window.setTimeout(() => setError(t("auth.errors.invalidLink")), 0);
+      return () => window.clearTimeout(timer);
     }
   }, [loginPath, t]);
 
-  // 只接受站内相对路径（"/" 开头且不是 "//"），防止 ?redirect= 被用来跳到外部站点。
   function redirectTarget() {
     const requested = new URLSearchParams(window.location.search).get("redirect");
-    return requested && requested.startsWith("/") && !requested.startsWith("//") ? requested : studioPath;
+    return safeRedirectPath(requested, studioPath);
   }
 
   async function submit(event) {
@@ -55,7 +56,7 @@ export default function LoginPage() {
         email,
         callbackURL: target,
         newUserCallbackURL: target,
-        errorCallbackURL: loginPath,
+        errorCallbackURL: loginPathWithRedirect(loginPath, target),
         metadata: { locale },
       });
       if (authError) {

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Button, Dropdown, Modal, Spinner } from "@heroui/react";
 import { authClient } from "@/lib/auth-client";
+import { loginPathWithRedirect } from "@/lib/auth-redirect";
 import LanguageSwitcher from "@/components/language-switcher";
 import { useI18n } from "@/i18n/provider";
 import { CoinsIcon, GridIcon, ImageIcon, ImagePromptIcon, Logo, LogoutIcon, ModelsIcon, PaletteIcon, SparklesIcon, TemplateIcon, UserIcon } from "@/components/ui";
@@ -29,10 +30,11 @@ export default function AppShell({ children, footer, publicView = false, showMyC
   const profilePath = path("/profile");
   const explorePath = path("/explore");
   const loginPath = path("/login");
+  const loginHref = loginPathWithRedirect(loginPath, pathname);
 
   useEffect(() => {
-    if (!isPending && !user && !publicView && !signedOutRef.current) router.replace(loginPath);
-  }, [router, loginPath, publicView, isPending, user]);
+    if (!isPending && !user && !publicView && !signedOutRef.current) router.replace(loginHref);
+  }, [router, loginHref, publicView, isPending, user]);
 
   // 顶栏积分余额：登录后拉一次；生成流程结束后 image-studio 会 dispatch "credits:refresh" 通知刷新。
   useEffect(() => {
@@ -128,7 +130,7 @@ export default function AppShell({ children, footer, publicView = false, showMyC
               </Dropdown.Popover>
             </Dropdown>
           ) : (
-            <div className="header-auth"><Link className="header-signin" href={loginPath}>{t("shell.signIn")}</Link><Link className="header-cta" href={loginPath}>{t("shell.getStarted")}{t("shell.free") && <em>{t("shell.free")}</em>}</Link></div>
+            <div className="header-auth"><Link className="header-signin" href={loginHref}>{t("shell.signIn")}</Link><Link className="header-cta" href={loginHref}>{t("shell.getStarted")}{t("shell.free") && <em>{t("shell.free")}</em>}</Link></div>
           )}
         </div>
       </header>

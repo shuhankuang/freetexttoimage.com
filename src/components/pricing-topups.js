@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button, Card, Spinner } from "@heroui/react";
 import { useI18n } from "@/i18n/provider";
 import { authClient } from "@/lib/auth-client";
+import { loginPathWithRedirect } from "@/lib/auth-redirect";
 import { CoinsIcon } from "@/components/ui";
 
 const PACKS = [
@@ -30,7 +31,7 @@ export default function PricingTopups() {
   }, []);
 
   function requireSignIn() {
-    router.push(`${path("/login")}?redirect=${encodeURIComponent(path("/pricing"))}`);
+    router.push(loginPathWithRedirect(path("/login"), path("/pricing")));
   }
 
   async function buyPack(packId) {

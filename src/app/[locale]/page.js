@@ -4,16 +4,19 @@ import HomeHowItWorks from "@/components/home-how-it-works";
 import ImageModelShowcase from "@/components/image-model-showcase";
 import HomeFaq from "@/components/home-faq";
 import HomeCta from "@/components/home-cta";
+import { getDictionary } from "@/i18n/dictionaries";
+import { buildPublicMetadata } from "@/lib/metadata";
 import { DEFAULT_MODEL, listProviders } from "@/lib/models";
 
 export async function generateMetadata({ params }) {
   const { locale } = await params;
-  return {
-    alternates: {
-      canonical: locale === "en" ? "/" : "/ja",
-      languages: { en: "/", ja: "/ja" },
-    },
-  };
+  const messages = await getDictionary(locale);
+  return buildPublicMetadata({
+    locale,
+    title: messages.meta.title,
+    description: messages.meta.description,
+    absoluteTitle: true,
+  });
 }
 
 export default async function HomePage({ params }) {

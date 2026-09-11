@@ -1,15 +1,18 @@
 const ja = {
   meta: {
-    title: "FreeTexttoImage — 無料AI画像生成ツール",
-    description: "テキストから無料でAI画像を生成し、プロンプトと作品をひとつの場所に保存できます。",
-    loginTitle: "ログインまたはアカウント作成",
+    title: "無料AI画像生成｜テキストから画像を作成 | FreeTexttoImage",
+    description: "主要なAIモデルを使って、テキストから高品質な画像をすばやく生成。モデルと縦横比を選び、登録特典の無料クレジットで始められます。",
+    loginTitle: "ログイン",
+    loginDescription: "FreeTexttoImageにログインして、AI画像の生成、クレジットの管理、作品の確認ができます。",
+    studioTitle: "AI画像スタジオ",
+    studioDescription: "AIモデル、縦横比、生成設定を選び、テキストからAI画像を作成できます。",
   },
   language: { label: "言語", english: "English", japanese: "日本語" },
   legal: { terms: "利用規約", privacy: "プライバシー", navigation: "法的情報" },
   explore: {
-    models: { title: "モデル", subtitle: "FreeTexttoImageで利用できる画像モデルを比較できます。" },
-    templates: { title: "テンプレート", subtitle: "よく使う制作目的に合ったプロンプト構成から始められます。" },
-    styles: { title: "スタイル", subtitle: "次の画像を作る前に、さまざまな表現の方向性を探せます。" },
+    models: { title: "モデル", subtitle: "FreeTexttoImageで利用できる画像モデルを比較できます。", metaTitle: "AI画像モデル", metaDescription: "テキストからの画像生成、画像編集、商品画像、人物、デザインに対応するAI画像モデルを比較できます。" },
+    templates: { title: "テンプレート", subtitle: "よく使う制作目的に合ったプロンプト構成から始められます。", metaTitle: "AI画像プロンプトテンプレート", metaDescription: "商品画像、人物、イラスト、クリエイティブ制作に使えるAI画像プロンプトテンプレートを探せます。" },
+    styles: { title: "スタイル", subtitle: "次の画像を作る前に、さまざまな表現の方向性を探せます。", metaTitle: "AI画像スタイル", metaDescription: "写真、イラスト、アニメ、デザインなど、AI画像生成に使える表現スタイルを探せます。" },
     developing: "このコレクションは現在準備中です。",
   },
   shell: {
@@ -45,8 +48,8 @@ const ja = {
     cancel: "キャンセル",
   },
   imageToPrompt: {
-    metaTitle: "AI画像プロンプト生成ツール | FreeTexttoImage",
-    metaDescription: "画像をアップロードすると、コピー、編集、新しいAI画像の作成に使える詳しいプロンプトを生成します。",
+    metaTitle: "無料AI画像プロンプト生成ツール",
+    metaDescription: "写真やイラストを、コピー、編集、新しい画像の生成に使える詳しいAIプロンプトへ変換。登録特典の無料クレジットで始められます。",
     section: "AI画像プロンプト生成ツール",
     title: "画像をすぐ使える",
     titleAccent: "AIプロンプトに変換",
@@ -325,6 +328,8 @@ const ja = {
     imageAlt: "生成された画像",
   },
   pricing: {
+    metaTitle: "AI画像生成の料金・クレジットプラン",
+    metaDescription: "Free、Basic、ProのAI画像生成プランを比較。月払い・年払いのほか、有効期限のない追加クレジットも購入できます。",
     section: "料金",
     title: "もっと作れて、",
     titleAccent: "もっとお得。",

@@ -1,15 +1,18 @@
 const en = {
   meta: {
-    title: "Free AI Text to Image Generator – Create Images from Text | FreeTextToImage",
-    description: "Create high-quality AI images from text in seconds. Choose an AI model, style, and aspect ratio, then generate images for free with FreeTexttoImage.",
-    loginTitle: "Sign in or create an account",
+    title: "Free AI Text to Image Generator | FreeTexttoImage",
+    description: "Create high-quality AI images from text in seconds with leading models. Choose a model and aspect ratio, then start generating with free signup credits.",
+    loginTitle: "Sign In",
+    loginDescription: "Sign in to FreeTexttoImage to generate AI images, manage credits, and view your creations.",
+    studioTitle: "AI Image Studio",
+    studioDescription: "Create AI images from text with your selected model, aspect ratio, and generation settings.",
   },
   language: { label: "Language", english: "English", japanese: "日本語" },
   legal: { terms: "Terms", privacy: "Privacy", navigation: "Legal pages" },
   explore: {
-    models: { title: "Models", subtitle: "Compare the image models available in FreeTexttoImage." },
-    templates: { title: "Templates", subtitle: "Start with practical prompt structures for common creative work." },
-    styles: { title: "Styles", subtitle: "Explore visual directions before creating your next image." },
+    models: { title: "Models", subtitle: "Compare the image models available in FreeTexttoImage.", metaTitle: "AI Image Models", metaDescription: "Compare AI image models for text-to-image generation, editing, product visuals, portraits, and creative design." },
+    templates: { title: "Templates", subtitle: "Start with practical prompt structures for common creative work.", metaTitle: "AI Image Prompt Templates", metaDescription: "Explore reusable AI image prompt templates for product images, portraits, illustrations, and creative projects." },
+    styles: { title: "Styles", subtitle: "Explore visual directions before creating your next image.", metaTitle: "AI Image Styles", metaDescription: "Explore AI image styles and visual directions for photography, illustration, anime, design, and more." },
     developing: "This collection is being prepared.",
   },
   shell: {
@@ -45,8 +48,8 @@ const en = {
     cancel: "Cancel",
   },
   imageToPrompt: {
-    metaTitle: "AI Image to Prompt Generator | FreeTexttoImage",
-    metaDescription: "Upload an image and get a detailed prompt you can copy, edit, and use to create new AI images.",
+    metaTitle: "Free AI Image to Prompt Generator",
+    metaDescription: "Turn a photo or illustration into a detailed AI prompt you can copy, edit, or use to generate a new image. Start with free signup credits.",
     section: "AI IMAGE TO PROMPT GENERATOR",
     title: "Turn Any Image Into a",
     titleAccent: "Ready-to-Use AI Prompt",
@@ -325,6 +328,8 @@ const en = {
     imageAlt: "Generated image",
   },
   pricing: {
+    metaTitle: "AI Image Generator Pricing & Credit Plans",
+    metaDescription: "Compare Free, Basic, and Pro AI image generation plans. Choose monthly or yearly credits, or buy one-time credits that never expire.",
     section: "PRICING",
     title: "Create more,",
     titleAccent: "for less.",

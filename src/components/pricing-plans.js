@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button, Card, Spinner } from "@heroui/react";
 import { useI18n } from "@/i18n/provider";
 import { authClient } from "@/lib/auth-client";
+import { loginPathWithRedirect } from "@/lib/auth-redirect";
 import { CheckIcon, CoinsIcon } from "@/components/ui";
 
 const PLANS = [
@@ -71,7 +72,7 @@ export default function PricingPlans() {
   }, []);
 
   function requireSignIn() {
-    router.push(`${path("/login")}?redirect=${encodeURIComponent(path("/pricing"))}`);
+    router.push(loginPathWithRedirect(path("/login"), path("/pricing")));
   }
 
   async function subscribe(planId) {
@@ -138,7 +139,7 @@ export default function PricingPlans() {
   function planAction(plan) {
     if (plan.id === "free") {
       if (session?.user && !activeSub) return <span className="plan-current-badge">{t("pricing.currentPlanBadge")}</span>;
-      return <Link className="pricing-plan-link" href={session?.user ? path("/studio") : path("/login")}>{t("pricing.startFree")}</Link>;
+      return <Link className="pricing-plan-link" href={session?.user ? path("/studio") : loginPathWithRedirect(path("/login"), path("/pricing"))}>{t("pricing.startFree")}</Link>;
     }
     if (activeSub && plan.id === activeSub.plan && interval === activeSub.interval) {
       return <span className="plan-current-badge">{t("pricing.currentPlanBadge")}</span>;

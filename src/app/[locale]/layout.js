@@ -16,7 +16,7 @@ export async function generateMetadata({ params }) {
   const messages = await getDictionary(locale);
   return {
     metadataBase: new URL(process.env.APP_URL || process.env.BETTER_AUTH_URL || "http://localhost:3000"),
-    title: { default: messages.meta.title, template: `%s · ${BRAND_NAME}` },
+    title: { default: messages.meta.title, template: `%s | ${BRAND_NAME}` },
     description: messages.meta.description,
   };
 }

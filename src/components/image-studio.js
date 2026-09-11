@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Button, Card, Label, Spinner, TextArea } from "@heroui/react";
 import ImageSettingsPopover from "@/components/image-settings-popover";
 import ModelPickerPopover from "@/components/model-picker-popover";
@@ -13,6 +13,7 @@ import ResultViewer from "@/components/result-viewer";
 import { useI18n } from "@/i18n/provider";
 import { ArrowIcon, CheckIcon, CoinsIcon, DiceIcon, ImagePlusIcon, NoCardIcon, SparkIcon, SparklesIcon } from "@/components/ui";
 import Hero from "@/components/blocks/hero";
+import { loginPathWithRedirect } from "@/lib/auth-redirect";
 
 const suggestions = ["A glass house in a misty pine forest at dawn", "An editorial portrait lit by a soft red neon sign", "A quiet coastal village painted in loose watercolors"];
 const FALLBACK_RATIOS = ["1:1", "4:3", "3:4", "16:9", "9:16"];
@@ -25,7 +26,9 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default function ImageStudio({ models = [], defaultModel = "z-image", howItWorks = null, modelShowcase = null, faq = null, cta = null }) {
   const router = useRouter(); const fileInput = useRef(null);
+  const pathname = usePathname();
   const { messages, path, t } = useI18n();
+  const loginHref = loginPathWithRedirect(path("/login"), pathname);
   const [prompt, setPrompt] = useState(""); const [model, setModel] = useState(defaultModel); const [ratio, setRatio] = useState("1:1"); const [imageCount, setImageCount] = useState(1);
   const [settingsRestored, setSettingsRestored] = useState(false);
   const [reference, setReference] = useState(null); const [pending, setPending] = useState(false); const [result, setResult] = useState(null); const [error, setError] = useState(""); const [creditsShort, setCreditsShort] = useState(false);
@@ -108,7 +111,7 @@ export default function ImageStudio({ models = [], defaultModel = "z-image", how
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: prompt.trim(), model, ratio }),
       });
-      if (response.status === 401) { router.replace(path("/login")); return; }
+      if (response.status === 401) { router.replace(loginHref); return; }
       if (response.status === 402) {
         const body = await response.json().catch(() => ({}));
         // 余额不足：保留 prompt，不当成通用生成失败处理。
@@ -138,7 +141,7 @@ export default function ImageStudio({ models = [], defaultModel = "z-image", how
     for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt++) {
       const res = await fetch(`/api/creations/${id}`);
       if (!res.ok) {
-        if (res.status === 401) { router.replace(path("/login")); throw new Error(t("studio.errors.signIn")); }
+        if (res.status === 401) { router.replace(loginHref); throw new Error(t("studio.errors.signIn")); }
         throw new Error(t("studio.errors.connection"));
       }
       const current = await res.json();

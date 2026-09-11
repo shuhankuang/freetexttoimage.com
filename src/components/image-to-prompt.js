@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button, Card, Spinner } from "@heroui/react";
 import { useI18n } from "@/i18n/provider";
+import { loginPathWithRedirect } from "@/lib/auth-redirect";
 import {
   ArrowIcon, CheckIcon, CopyIcon, ImageIcon, ImagePlusIcon, SparkIcon, TrashIcon,
 } from "@/components/ui";
@@ -92,7 +93,7 @@ export default function ImageToPrompt() {
       formData.append("locale", locale);
       const response = await fetch("/api/image-to-prompt", { method: "POST", body: formData });
       if (response.status === 401) {
-        router.push(`${path("/login")}?redirect=${encodeURIComponent(path("/image-to-prompt"))}`);
+        router.push(loginPathWithRedirect(path("/login"), path("/image-to-prompt")));
         return;
       }
       const body = await response.json().catch(() => ({}));

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getDictionary } from "@/i18n/dictionaries";
+import { buildPrivateMetadata } from "@/lib/metadata";
 
 const sections = ["models", "templates", "styles"];
 
@@ -11,7 +12,8 @@ export async function generateMetadata({ params }) {
   const { locale, section } = await params;
   if (!sections.includes(section)) return {};
   const messages = await getDictionary(locale);
-  return { title: `${messages.explore[section].title} — FreeTexttoImage` };
+  const copy = messages.explore[section];
+  return buildPrivateMetadata({ title: copy.metaTitle, description: copy.metaDescription, follow: true });
 }
 
 export default async function ExploreSectionPage({ params }) {
