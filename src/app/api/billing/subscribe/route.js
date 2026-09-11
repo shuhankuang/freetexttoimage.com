@@ -38,7 +38,7 @@ export async function POST(request) {
           plan,
           interval,
           successUrl: `${origin}${pricingPath}?checkout=success`,
-          cancelUrl: `${origin}${pricingPath}?checkout=cancelled`,
+          cancelUrl: `${origin}${pricingPath}`,
         });
         return NextResponse.json({ url: checkoutSession.url });
       } catch (checkoutErr) {

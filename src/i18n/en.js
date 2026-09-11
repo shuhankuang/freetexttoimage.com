@@ -401,13 +401,6 @@ const en = {
     nextCreditReset: "Credits refresh {date}",
     cancelsOn: "Cancels {date}",
     manageSubscription: "Manage subscription",
-    includedTitle: "Included with every plan",
-    benefits: {
-      models: { title: "Every image model", body: "Use both Z-Image and Wan 2.7." },
-      successOnly: { title: "Pay for results", body: "Failed generations return their credits." },
-      downloads: { title: "Clean downloads", body: "Download your images without a watermark." },
-      history: { title: "Your creation history", body: "Come back to the images you made." },
-    },
     topupEyebrow: "NEED A LITTLE MORE?",
     onetimeSection: "Permanent credit",
     onetimeAccent: "top-ups",
@@ -427,7 +420,7 @@ const en = {
       yearly: { question: "How does yearly billing work?", answer: "Yearly plans include 2 months free compared with paying monthly. You receive the same monthly credits, with a lower overall price." },
     },
     checkoutSuccess: "Payment received — your credits will show up in a moment.",
-    checkoutCancelled: "Checkout cancelled. No charge was made.",
+    securePayments: "Secure payments powered by Stripe. Mastercard, Visa, Discover, and American Express accepted.",
     changeScheduled: "Your plan change is scheduled for {date}.",
     errors: {
       checkout: "Couldn't start checkout. Please try again.",

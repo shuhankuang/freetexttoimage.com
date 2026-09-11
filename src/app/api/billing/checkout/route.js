@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { createTopupCheckoutSession, CREDIT_PACKS } from "@/lib/billing";
+import { localePath } from "@/i18n/config";
 
 // 一次性积分包 Checkout。body 只接受 { pack: "credits_40" | "credits_140" | "credits_320" }——
 // 金额/积分数量由服务端按 pack 查，浏览器传别的字段一律忽略。
@@ -22,13 +23,14 @@ export async function POST(request) {
   }
 
   const origin = process.env.APP_URL || new URL(request.url).origin;
+  const pricingPath = localePath(body?.locale === "ja" ? "ja" : "en", "/pricing");
   try {
     const checkoutSession = await createTopupCheckoutSession({
       userId: session.user.id,
       userEmail: session.user.email,
       packId,
-      successUrl: `${origin}/pricing?checkout=success`,
-      cancelUrl: `${origin}/pricing?checkout=cancelled`,
+      successUrl: `${origin}${pricingPath}?checkout=success`,
+      cancelUrl: `${origin}${pricingPath}`,
     });
     return NextResponse.json({ url: checkoutSession.url });
   } catch (err) {

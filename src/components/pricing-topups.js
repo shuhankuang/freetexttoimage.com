@@ -16,7 +16,7 @@ const PACKS = [
 
 export default function PricingTopups() {
   const router = useRouter();
-  const { path, t } = useI18n();
+  const { locale, path, t } = useI18n();
   const { data: session } = authClient.useSession();
   const [pendingPack, setPendingPack] = useState(null);
   const [error, setError] = useState("");
@@ -42,7 +42,7 @@ export default function PricingTopups() {
       const response = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pack: packId }),
+        body: JSON.stringify({ pack: packId, locale }),
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok || !body.url) throw new Error(body.error || t("pricing.errors.checkout"));

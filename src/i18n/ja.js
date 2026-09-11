@@ -401,13 +401,6 @@ const ja = {
     nextCreditReset: "次回クレジット更新: {date}",
     cancelsOn: "解約日: {date}",
     manageSubscription: "プランを管理",
-    includedTitle: "すべてのプランに含まれるもの",
-    benefits: {
-      models: { title: "すべての画像モデル", body: "Z-Image と Wan 2.7 の両方を利用できます。" },
-      successOnly: { title: "結果にだけお支払い", body: "生成に失敗した場合はクレジットが戻ります。" },
-      downloads: { title: "きれいにダウンロード", body: "透かしなしで画像を保存できます。" },
-      history: { title: "作品履歴", body: "作成した画像をいつでも見返せます。" },
-    },
     topupEyebrow: "もう少し必要ですか？",
     onetimeSection: "無期限クレジットを",
     onetimeAccent: "追加",
@@ -427,7 +420,7 @@ const ja = {
       yearly: { question: "年払いはどのような仕組みですか？", answer: "年払いプランは月払いと比べて2か月分お得です。毎月同じクレジット数を受け取りながら、年間の支払総額を抑えられます。" },
     },
     checkoutSuccess: "お支払いを確認しました。まもなくクレジットが反映されます。",
-    checkoutCancelled: "決済がキャンセルされました。課金はされていません。",
+    securePayments: "Stripeによる安全な決済。Mastercard、Visa、Discover、American Expressをご利用いただけます。",
     changeScheduled: "プランの変更を {date} に予約しました。",
     errors: {
       checkout: "決済を開始できませんでした。もう一度お試しください。",

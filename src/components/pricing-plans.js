@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, Card, Spinner } from "@heroui/react";
@@ -166,7 +167,6 @@ export default function PricingPlans() {
 
   return <>
     {checkoutState === "success" && <p className="pricing-banner pricing-banner-success" role="status">{t("pricing.checkoutSuccess")}</p>}
-    {checkoutState === "cancelled" && <p className="pricing-banner" role="status">{t("pricing.checkoutCancelled")}</p>}
     {scheduledChange && <p className="pricing-banner pricing-banner-success" role="status">{t("pricing.changeScheduled", { date: scheduledChange })}</p>}
     {error && <p className="inline-error" role="alert">{error}</p>}
 
@@ -204,6 +204,15 @@ export default function PricingPlans() {
           <div className="plan-card-action">{planAction(plan)}</div>
         </Card.Content></Card>;
       })}</div>
+      <div className="pricing-payment-trust">
+        <Image
+          src="/payment.png"
+          alt={t("pricing.securePayments")}
+          width={808}
+          height={264}
+          sizes="(max-width: 620px) 84vw, 380px"
+        />
+      </div>
     </section>
   </>;
 }

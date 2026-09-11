@@ -4,10 +4,8 @@ import FaqBlock from "@/components/blocks/faq";
 import Hero from "@/components/blocks/hero";
 import PricingPlans from "@/components/pricing-plans";
 import PricingTopups from "@/components/pricing-topups";
-import { CheckIcon } from "@/components/ui";
 import { getDictionary } from "@/i18n/dictionaries";
 
-const BENEFITS = ["models", "successOnly", "downloads", "history"];
 const FAQS = ["credits", "modelCost", "monthly", "permanent", "buyWithoutSubscription", "cancel", "yearly"];
 
 export default async function Pricing({ locale }) {
@@ -26,13 +24,6 @@ export default async function Pricing({ locale }) {
     />
 
     <PricingPlans />
-
-    <section className="pricing-benefits" aria-label={copy.includedTitle}>
-      {BENEFITS.map((key) => <div key={key}>
-        <span><CheckIcon size={15} /></span>
-        <div><strong>{copy.benefits[key].title}</strong><p>{copy.benefits[key].body}</p></div>
-      </div>)}
-    </section>
 
     <section className="topup-section" aria-labelledby="topup-heading">
       <Hero
