@@ -51,3 +51,6 @@ sqlite.db-shm
 # source gallery exports (optimized WebP derivatives are committed)
 public/gallery/examples/ChatGPT Image *.png
 public/model-images/ChatGPT Image *.png
+
+# source footer artwork (optimized WebP derivative is committed)
+public/footer-bg*.png

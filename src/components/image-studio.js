@@ -23,7 +23,7 @@ const SETTINGS_STORAGE_KEY = "freetexttoimage:image-settings:v1";
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export default function ImageStudio({ models = [], defaultModel = "z-image", howItWorks = null, modelShowcase = null }) {
+export default function ImageStudio({ models = [], defaultModel = "z-image", howItWorks = null, modelShowcase = null, faq = null, cta = null }) {
   const router = useRouter(); const fileInput = useRef(null);
   const { messages, path, t } = useI18n();
   const [prompt, setPrompt] = useState(""); const [model, setModel] = useState(defaultModel); const [ratio, setRatio] = useState("1:1"); const [imageCount, setImageCount] = useState(1);
@@ -157,7 +157,7 @@ export default function ImageStudio({ models = [], defaultModel = "z-image", how
       subtitle={t("studio.subtitle")}
       icon={<SparkIcon className="title-flower" size={24} />}
     />
-    <Card className="generator-card"><Card.Content>
+    <Card id="image-generator" className="generator-card"><Card.Content>
       <div className="composer-heading"><Label htmlFor="image-prompt" className="prompt-label"><SparkIcon />{t("studio.promptLabel")}</Label><Button variant="ghost" onPress={surprise}><DiceIcon />{t("studio.surprise")}</Button></div>
       <TextArea id="image-prompt" maxLength={maxPrompt} fullWidth rows={3} value={prompt} onChange={(event) => { setPrompt(event.target.value); setError(""); }} placeholder={t("studio.placeholder")} className="generator-textarea rounded-none" />
       <div className="generator-meta"><input ref={fileInput} hidden type="file" accept="image/png,image/jpeg,image/webp" onChange={attach} /><Button variant="ghost" onPress={() => fileInput.current.click()}><ImagePlusIcon />{t("studio.addReference")}</Button><span>{prompt.length} / {maxPrompt}</span></div>
@@ -174,6 +174,8 @@ export default function ImageStudio({ models = [], defaultModel = "z-image", how
     {howItWorks}
     <InspirationGallery onChoose={choosePrompt} />
     {modelShowcase}
+    {faq}
+    {cta}
     <ResultViewer item={result} isOpen={!!result} onOpenChange={(open) => { if (!open) setResult(null); }} />
   </main>;
 }

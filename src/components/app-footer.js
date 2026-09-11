@@ -8,7 +8,7 @@ export default async function AppFooter({ locale }) {
   const messages = await getDictionary(locale);
   const path = (pathname) => localePath(locale, pathname);
 
-  return <footer className="app-footer mt-20">
+  return <footer className="app-footer">
     <span className="footer-brand"><Logo href={path("/")} label={messages.shell.homeLabel} /><span>{messages.inspiration.footer}</span></span>
     <nav aria-label={messages.legal.navigation}>
       <Link href={path("/pricing")}>{messages.shell.pricing}</Link>

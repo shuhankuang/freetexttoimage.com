@@ -166,6 +166,47 @@ const en = {
       grok: "Expressive portraits and fast creative visuals.",
     },
   },
+  homeFaq: {
+    section: "FREQUENTLY ASKED QUESTIONS",
+    title: "Questions About",
+    titleAccent: "Creating Images from Text",
+    subtitle: "Simple answers about creating images from text, prompts, models, and free image generation.",
+    items: {
+      what: {
+        question: "What is an AI text-to-image generator?",
+        answer: "An AI text-to-image generator creates images from written words. Describe the image you want, choose a model, and generate an image from your text in seconds.",
+      },
+      how: {
+        question: "How do I create an image from text?",
+        answer: "Type what you want to see into the prompt box, choose an image model and size, then click Generate. You can change your prompt and try again until you get the result you want.",
+      },
+      free: {
+        question: "Can I generate AI images for free?",
+        answer: "Yes. FreeTextToImage gives you free credits when you sign up, so you can try the image generator before paying. No credit card is needed to get started.",
+      },
+      models: {
+        question: "Which AI image models are available?",
+        answer: "You can use GPT Image 2.5, Nano Banana 2, Nano Banana Pro, FLUX.2 Pro, Seedream 4.5, Z-Image, Wan 2.7 Image, and Grok Imagine. Each model can give you a different look and result.",
+      },
+      reference: {
+        question: "Can I use an image as a reference?",
+        answer: "Reference image support is coming soon. For now, describe the look or idea you want in your text prompt.",
+      },
+      prompt: {
+        question: "How do I write a good AI image prompt?",
+        answer: "Start with what you want to see, then add useful details such as the style, colors, lighting, background, or mood. Clear prompts usually give better image results.",
+      },
+    },
+  },
+  homeCta: {
+    section: "START CREATING",
+    title: "Ready to Turn Your Ideas",
+    titleAccent: "Into Images?",
+    description: "Create images from text with leading AI image models.",
+    descriptionSecond: "Start free and see what you can make.",
+    action: "Start Creating Free",
+    note: "No credit card required · Free credits included",
+  },
   creations: {
     loading: "Loading your creations…",
     section: "LIBRARY",

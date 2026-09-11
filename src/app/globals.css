@@ -77,7 +77,7 @@ button, input, textarea { font: inherit; }
 .app-frame { min-height: 100vh; display: grid; grid-template-columns: 238px minmax(0, 1fr); }
 .app-sidebar { position: sticky; top: 0; height: 100vh; padding: 28px 18px 18px; background: #f1f0e9; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
 .app-sidebar .logo { margin: 4px 12px 48px; }.app-sidebar nav { min-height: 0; display: flex; flex-direction: column; overflow-y: auto; }.sidebar-nav-label { margin: 0 13px 10px; color: #818779; font-size: 11px; font-weight: 400; letter-spacing: 1.3px; text-transform: uppercase; }.sidebar-nav-label:not(:first-child) { margin-top: 28px; }.sidebar-nav-group { display: flex; flex-direction: column; gap: 4px; }.app-sidebar nav a { display: flex; align-items: center; justify-content: flex-start; gap: 12px; min-height: 44px; padding: 0 13px; border-radius: 9px; color: #6e7468; font-size: 15px; }.app-sidebar nav a:hover { background: #e9e9e2; }.app-sidebar nav a.active { background: #fffdf9; color: #414b39; font-weight: 600; box-shadow: 0 3px 10px rgba(55, 61, 48, .07); }
-.app-main { min-width: 0; min-height: 100vh; display: flex; flex-direction: column; }.app-header { height: 68px; padding: 0 34px; border-bottom: 1px solid var(--border); display: flex; justify-content: flex-end; align-items: center; gap: 18px; color: #7c8176; font-size: 13px; }.app-header > span { margin-right: auto; }.app-header div { display: flex; align-items: center; gap: 7px; }
+.app-main { min-width: 0; min-height: 100vh; display: flex; flex-direction: column; }.app-main > main { position: relative; z-index: 1; }.app-header { height: 68px; padding: 0 34px; border-bottom: 1px solid var(--border); display: flex; justify-content: flex-end; align-items: center; gap: 18px; color: #7c8176; font-size: 13px; }.app-header > span { margin-right: auto; }.app-header div { display: flex; align-items: center; gap: 7px; }
 .header-credits { display: inline-flex; align-items: center; gap: 6px; padding: 7px 15px; border: 1px solid #dfe3d1; border-radius: 999px; background: #f1f4e9; color: #46513d; font-weight: 650; font-size: 13px; white-space: nowrap; }
 .header-credits svg { flex: none; color: #8b9b78; }
 .user-menu-trigger { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; border: 1px solid #e1e2d6; background: #fffdf8; color: #68765b; cursor: pointer; transition: background .15s, border-color .15s, color .15s; }
@@ -398,6 +398,7 @@ body { font-family: Arial, Helvetica, sans-serif; }
 .title-flower { display: inline-block; margin-left: 2px; color: #cf815b; vertical-align: top; transform: translate(9px, -15px); }
 .creative-heading > p:not(.hero-title) { margin: 0 auto; color: #7d8473; font-size: 15px; line-height: 1.7; }
 .image-studio .generator-card { max-width: 890px; margin: auto; gap: 0; border-radius: 15px; background: #fff; box-shadow: 0 6px 24px #303c2010 !important; overflow: hidden !important; }
+.image-studio #image-generator { scroll-margin-top: 28px; }
 .image-studio .generator-card .card__content { padding: 17px 22px 8px; }
 .composer-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .composer-heading .prompt-label { display: flex; gap: 8px; align-items: center; color: #747f68; font-weight: 400; margin: 0; font-size: 14px; }
@@ -511,7 +512,35 @@ body { font-family: Arial, Helvetica, sans-serif; }
 .model-family-model:hover { color: var(--accent); transform: translateX(2px); }
 @media (max-width: 900px) { .model-showcase-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }.model-showcase-grid > .model-family:nth-child(n) { border: 0; }.model-showcase-grid > .model-family:nth-child(2n) { border-left: 1px solid #dfe2d7; }.model-showcase-grid > .model-family:nth-child(n + 3) { border-top: 1px solid #dfe2d7; } }
 @media (max-width: 620px) { .creative-heading.section-heading > .hero-title { margin-top: 18px; font-size: 24px; }.creative-heading.section-heading > p:not(.hero-title) { font-size: 13px; }.model-showcase { margin-top: 42px; }.model-showcase-heading { margin-bottom: 24px; }.model-showcase-grid { grid-template-columns: 1fr; }.model-showcase-grid > .model-family:nth-child(n) { min-height: 205px; padding: 22px 20px 20px; border: 0; }.model-showcase-grid > .model-family:nth-child(n + 2) { border-top: 1px solid #dfe2d7; }.model-family-index { top: 21px; right: 20px; font-size: 21px; }.model-family-preview { right: 20px; bottom: 22px; width: 72px; height: 72px; }.model-family-heading { padding-right: 46px; }.model-family-heading img { width: 34px; height: 34px; }.model-family-description { width: 68%; min-height: 36px; margin-top: 16px; font-size: 11.5px; }.model-family-list { width: calc(100% - 90px); margin-top: 17px; }.model-family-model { font-size: 15px; } }
-.app-footer { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 26px 34px; border-top: 1px solid var(--border); color: #909a83; font-size: 12px; }
+.home-faq { width: min(100%, 760px); margin: 68px auto 0; }
+.home-faq-heading { margin-bottom: 24px !important; }
+.home-faq-list { border-top: 1px solid #dfe2d7; }
+.home-faq-item { border-bottom: 1px solid #dfe2d7; transition: background-color .18s ease; }
+.home-faq-item:hover { background: #f6f5ef; }
+.home-faq-item summary { min-height: 68px; padding: 18px 4px; display: grid; grid-template-columns: 42px minmax(0, 1fr) 22px; align-items: center; gap: 12px; list-style: none; cursor: pointer; }
+.home-faq-item summary::-webkit-details-marker { display: none; }
+.home-faq-item summary:focus-visible { border-radius: 6px; outline: 2px solid var(--accent); outline-offset: 3px; }
+.home-faq-index { color: #cfd4c9; font: italic 400 16px/1 Georgia, serif; transition: color .18s ease; }
+.home-faq-item:hover .home-faq-index { color: var(--accent); }
+.home-faq-question { color: #4f5948; font-size: 15px; font-weight: 600; line-height: 1.45; transition: color .18s; }
+.home-faq-item[open] .home-faq-question { color: #69775b; }
+.home-faq-toggle { position: relative; width: 18px; height: 18px; color: #89927f; }
+.home-faq-toggle::before,.home-faq-toggle::after { content: ""; position: absolute; top: 8px; left: 3px; width: 12px; height: 1px; background: currentColor; transition: transform .2s ease; }
+.home-faq-toggle::after { transform: rotate(90deg); }
+.home-faq-item[open] .home-faq-toggle::after { transform: rotate(0); }
+.home-faq-item > p { max-width: 720px; margin: -2px 44px 22px 58px; color: #7a8274; font-size: 14px; line-height: 1.7; }
+@media (max-width: 620px) { .home-faq { margin-top: 48px; }.home-faq-heading { margin-bottom: 20px !important; }.home-faq-item summary { min-height: 62px; padding: 15px 2px; grid-template-columns: 30px minmax(0, 1fr) 18px; gap: 9px; }.home-faq-index { font-size: 14px; }.home-faq-question { font-size: 14px; }.home-faq-item > p { margin: -1px 27px 19px 41px; font-size: 13px; } }
+.home-cta { position: relative; z-index: 1; width: min(100%, 760px); margin: 72px auto 64px; text-align: center; }
+.home-cta-heading { max-width: 720px; margin: 0 auto !important; }
+.home-cta-button { min-height: 46px; margin-top: 25px; padding: 0 19px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; border-radius: 8px; background: var(--accent); color: #fff; font-size: 13px; font-weight: 600; box-shadow: 0 5px 16px rgba(32, 38, 28, .18); transition: background-color .18s, transform .18s, box-shadow .18s; }
+.home-cta-button:hover { background: #ca5732; transform: translateY(-1px); box-shadow: 0 8px 20px rgba(32, 38, 28, .24); }
+.home-cta-button span { font-size: 16px; transition: transform .18s; }
+.home-cta-button:hover span { transform: translateX(2px); }
+.home-cta small { display: block; margin-top: 13px; color: #92998b; font-size: 12px; line-height: 1.5; }
+@media (max-width: 620px) { .home-cta { margin: 52px auto 42px; }.home-cta-button { width: 100%; max-width: 280px; min-height: 47px; } }
+.app-footer { position: relative; isolation: isolate; z-index: 0; width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 26px 34px; color: #909a83; font-size: 12px; }
+.app-footer::before,.legal-footer::before { content: ""; position: absolute; z-index: -1; right: 0; bottom: calc(100% - 25px); left: 0; height: 420px; background: url('/footer-bg.webp') center bottom / 100% auto no-repeat; opacity: .24; pointer-events: none; }
+@media (max-width: 620px) { .app-footer::before,.legal-footer::before { height: 300px; background-size: auto 100%; opacity: .2; } }
 .footer-brand { display: flex; align-items: center; gap: 11px; }
 .footer-brand > span { color: #99a08f; }
 .app-footer .logo { height: 24px; gap: 7px; font-size: 14px; letter-spacing: -.35px; }
@@ -523,6 +552,7 @@ body { font-family: Arial, Helvetica, sans-serif; }
 
 /* Simple legal pages */
 .legal-page { min-height: 100vh; display: flex; flex-direction: column; background: var(--background); }
+.legal-header,.legal-main { position: relative; z-index: 1; }
 .legal-header { width: min(100% - 64px, 1120px); height: 82px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
 .legal-header nav { display: flex; align-items: center; gap: 24px; color: #777f70; font-size: 13px; }
 .legal-header nav > a { padding: 8px 0; transition: color .15s; }
@@ -538,7 +568,7 @@ body { font-family: Arial, Helvetica, sans-serif; }
 .legal-document section { padding: 28px 0; border-bottom: 1px solid var(--border); }
 .legal-document h2 { margin: 0 0 10px; color: #565f4e; font-size: 16px; font-weight: 650; }
 .legal-document p { margin: 0; color: #737a6e; font-size: 14px; line-height: 1.8; }
-.legal-footer { width: min(100% - 64px, 1120px); margin: auto auto 0; padding: 26px 0 38px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 20px; color: #899083; font-size: 12px; }
+.legal-footer { position: relative; isolation: isolate; z-index: 0; width: min(100% - 64px, 1120px); margin: auto auto 0; padding: 26px 0 38px; display: flex; align-items: center; justify-content: space-between; gap: 20px; color: #899083; font-size: 12px; }
 .legal-footer .logo { height: 24px; gap: 7px; font-size: 14px; }
 .legal-footer .logo-mark { width: 24px; height: 24px; }
 .legal-footer .logo strong { height: 24px; }
