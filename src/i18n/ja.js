@@ -28,9 +28,10 @@ const ja = {
   },
   modelPrompts: {
     section: "モデル別プロンプト",
-    pageTitle: "{model}向けプロンプト",
+    pageTitle: "より良いAI画像を作るための",
+    pageTitleAccent: "{model}プロンプト",
     metaTitle: "{model}のプロンプト例",
-    description: "{model}向けに作られたプロンプト例と、すぐに使えるアイデアを紹介します。",
+    description: "リアルな写真からクリエイティブなデザインまで、{model}向けのプロンプト例と出発点を紹介します。",
     developing: "このプロンプト集は現在準備中です。",
     models: {
       gptImage25: "GPT Image 2.5",
@@ -42,6 +43,8 @@ const ja = {
       open: "プロンプトを開く：{title}",
       viewPrompt: "プロンプトを見る",
       imageUnavailable: "画像を読み込めません",
+      imageGallery: "このプロンプトの画像",
+      showImage: "画像{number}を表示",
       showing: "{total}件中{visible}件を表示",
       loadMore: "さらに読み込む",
       loadingMore: "読み込み中…",

@@ -27,10 +27,11 @@ const en = {
     developing: "This collection is being prepared.",
   },
   modelPrompts: {
-    section: "Model Prompts",
-    pageTitle: "{model} Prompts",
+    section: "MODEL PROMPTS",
+    pageTitle: "{model} Prompts for Better",
+    pageTitleAccent: "AI Images",
     metaTitle: "{model} Prompt Examples",
-    description: "Prompt examples and starting points designed for {model}.",
+    description: "Explore prompt examples and starting points made for {model}, from realistic photos to creative designs.",
     developing: "This prompt collection is being prepared.",
     models: {
       gptImage25: "GPT Image 2.5",
@@ -42,6 +43,8 @@ const en = {
       open: "Open prompt: {title}",
       viewPrompt: "View prompt",
       imageUnavailable: "Image unavailable",
+      imageGallery: "Images in this prompt",
+      showImage: "Show image {number}",
       showing: "Showing {visible} of {total}",
       loadMore: "Load more prompts",
       loadingMore: "Loading more…",

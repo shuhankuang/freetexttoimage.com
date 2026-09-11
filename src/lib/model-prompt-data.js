@@ -9,6 +9,11 @@ function safeTime(value) {
 }
 
 function normalizePrompt(item, model) {
+  const images = Array.from(new Set([
+    ...(Array.isArray(item.images) ? item.images.map((image) => image?.url) : []),
+    item.coverUrl,
+  ].filter(Boolean)));
+
   return {
     id: String(item.tweetId),
     title: item.title?.trim() || "Untitled prompt",
@@ -16,6 +21,7 @@ function normalizePrompt(item, model) {
     model: item.model?.trim() || "GPT Image 2.5",
     modelIcon: model.icon,
     coverUrl: item.coverUrl,
+    images,
     sourceUrl: item.twitterUrl,
     authorName: item.userName?.trim() || item.userScreenName,
     authorHandle: item.userScreenName?.trim() || "",

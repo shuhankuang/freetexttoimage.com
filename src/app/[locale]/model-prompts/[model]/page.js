@@ -41,6 +41,7 @@ export default async function ModelPromptPage({ params }) {
         className="section-heading model-prompts-heading"
         label={copy.section}
         title={copy.pageTitle.replace("{model}", name)}
+        accent={copy.pageTitleAccent.replace("{model}", name)}
         subtitle={copy.description.replace("{model}", name)}
       />
       {items.length > 0

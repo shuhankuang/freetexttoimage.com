@@ -61,6 +61,7 @@ export default function ModelPromptGallery({ items, copy }) {
   const { path } = useI18n();
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [active, setActive] = useState(null);
+  const [activeImage, setActiveImage] = useState(null);
   const [copied, setCopied] = useState(false);
   const [columnCount, setColumnCount] = useState(3);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -110,6 +111,7 @@ export default function ModelPromptGallery({ items, copy }) {
 
   function open(item) {
     setCopied(false);
+    setActiveImage(item.coverUrl);
     setActive(item);
   }
 
@@ -140,7 +142,7 @@ export default function ModelPromptGallery({ items, copy }) {
       </Button>}
     </div>
 
-    <Modal.Backdrop isOpen={Boolean(active)} onOpenChange={(openState) => { if (!openState) setActive(null); }} className="model-prompt-modal-backdrop">
+    <Modal.Backdrop isOpen={Boolean(active)} onOpenChange={(openState) => { if (!openState) { setActive(null); setActiveImage(null); } }} className="model-prompt-modal-backdrop">
       <Modal.Container size="full">
         <Modal.Dialog className="model-prompt-modal">
           <Modal.Heading className="model-prompt-modal-heading">{active?.title || copy.details}</Modal.Heading>
@@ -148,8 +150,16 @@ export default function ModelPromptGallery({ items, copy }) {
           <Modal.Body>
             {active && <div className="model-prompt-detail">
               <div className="model-prompt-detail-image">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={active.coverUrl} alt={active.title} />
+                <div className="model-prompt-detail-stage">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img key={activeImage} src={activeImage || active.coverUrl} alt={active.title} />
+                </div>
+                {active.images.length > 1 && <div className="model-prompt-thumbnails" aria-label={copy.imageGallery}>
+                  {active.images.map((image, index) => <button type="button" className={image === activeImage ? "is-active" : ""} aria-pressed={image === activeImage} aria-label={copy.showImage.replace("{number}", index + 1)} onClick={() => setActiveImage(image)} key={image}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={image} alt="" loading="lazy" decoding="async" />
+                  </button>)}
+                </div>}
               </div>
               <aside className="model-prompt-detail-copy">
                 <div className="model-prompt-detail-source">
