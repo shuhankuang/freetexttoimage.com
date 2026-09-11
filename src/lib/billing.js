@@ -62,11 +62,11 @@ export async function createTopupCheckoutSession({ userId, userEmail, packId, su
 // ── 订阅（Phase 4）───────────────────────────────────────
 export const SUBSCRIPTION_PLANS = {
   basic: {
-    credits: 100,
+    credits: 120,
     prices: { month: "STRIPE_PRICE_BASIC", year: "STRIPE_PRICE_BASIC_YEARLY" },
   },
   pro: {
-    credits: 350,
+    credits: 400,
     prices: { month: "STRIPE_PRICE_PRO", year: "STRIPE_PRICE_PRO_YEARLY" },
   },
 };

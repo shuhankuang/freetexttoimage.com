@@ -38,8 +38,8 @@ const PRODUCT_SPECS = [
   {
     key: "basic",
     name: "FreeTexttoImage Basic",
-    description: "100 fresh image-generation credits every month.",
-    metadata: { kind: "subscription", plan: "basic", monthly_credits: "100" },
+    description: "120 fresh image-generation credits every month.",
+    metadata: { kind: "subscription", plan: "basic", monthly_credits: "120" },
     prices: [
       { key: "freetexttoimage_basic_monthly", env: "STRIPE_PRICE_BASIC", amount: 900, interval: "month" },
       { key: "freetexttoimage_basic_yearly", env: "STRIPE_PRICE_BASIC_YEARLY", amount: 9000, interval: "year" },
@@ -48,8 +48,8 @@ const PRODUCT_SPECS = [
   {
     key: "pro",
     name: "FreeTexttoImage Pro",
-    description: "350 fresh image-generation credits every month.",
-    metadata: { kind: "subscription", plan: "pro", monthly_credits: "350" },
+    description: "400 fresh image-generation credits every month.",
+    metadata: { kind: "subscription", plan: "pro", monthly_credits: "400" },
     prices: [
       { key: "freetexttoimage_pro_monthly", env: "STRIPE_PRICE_PRO", amount: 2400, interval: "month" },
       { key: "freetexttoimage_pro_yearly", env: "STRIPE_PRICE_PRO_YEARLY", amount: 24000, interval: "year" },

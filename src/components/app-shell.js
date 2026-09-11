@@ -96,7 +96,7 @@ export default function AppShell({ children, footer, publicView = false, showMyC
         <span><SparklesIcon /></span>
         <div className="note-title">{t("shell.noteStart")}<br /><em>{t("shell.noteEnd")}</em></div>
         <p>{t("shell.noteBody").split("\n").map((line, index) => <span key={line}>{index > 0 && <br />}{line}</span>)}</p>
-        <Link href={user ? studioPath : loginPath}>{t("shell.startCreating")} <span>→</span></Link>
+        <Link href={homePath}>{t("shell.backHome")} <span>→</span></Link>
       </div>
     </aside>
     <div className="app-main">

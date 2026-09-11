@@ -10,7 +10,6 @@ import {
   ArrowIcon, CheckIcon, CopyIcon, ImageIcon, ImagePlusIcon, SparkIcon, TrashIcon,
 } from "@/components/ui";
 import Steps from "@/components/blocks/steps";
-import Hero from "@/components/blocks/hero";
 
 const GUIDE_STEP_KEYS = ["upload", "analyze", "create"];
 
@@ -126,16 +125,7 @@ export default function ImageToPrompt() {
     router.push(path("/"));
   }
 
-  return <main className="workspace-page image-prompt-page">
-    <Hero
-      headingLevel="h1"
-      className="image-prompt-hero"
-      label={t("imageToPrompt.section")}
-      title={t("imageToPrompt.title")}
-      accent={t("imageToPrompt.titleAccent")}
-      subtitle={t("imageToPrompt.subtitle")}
-    />
-
+  return <>
     <div className="image-prompt-workspace">
       <Card className="image-prompt-card image-upload-card"><Card.Content>
         <div className="image-prompt-card-heading">
@@ -211,5 +201,5 @@ export default function ImageToPrompt() {
       }))}
     />
     <p className="image-prompt-note">{t("imageToPrompt.note")} <Link href={path("/privacy")}>{t("imageToPrompt.privacy")}</Link></p>
-  </main>;
+  </>;
 }
