@@ -14,5 +14,5 @@ export async function generateMetadata({ params }) {
 
 export default async function StudioLayout({ children, params }) {
   const { locale } = await params;
-  return <ServerAppShell locale={locale}>{children}</ServerAppShell>;
+  return <ServerAppShell activePath="/studio" locale={locale}>{children}</ServerAppShell>;
 }

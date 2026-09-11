@@ -21,7 +21,7 @@ export async function generateMetadata({ params }) {
 
 export default async function HomePage({ params }) {
   const { locale } = await params;
-  return <ServerAppShell publicView locale={locale}>
+  return <ServerAppShell activePath="/" publicView locale={locale}>
     <ImageStudio models={listProviders()} defaultModel={DEFAULT_MODEL} howItWorks={<HomeHowItWorks locale={locale} />} modelShowcase={<ImageModelShowcase locale={locale} />} faq={<HomeFaq locale={locale} />} cta={<HomeCta locale={locale} />} />
   </ServerAppShell>;
 }

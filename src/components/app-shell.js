@@ -8,11 +8,9 @@ import { authClient } from "@/lib/auth-client";
 import { loginPathWithRedirect } from "@/lib/auth-redirect";
 import LanguageSwitcher from "@/components/language-switcher";
 import { useI18n } from "@/i18n/provider";
-import { CoinsIcon, GridIcon, ImageIcon, ImagePromptIcon, Logo, LogoutIcon, ModelsIcon, PaletteIcon, SparklesIcon, TemplateIcon, UserIcon } from "@/components/ui";
+import { CoinsIcon, LogoutIcon, UserIcon } from "@/components/ui";
 
-const SHOW_EXPLORE_NAV = false;
-
-export default function AppShell({ children, footer, publicView = false, showMyCreations = false }) {
+export default function AppShell({ children, footer, publicView = false, sidebar }) {
   const rawPathname = usePathname();
   const pathname = rawPathname.replace(/^\/en(?=\/|$)/, "") || "/";
   const router = useRouter();
@@ -23,12 +21,12 @@ export default function AppShell({ children, footer, publicView = false, showMyC
   const [logoutOpen, setLogoutOpen] = useState(false);
   const signedOutRef = useRef(false);
   const homePath = path("/");
-  const studioPath = path("/studio");
   const creationsPath = path("/creations");
   const imageToPromptPath = path("/image-to-prompt");
   const pricingPath = path("/pricing");
   const profilePath = path("/profile");
   const explorePath = path("/explore");
+  const modelPromptsPath = path("/model-prompts");
   const loginPath = path("/login");
   const loginHref = loginPathWithRedirect(loginPath, pathname);
 
@@ -71,36 +69,12 @@ export default function AppShell({ children, footer, publicView = false, showMyC
         ? t("shell.profileBilling")
         : pathname.startsWith(`${explorePath}/`)
           ? t("shell.explore")
+          : pathname.startsWith(`${modelPromptsPath}/`)
+            ? t("modelPrompts.section")
       : t("shell.imageStudio");
 
   return <div className="app-frame">
-    <aside className="app-sidebar">
-      <Logo href={homePath} label={t("shell.homeLabel")} />
-      <nav aria-label={t("shell.navigation")}>
-        <span className="sidebar-nav-label">{t("shell.workspace")}</span>
-        <div className="sidebar-nav-group">
-          <Link className={pathname === homePath || pathname === studioPath ? "active" : ""} href={homePath}><ImageIcon />{t("shell.create")}</Link>
-          <Link className={pathname === imageToPromptPath ? "active" : ""} href={imageToPromptPath}><ImagePromptIcon />{t("shell.imageToPrompt")}</Link>
-          {showMyCreations && <Link className={pathname === creationsPath ? "active" : ""} href={creationsPath}><GridIcon />{t("shell.creations")}</Link>}
-          <Link className={pathname === pricingPath ? "active" : ""} href={pricingPath}><CoinsIcon />{t("shell.pricing")}</Link>
-        </div>
-
-        {SHOW_EXPLORE_NAV && <>
-          <span className="sidebar-nav-label">{t("shell.explore")}</span>
-          <div className="sidebar-nav-group">
-            <Link className={pathname === `${explorePath}/models` ? "active" : ""} href={`${explorePath}/models`}><ModelsIcon />{t("shell.exploreModels")}</Link>
-            <Link className={pathname === `${explorePath}/styles` ? "active" : ""} href={`${explorePath}/styles`}><PaletteIcon />{t("shell.exploreStyles")}</Link>
-            <Link className={pathname === `${explorePath}/templates` ? "active" : ""} href={`${explorePath}/templates`}><TemplateIcon />{t("shell.exploreTemplates")}</Link>
-          </div>
-        </>}
-      </nav>
-      <div className="sidebar-note">
-        <span><SparklesIcon /></span>
-        <div className="note-title">{t("shell.noteStart")}<br /><em>{t("shell.noteEnd")}</em></div>
-        <p>{t("shell.noteBody").split("\n").map((line, index) => <span key={line}>{index > 0 && <br />}{line}</span>)}</p>
-        <Link href={homePath}>{t("shell.backHome")} <span>→</span></Link>
-      </div>
-    </aside>
+    {sidebar}
     <div className="app-main">
       <header className="app-header">
         <span className="header-trail">{t("shell.workspace")} <i>/</i> <strong>{pageTitle}</strong></span>

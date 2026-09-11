@@ -8,6 +8,7 @@ import {
   Copy,
   Download,
   Dices,
+  Gem,
   Image as ImageGlyph,
   ImagePlus,
   LayoutGrid,
@@ -15,6 +16,7 @@ import {
   Languages,
   LogOut,
   Palette,
+  PlayingCardsFan,
   Plus,
   ScanSearch,
   Sparkle,
@@ -35,6 +37,7 @@ function appIcon(Glyph, defaultSize) {
 
 export const SparkIcon = appIcon(Sparkle, 18);
 export const CoinsIcon = appIcon(Coins, 15);
+export const GemIcon = appIcon(Gem, 20);
 export const CheckIcon = appIcon(Check, 14);
 export const SparklesIcon = appIcon(Sparkles, 16);
 export const ArrowIcon = appIcon(ArrowRight, 17);
@@ -51,6 +54,7 @@ export const PlusIcon = appIcon(Plus, 18);
 export const DiceIcon = appIcon(Dices, 15);
 export const ImagePlusIcon = appIcon(ImagePlus, 16);
 export const ImagePromptIcon = appIcon(ScanSearch, 20);
+export const PromptCardsIcon = appIcon(PlayingCardsFan, 20);
 export const CopyIcon = appIcon(Copy, 14);
 export const DownloadIcon = appIcon(Download, 17);
 export const LanguageIcon = appIcon(Languages, 17);

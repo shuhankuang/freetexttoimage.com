@@ -10,5 +10,5 @@ export async function generateMetadata({ params }) {
 
 export default async function CreationsLayout({ children, params }) {
   const { locale } = await params;
-  return <ServerAppShell locale={locale}>{children}</ServerAppShell>;
+  return <ServerAppShell activePath="/creations" locale={locale}>{children}</ServerAppShell>;
 }
