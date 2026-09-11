@@ -9,6 +9,17 @@ const en = {
   },
   language: { label: "Language", english: "English", japanese: "日本語" },
   legal: { terms: "Terms", privacy: "Privacy", navigation: "Legal pages" },
+  footer: {
+    tagline: "Simple AI tools for turning ideas and images into something new.",
+    copyright: "© {year} FreeTexttoImage",
+    tools: "AI Tools",
+    toolsNavigation: "AI tools",
+    textToImage: "Text to Image",
+    imageToPrompt: "Image to Prompt",
+    product: "Product",
+    productNavigation: "Product pages",
+    legal: "Legal",
+  },
   explore: {
     models: { title: "Models", subtitle: "Compare the image models available in FreeTexttoImage.", metaTitle: "AI Image Models", metaDescription: "Compare AI image models for text-to-image generation, editing, product visuals, portraits, and creative design." },
     templates: { title: "Templates", subtitle: "Start with practical prompt structures for common creative work.", metaTitle: "AI Image Prompt Templates", metaDescription: "Explore reusable AI image prompt templates for product images, portraits, illustrations, and creative projects." },

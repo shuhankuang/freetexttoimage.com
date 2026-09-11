@@ -9,6 +9,17 @@ const ja = {
   },
   language: { label: "言語", english: "English", japanese: "日本語" },
   legal: { terms: "利用規約", privacy: "プライバシー", navigation: "法的情報" },
+  footer: {
+    tagline: "アイデアや画像から新しい表現を作る、シンプルなAIツール。",
+    copyright: "© {year} FreeTexttoImage",
+    tools: "AIツール",
+    toolsNavigation: "AIツール",
+    textToImage: "テキストから画像",
+    imageToPrompt: "画像からプロンプト",
+    product: "サービス",
+    productNavigation: "サービスページ",
+    legal: "法的情報",
+  },
   explore: {
     models: { title: "モデル", subtitle: "FreeTexttoImageで利用できる画像モデルを比較できます。", metaTitle: "AI画像モデル", metaDescription: "テキストからの画像生成、画像編集、商品画像、人物、デザインに対応するAI画像モデルを比較できます。" },
     templates: { title: "テンプレート", subtitle: "よく使う制作目的に合ったプロンプト構成から始められます。", metaTitle: "AI画像プロンプトテンプレート", metaDescription: "商品画像、人物、イラスト、クリエイティブ制作に使えるAI画像プロンプトテンプレートを探せます。" },

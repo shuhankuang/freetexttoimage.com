@@ -16,43 +16,100 @@ const REQUIRED_EVENTS = [
 const PRODUCT_SPECS = [
   {
     key: "credits_40",
-    name: "FreeTexttoImage — 40 Credits",
-    description: "40 permanent image-generation credits.",
-    metadata: { kind: "credit_pack", pack_id: "credits_40", credits: "40" },
-    prices: [{ key: "freetexttoimage_credits_40", env: "STRIPE_PRICE_CREDITS_40", amount: 500 }],
+    name: "FreeTexttoImage — 40 Permanent Credits",
+    description: "40 AI image-generation credits that never expire.",
+    metadata: { kind: "credit_pack", pack_id: "credits_40", credits: "40", expires: "never" },
+    prices: [{
+      key: "freetexttoimage_credits_40",
+      env: "STRIPE_PRICE_CREDITS_40",
+      amount: 500,
+      metadata: { kind: "credit_pack", pack_id: "credits_40", credits: "40", expires: "never" },
+    }],
   },
   {
     key: "credits_140",
-    name: "FreeTexttoImage — 140 Credits",
-    description: "140 permanent image-generation credits.",
-    metadata: { kind: "credit_pack", pack_id: "credits_140", credits: "140" },
-    prices: [{ key: "freetexttoimage_credits_140", env: "STRIPE_PRICE_CREDITS_140", amount: 1500 }],
+    name: "FreeTexttoImage — 140 Permanent Credits",
+    description: "140 AI image-generation credits that never expire.",
+    metadata: { kind: "credit_pack", pack_id: "credits_140", credits: "140", expires: "never" },
+    prices: [{
+      key: "freetexttoimage_credits_140",
+      env: "STRIPE_PRICE_CREDITS_140",
+      amount: 1500,
+      metadata: { kind: "credit_pack", pack_id: "credits_140", credits: "140", expires: "never" },
+    }],
   },
   {
     key: "credits_320",
-    name: "FreeTexttoImage — 320 Credits",
-    description: "320 permanent image-generation credits.",
-    metadata: { kind: "credit_pack", pack_id: "credits_320", credits: "320" },
-    prices: [{ key: "freetexttoimage_credits_320", env: "STRIPE_PRICE_CREDITS_320", amount: 3000 }],
+    name: "FreeTexttoImage — 320 Permanent Credits",
+    description: "320 AI image-generation credits that never expire.",
+    metadata: { kind: "credit_pack", pack_id: "credits_320", credits: "320", expires: "never" },
+    prices: [{
+      key: "freetexttoimage_credits_320",
+      env: "STRIPE_PRICE_CREDITS_320",
+      amount: 3000,
+      metadata: { kind: "credit_pack", pack_id: "credits_320", credits: "320", expires: "never" },
+    }],
   },
   {
     key: "basic",
     name: "FreeTexttoImage Basic",
-    description: "120 fresh image-generation credits every month.",
-    metadata: { kind: "subscription", plan: "basic", monthly_credits: "120" },
+    description: "120 credits each month, up to 60 images, all AI models, faster generation, and watermark-free output.",
+    metadata: {
+      kind: "subscription",
+      plan: "basic",
+      monthly_credits: "120",
+      images_per_month: "60",
+      all_models: "true",
+      generation_speed: "faster",
+      watermark_free: "true",
+      support: "standard",
+    },
     prices: [
-      { key: "freetexttoimage_basic_monthly", env: "STRIPE_PRICE_BASIC", amount: 900, interval: "month" },
-      { key: "freetexttoimage_basic_yearly", env: "STRIPE_PRICE_BASIC_YEARLY", amount: 9000, interval: "year" },
+      {
+        key: "freetexttoimage_basic_monthly",
+        env: "STRIPE_PRICE_BASIC",
+        amount: 900,
+        interval: "month",
+        metadata: { kind: "subscription", plan: "basic", billing_interval: "month", monthly_credits: "120" },
+      },
+      {
+        key: "freetexttoimage_basic_yearly",
+        env: "STRIPE_PRICE_BASIC_YEARLY",
+        amount: 9000,
+        interval: "year",
+        metadata: { kind: "subscription", plan: "basic", billing_interval: "year", monthly_credits: "120", monthly_equivalent_cents: "750", months_free: "2" },
+      },
     ],
   },
   {
     key: "pro",
     name: "FreeTexttoImage Pro",
-    description: "400 fresh image-generation credits every month.",
-    metadata: { kind: "subscription", plan: "pro", monthly_credits: "400" },
+    description: "400 credits each month, up to 200 images, all AI models, faster generation, watermark-free output, and priority support.",
+    metadata: {
+      kind: "subscription",
+      plan: "pro",
+      monthly_credits: "400",
+      images_per_month: "200",
+      all_models: "true",
+      generation_speed: "faster",
+      watermark_free: "true",
+      support: "priority",
+    },
     prices: [
-      { key: "freetexttoimage_pro_monthly", env: "STRIPE_PRICE_PRO", amount: 2400, interval: "month" },
-      { key: "freetexttoimage_pro_yearly", env: "STRIPE_PRICE_PRO_YEARLY", amount: 24000, interval: "year" },
+      {
+        key: "freetexttoimage_pro_monthly",
+        env: "STRIPE_PRICE_PRO",
+        amount: 2400,
+        interval: "month",
+        metadata: { kind: "subscription", plan: "pro", billing_interval: "month", monthly_credits: "400" },
+      },
+      {
+        key: "freetexttoimage_pro_yearly",
+        env: "STRIPE_PRICE_PRO_YEARLY",
+        amount: 24000,
+        interval: "year",
+        metadata: { kind: "subscription", plan: "pro", billing_interval: "year", monthly_credits: "400", monthly_equivalent_cents: "2000", months_free: "2" },
+      },
     ],
   },
 ];
@@ -62,7 +119,7 @@ function usage() {
 配置 FreeTexttoImage 的 Stripe 正式环境资源。
 
 用法：
-  pnpm stripe:setup:production              预览将创建或复用的资源
+  pnpm stripe:setup:production              预览将创建或同步的资源
   pnpm stripe:setup:production -- --apply   创建资源并回写 .env.production
 
 选项：
@@ -79,6 +136,7 @@ function usage() {
 function parseArgs(argv) {
   const options = { apply: false, envFile: ".env.production" };
   for (const arg of argv) {
+    if (arg === "--") continue;
     if (arg === "--apply") options.apply = true;
     else if (arg === "--help" || arg === "-h") options.help = true;
     else if (arg.startsWith("--env-file=")) options.envFile = arg.slice("--env-file=".length);
@@ -268,7 +326,7 @@ async function main() {
   const envUpdates = {};
   for (const productSpec of PRODUCT_SPECS) {
     let product = productsByKey.get(productSpec.key) || null;
-    const action = !product ? "创建" : productNeedsUpdate(product, productSpec) ? "更新" : "复用";
+    const action = !product ? "创建" : productNeedsUpdate(product, productSpec) ? "更新" : "同步";
     console.log(`[${action}] 产品 ${productSpec.name}`);
 
     if (options.apply) {
@@ -287,7 +345,7 @@ async function main() {
       let price = pricesByKey.get(priceSpec.key) || null;
       if (price) assertPriceMatches(price, priceSpec, product);
       console.log(price
-        ? `  [复用] ${priceSpec.key} · ${describeAmount(priceSpec.amount, priceSpec.interval)} · ${price.id}`
+        ? `  [同步] ${priceSpec.key} · ${describeAmount(priceSpec.amount, priceSpec.interval)} · ${price.id}`
         : `  [创建] ${priceSpec.key} · ${describeAmount(priceSpec.amount, priceSpec.interval)}`);
 
       if (options.apply && !price) {
@@ -298,8 +356,13 @@ async function main() {
           lookup_key: priceSpec.key,
           nickname: priceSpec.key,
           ...(priceSpec.interval ? { recurring: { interval: priceSpec.interval, usage_type: "licensed" } } : {}),
-          metadata: managedMetadata(priceSpec.key, { product_key: productSpec.key }),
+          metadata: managedMetadata(priceSpec.key, { product_key: productSpec.key, ...priceSpec.metadata }),
         }, { idempotencyKey: `${MANAGED_BY}:price:${priceSpec.key}` });
+      } else if (options.apply && price) {
+        price = await stripe.prices.update(price.id, {
+          nickname: priceSpec.key,
+          metadata: managedMetadata(priceSpec.key, { product_key: productSpec.key, ...priceSpec.metadata }),
+        });
       }
       if (price) envUpdates[priceSpec.env] = price.id;
     }
@@ -331,9 +394,10 @@ async function main() {
   };
 
   if (options.apply) {
+    const { active: _active, ...portalCreateParams } = portalParams;
     portalConfiguration = portalConfiguration
       ? await stripe.billingPortal.configurations.update(portalConfiguration.id, portalParams)
-      : await stripe.billingPortal.configurations.create(portalParams, { idempotencyKey: `${MANAGED_BY}:portal` });
+      : await stripe.billingPortal.configurations.create(portalCreateParams, { idempotencyKey: `${MANAGED_BY}:portal` });
     envUpdates.STRIPE_PORTAL_CONFIGURATION_ID = portalConfiguration.id;
 
     const webhookParams = {

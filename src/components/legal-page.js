@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AppFooter from "@/components/app-footer";
 import LanguageSwitcher from "@/components/language-switcher";
 import { Logo } from "@/components/ui";
 import { legalContent } from "@/content/legal";
@@ -36,10 +37,7 @@ export default function LegalPage({ locale, page }) {
         </div>
       </main>
 
-      <footer className="legal-footer">
-        <Logo href={path("/")} label="FreeTexttoImage home" />
-        <a href="mailto:hello@freetexttoimage.com">{content.common.contact}</a>
-      </footer>
+      <AppFooter locale={locale} />
     </div>
   );
 }
