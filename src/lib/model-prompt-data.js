@@ -9,9 +9,11 @@ function safeTime(value) {
 }
 
 function normalizePrompt(item, model) {
+  // coverUrl 是数据源明确指定的封面。始终把它放在第 1 张，再按源顺序追加其余图片；
+  // 不能先铺 images[] 再补 cover，否则多图条目的缩略图顺序会把封面排到中间。
   const images = Array.from(new Set([
-    ...(Array.isArray(item.images) ? item.images.map((image) => image?.url) : []),
     item.coverUrl,
+    ...(Array.isArray(item.images) ? item.images.map((image) => image?.url) : []),
   ].filter(Boolean)));
 
   return {
