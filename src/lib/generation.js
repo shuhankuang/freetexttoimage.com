@@ -8,6 +8,7 @@ import { getProvider, DEFAULT_MODEL } from "@/lib/models";
 import { publicObjectUrl, uploadObject, s3Configured } from "@/lib/storage";
 import { deductCredits, refundCredits, getBalance } from "@/lib/credits";
 import { ensureSubscriptionCreditsFresh } from "@/lib/billing";
+import { resolveReferenceTokens } from "@/lib/reference-images";
 
 const THUMBNAIL_WIDTH = 640; // 网格列按宽度布局；固定宽度并保留原比例，避免裁掉生成内容
 
@@ -215,13 +216,14 @@ export async function ensurePolling(creationId) {
 }
 
 // ── 对外入口 ──────────────────────────────────────────────
-export async function createJob(user, { prompt, style, ratio, model = DEFAULT_MODEL }) {
+export async function createJob(user, { prompt, style, ratio, model = DEFAULT_MODEL, referenceTokens = [] }) {
   if (!s3Configured) {
     throw configError(
       "S3 storage is not configured. Fill S3_BUCKET/S3_ENDPOINT + S3_ACCESS_KEY_ID + S3_SECRET_ACCESS_KEY in .env.local."
     );
   }
   const provider = getProvider(model);
+  const referenceUrls = resolveReferenceTokens(referenceTokens, user.id, provider.referenceImageLimit || 0);
   const normalizedPrompt = typeof prompt === "string" ? prompt.trim() : "";
   const promptMax = provider.promptMax || 2000;
   if (!normalizedPrompt || normalizedPrompt.length > promptMax) {
@@ -261,6 +263,7 @@ export async function createJob(user, { prompt, style, ratio, model = DEFAULT_MO
       prompt: normalizedPrompt,
       aspectRatio: normalizedRatio,
       callBackUrl: callbackUrl(),
+      referenceUrls,
     });
 
     await db.insert(creations).values({

@@ -48,11 +48,17 @@ export async function POST(request) {
       style: body?.style || null,
       ratio: body?.ratio || null,
       model: body?.model || undefined,
+      referenceTokens: body?.referenceTokens,
     });
     return NextResponse.json(creation, { status: 201 });
   } catch (err) {
     // 积分不足 → 402；缺配置（KIE_API_KEY / S3_*）→ 503；模型服务侧失败 → 502
-    if (err?.code === "INVALID_INPUT" || err?.code === "INVALID_MODEL") {
+    if (
+      err?.code === "INVALID_INPUT" ||
+      err?.code === "INVALID_MODEL" ||
+      err?.code === "INVALID_REFERENCE" ||
+      err?.code === "REFERENCE_EXPIRED"
+    ) {
       return NextResponse.json({ error: err.message, code: err.code }, { status: 400 });
     }
     if (err?.code === "INSUFFICIENT_CREDITS") {

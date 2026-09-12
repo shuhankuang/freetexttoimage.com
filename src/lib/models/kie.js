@@ -73,7 +73,7 @@ function extractResultUrls(resultJson) {
 }
 
 // 工厂：共享 createTask/getTask 管道；每模型声明自己的 input 与 UI 能力。
-function makeKieProvider({ id, label, icon, fixedInput = {}, nsfw = false, promptMax, aspectRatios, qualityLabel = "Standard", creditCost = 1, referenceImageLimit = 0 }) {
+function makeKieProvider({ id, label, icon, fixedInput = {}, nsfw = false, promptMax, aspectRatios, qualityLabel = "Standard", creditCost = 1, referenceImageLimit = 0, reference = null }) {
   return {
     id,
     label,
@@ -85,17 +85,25 @@ function makeKieProvider({ id, label, icon, fixedInput = {}, nsfw = false, promp
     creditCost, // 生成成功扣多少积分，createJob（generation.js）用它去扣款
     referenceImageLimit,
 
-    async createTask({ prompt, aspectRatio, callBackUrl }) {
+    async createTask({ prompt, aspectRatio, callBackUrl, referenceUrls = [] }) {
+      const withReferences = referenceUrls.length > 0;
+      const taskModel = withReferences ? (reference?.model || id) : id;
+      const taskFixedInput = withReferences && reference?.fixedInput
+        ? reference.fixedInput
+        : fixedInput;
       const body = await request("/api/v1/jobs/createTask", {
         method: "POST",
         body: JSON.stringify({
-          model: id,
+          model: taskModel,
           ...(callBackUrl ? { callBackUrl } : {}),
           input: {
             prompt,
-            aspect_ratio: aspectRatio || "1:1",
+            ...(!withReferences || !reference?.omitAspectRatio
+              ? { aspect_ratio: aspectRatio || "1:1" }
+              : {}),
+            ...(withReferences ? { [reference.field]: referenceUrls } : {}),
             ...(nsfw ? { nsfw_checker: true } : {}),
-            ...fixedInput,
+            ...taskFixedInput,
           },
         }),
       });
@@ -154,6 +162,18 @@ export const kieWanImage = makeKieProvider({
   aspectRatios: ["1:1", "4:3", "16:9", "9:16"],
   creditCost: 4,
   referenceImageLimit: 9,
+  reference: {
+    field: "input_urls",
+    omitAspectRatio: true,
+    fixedInput: {
+      resolution: "2K",
+      n: 1,
+      enable_sequential: false,
+      thinking_mode: false,
+      watermark: false,
+      seed: 0,
+    },
+  },
 });
 
 export const kieGptImage25 = makeKieProvider({
@@ -167,6 +187,11 @@ export const kieGptImage25 = makeKieProvider({
   aspectRatios: ["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16"],
   creditCost: 2,
   referenceImageLimit: 16,
+  reference: {
+    model: "gpt-image-2-5-flare-image-to-image",
+    field: "input_urls",
+    fixedInput: { resolution: "2K" },
+  },
 });
 
 export const kieGrokImagine = makeKieProvider({
@@ -180,6 +205,12 @@ export const kieGrokImagine = makeKieProvider({
   aspectRatios: ["1:1", "3:2", "2:3", "16:9", "9:16"],
   creditCost: 2,
   referenceImageLimit: 1,
+  reference: {
+    model: "grok-imagine/image-to-image",
+    field: "image_urls",
+    omitAspectRatio: true,
+    fixedInput: {},
+  },
 });
 
 export const kieNanoBanana2 = makeKieProvider({
@@ -192,6 +223,7 @@ export const kieNanoBanana2 = makeKieProvider({
   aspectRatios: ["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16"],
   creditCost: 2,
   referenceImageLimit: 14,
+  reference: { field: "image_input" },
 });
 
 export const kieFlux2Pro = makeKieProvider({
@@ -205,6 +237,11 @@ export const kieFlux2Pro = makeKieProvider({
   aspectRatios: ["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16"],
   creditCost: 2,
   referenceImageLimit: 8,
+  reference: {
+    model: "flux-2/pro-image-to-image",
+    field: "input_urls",
+    fixedInput: { resolution: "2K" },
+  },
 });
 
 export const kieNanoBananaPro = makeKieProvider({
@@ -217,6 +254,7 @@ export const kieNanoBananaPro = makeKieProvider({
   aspectRatios: ["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16"],
   creditCost: 2,
   referenceImageLimit: 8,
+  reference: { field: "image_input" },
 });
 
 export const kieSeedream45 = makeKieProvider({
@@ -230,4 +268,9 @@ export const kieSeedream45 = makeKieProvider({
   aspectRatios: ["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16"],
   creditCost: 2,
   referenceImageLimit: 14,
+  reference: {
+    model: "seedream/4.5-edit",
+    field: "image_urls",
+    fixedInput: { quality: "basic" },
+  },
 });

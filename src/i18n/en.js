@@ -248,6 +248,7 @@ const en = {
     errors: {
       referenceSize: "Reference images must be smaller than 10 MB.",
       referenceLimit: "You can add up to {count} reference images for this model.",
+      referenceUpload: "A reference image could not be uploaded. Please try again.",
       promptRequired: "Describe the image you want to create.",
       generate: "Generation failed. Please try again.",
       failed: "The image generation failed. Please tweak your prompt and try again.",

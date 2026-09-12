@@ -248,6 +248,7 @@ const ja = {
     errors: {
       referenceSize: "参考画像は10MB未満にしてください。",
       referenceLimit: "このモデルには参考画像を{count}枚まで追加できます。",
+      referenceUpload: "参考画像をアップロードできませんでした。もう一度お試しください。",
       promptRequired: "作りたい画像を入力してください。",
       generate: "画像を生成できませんでした。もう一度お試しください。",
       failed: "画像の生成に失敗しました。プロンプトを調整して、もう一度お試しください。",

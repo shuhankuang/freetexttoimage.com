@@ -93,7 +93,7 @@ export default function ImageStudio({ models = [], defaultModel = "z-image", how
       current.slice(nextReferenceLimit).forEach((item) => URL.revokeObjectURL(item.url));
       return current.slice(0, nextReferenceLimit);
     });
-  }, [models, prompt, ratio]);
+  }, [models, prompt, ratio, setRatio]);
 
   useEffect(() => {
     function selectShowcaseModel(event) {
@@ -134,15 +134,56 @@ export default function ImageStudio({ models = [], defaultModel = "z-image", how
     setError("");
   }
   function surprise() { setPrompt(suggestions[Math.floor(Math.random() * suggestions.length)]); setError(""); }
+  async function uploadReferences(items) {
+    const tokens = [];
+    // 少量并发避免 8–16 张参考图时等待过久，同时避免瞬间打满上传服务。
+    for (let offset = 0; offset < items.length; offset += 3) {
+      const batch = await Promise.all(items.slice(offset, offset + 3).map(async ({ file }) => {
+        const formData = new FormData();
+        formData.append("image", file);
+        formData.append("model", model);
+        const response = await fetch("/api/reference-images", { method: "POST", body: formData });
+        if (response.status === 401) {
+          router.replace(loginHref);
+          const error = new Error("Unauthorized");
+          error.code = "UNAUTHORIZED";
+          throw error;
+        }
+        if (!response.ok) throw new Error(t("studio.errors.referenceUpload"));
+        const body = await response.json();
+        if (!body?.token) throw new Error(t("studio.errors.referenceUpload"));
+        return body.token;
+      }));
+      tokens.push(...batch);
+    }
+    return tokens;
+  }
   async function generate() {
     if (!prompt.trim()) { setError(t("studio.errors.promptRequired")); return; }
     setPending(true); setError(""); setCreditsShort(false);
     try {
+      if (references.length > 0) {
+        const balanceResponse = await fetch("/api/credits");
+        if (balanceResponse.status === 401) {
+          router.replace(loginHref);
+          return;
+        }
+        if (balanceResponse.ok) {
+          const balance = await balanceResponse.json();
+          const cost = activeSpec.creditCost || 1;
+          if ((balance?.total ?? 0) < cost) {
+            setError(t("studio.errors.insufficientCredits", { cost, balance: balance?.total ?? 0 }));
+            setCreditsShort(true);
+            return;
+          }
+        }
+      }
+      const referenceTokens = await uploadReferences(references);
       // 1) 提交生成任务 → 拿回 status=processing 的 creation
       const response = await fetch("/api/creations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt.trim(), model, ratio }),
+        body: JSON.stringify({ prompt: prompt.trim(), model, ratio, referenceTokens }),
       });
       if (response.status === 401) { router.replace(loginHref); return; }
       if (response.status === 402) {
@@ -162,6 +203,7 @@ export default function ImageStudio({ models = [], defaultModel = "z-image", how
       if (finished.status === "failed") throw new Error(t("studio.errors.failed"));
       setResult(finished);
     } catch (err) {
+      if (err?.code === "UNAUTHORIZED") return;
       const knownErrors = Object.values(messages.studio.errors);
       setError(knownErrors.includes(err?.message) ? err.message : t("studio.errors.generate"));
     } finally {

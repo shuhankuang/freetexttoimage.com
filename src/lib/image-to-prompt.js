@@ -1,5 +1,6 @@
+import { uploadTemporaryFile } from "@/lib/kie-files";
+
 const KIE_API_BASE = (process.env.KIE_BASE || "https://api.kie.ai").replace(/\/+$/, "");
-const KIE_UPLOAD_BASE = (process.env.KIE_UPLOAD_BASE || "https://kieai.redpandaai.co").replace(/\/+$/, "");
 
 function apiKey() {
   if (!process.env.KIE_API_KEY) {
@@ -37,24 +38,6 @@ async function kieFetch(url, options) {
   return body;
 }
 
-async function uploadTemporaryImage(buffer) {
-  const upload = await kieFetch(`${KIE_UPLOAD_BASE}/api/file-base64-upload`, {
-    method: "POST",
-    body: JSON.stringify({
-      base64Data: `data:image/webp;base64,${buffer.toString("base64")}`,
-      uploadPath: "freetexttoimage/image-to-prompt",
-      fileName: `${crypto.randomUUID()}.webp`,
-    }),
-  });
-  const url = upload?.data?.fileUrl || upload?.data?.downloadUrl;
-  if (!url) {
-    const error = new Error("KIE did not return an uploaded image URL.");
-    error.code = "KIE_RESPONSE";
-    throw error;
-  }
-  return url;
-}
-
 function analysisInstruction(locale) {
   const outputLanguage = locale === "ja" ? "Japanese" : "English";
   return `Analyze the supplied image and write one polished text-to-image generation prompt in ${outputLanguage}. Describe the visible subject, composition, environment, artistic medium or photographic style, lighting, color palette, mood, perspective, lens or rendering details when they are visually supported. Preserve distinctive visual details without guessing identities, brands, locations, or facts that are not visible. Make the prompt specific and natural, between 80 and 160 words. Return only the prompt, with no heading, bullets, quotation marks, or commentary.`;
@@ -68,7 +51,11 @@ function responseText(body) {
 }
 
 export async function createPromptFromImage(buffer, locale = "en") {
-  const imageUrl = await uploadTemporaryImage(buffer);
+  const imageUrl = await uploadTemporaryFile(buffer, {
+    contentType: "image/webp",
+    fileName: `${crypto.randomUUID()}.webp`,
+    uploadPath: "freetexttoimage/image-to-prompt",
+  });
   const result = await kieFetch(`${KIE_API_BASE}/gemini-2.5-flash/v1/chat/completions`, {
     method: "POST",
     body: JSON.stringify({
