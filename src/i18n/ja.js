@@ -50,6 +50,7 @@ const ja = {
       showing: "{total}件中{visible}件を表示",
       loadMore: "さらに読み込む",
       loadingMore: "読み込み中…",
+      retry: "再試行",
       details: "プロンプトの詳細",
       close: "プロンプトの詳細を閉じる",
       viewOnX: "Xで見る",

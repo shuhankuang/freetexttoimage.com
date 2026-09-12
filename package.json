@@ -9,6 +9,8 @@
     "lint": "eslint",
     "db:generate": "drizzle-kit generate",
     "db:setup": "node scripts/setup-db.mjs",
+    "prompts:import": "node scripts/import-prompt-data.mjs",
+    "prompts:import:dry": "node scripts/import-prompt-data.mjs --dry-run",
     "stripe:setup:production": "node scripts/setup-stripe-production.mjs"
   },
   "dependencies": {

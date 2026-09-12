@@ -59,9 +59,13 @@ function s3() {
   return client;
 }
 
-export async function uploadObject(key, data, contentType = "application/octet-stream") {
-  await s3().putObject(key, data, contentType);
+export async function uploadObject(key, data, contentType = "application/octet-stream", headers) {
+  await s3().putObject(key, data, contentType, undefined, headers);
   return { key };
+}
+
+export async function objectExists(key) {
+  return s3().objectExists(key);
 }
 
 // 返回 Buffer（图片通常几百 KB ~ 几 MB，一次读进内存足够且简单可靠）。

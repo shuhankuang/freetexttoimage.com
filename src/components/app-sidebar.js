@@ -4,7 +4,7 @@ import Link from "next/link";
 import { getDictionary } from "@/i18n/dictionaries";
 import { localePath } from "@/i18n/config";
 import { MODEL_PROMPT_PAGES } from "@/lib/model-prompt-pages";
-import { getModelPromptCount } from "@/lib/model-prompt-data";
+import { getModelPromptCounts } from "@/lib/model-prompt-data";
 import {
   GemIcon, GridIcon, ImageIcon, ImagePromptIcon, Logo, ModelsIcon, PaletteIcon,
   PromptCardsIcon, SparklesIcon, TemplateIcon,
@@ -17,7 +17,7 @@ export default async function AppSidebar({ activePath = "/", locale, showMyCreat
   const copy = messages.shell;
   const path = (pathname) => localePath(locale, pathname);
   const activeClass = (pathname) => activePath === pathname ? "active" : undefined;
-  const modelPromptCounts = await Promise.all(MODEL_PROMPT_PAGES.map((model) => getModelPromptCount(model)));
+  const modelPromptCounts = await getModelPromptCounts();
 
   return <aside className="app-sidebar">
     <Logo href={path("/")} label={copy.homeLabel} />
@@ -32,12 +32,12 @@ export default async function AppSidebar({ activePath = "/", locale, showMyCreat
 
       <span className="sidebar-nav-label">{messages.modelPrompts.section}</span>
       <div className="sidebar-nav-group">
-        {MODEL_PROMPT_PAGES.map((model, index) => {
+        {MODEL_PROMPT_PAGES.map((model) => {
           const href = `/prompts/${model.slug}`;
           return <Link className={activeClass(href)} href={path(href)} key={model.slug}>
             <PromptCardsIcon />
             {messages.modelPrompts.models[model.key]}
-            <span className="sidebar-nav-badge">{modelPromptCounts[index]}</span>
+            <span className="sidebar-nav-badge">{modelPromptCounts[model.slug]}</span>
           </Link>;
         })}
       </div>

@@ -1,4 +1,5 @@
 import { localePath, locales } from "@/i18n/config";
+import { MODEL_PROMPT_PAGES } from "@/lib/model-prompt-pages";
 
 const SITE_URL = "https://freetexttoimage.com";
 const PUBLIC_ROUTES = [
@@ -7,6 +8,7 @@ const PUBLIC_ROUTES = [
   { path: "/pricing", changeFrequency: "monthly", priority: 0.8 },
   { path: "/terms", changeFrequency: "yearly", priority: 0.3 },
   { path: "/privacy", changeFrequency: "yearly", priority: 0.3 },
+  ...MODEL_PROMPT_PAGES.map(({ slug }) => ({ path: `/prompts/${slug}`, changeFrequency: "weekly", priority: 0.7 })),
 ];
 
 function absoluteUrl(locale, path) {

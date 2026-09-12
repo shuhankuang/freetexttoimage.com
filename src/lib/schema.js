@@ -163,3 +163,40 @@ export const subscriptions = sqliteTable("subscriptions", {
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });
+
+// ── 公开 Prompt 画廊 ─────────────────────────────────────
+// images_json 按展示顺序保存；第 1 项永远是封面。这样封面顺序由导入端一次确定，
+// 列表、详情和后续 API 不会各自猜测 coverUrl。
+export const promptItems = sqliteTable(
+  "prompt_items",
+  {
+    id: text("id").primaryKey(),
+    sourceId: text("source_id").notNull(),
+    modelSlug: text("model_slug").notNull(),
+    modelLabel: text("model_label").notNull(),
+    prompt: text("prompt").notNull(),
+    promptType: text("prompt_type").notNull().default("text"),
+    title: text("title"),
+    authorName: text("author_name").notNull(),
+    authorHandle: text("author_handle").notNull(),
+    sourceUrl: text("source_url").notNull(),
+    viewCount: integer("view_count"),
+    publishedAt: integer("published_at").notNull(),
+    images: text("images_json", { mode: "json" }).notNull(),
+    createdAt: text("created_at").notNull(),
+    updatedAt: text("updated_at").notNull(),
+  },
+  (table) => [
+    index("idx_prompt_items_model_page").on(table.modelSlug, table.publishedAt, table.id),
+  ]
+);
+
+export const promptImportFiles = sqliteTable("prompt_import_files", {
+  fileHash: text("file_hash").primaryKey(),
+  filePath: text("file_path").notNull(),
+  status: text("status").notNull(),
+  itemCount: integer("item_count").notNull().default(0),
+  error: text("error"),
+  startedAt: text("started_at").notNull(),
+  completedAt: text("completed_at"),
+});

@@ -50,6 +50,7 @@ const en = {
       showing: "Showing {visible} of {total}",
       loadMore: "Load more prompts",
       loadingMore: "Loading more…",
+      retry: "Try again",
       details: "Prompt details",
       close: "Close prompt details",
       viewOnX: "View on X",
