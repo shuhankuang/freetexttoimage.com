@@ -26,7 +26,7 @@ export default function AppShell({ children, footer, publicView = false, sidebar
   const pricingPath = path("/pricing");
   const profilePath = path("/profile");
   const explorePath = path("/explore");
-  const modelPromptsPath = path("/model-prompts");
+  const promptsPath = path("/prompts");
   const loginPath = path("/login");
   const loginHref = loginPathWithRedirect(loginPath, pathname);
 
@@ -69,7 +69,7 @@ export default function AppShell({ children, footer, publicView = false, sidebar
         ? t("shell.profileBilling")
         : pathname.startsWith(`${explorePath}/`)
           ? t("shell.explore")
-          : pathname.startsWith(`${modelPromptsPath}/`)
+          : pathname.startsWith(`${promptsPath}/`)
             ? t("modelPrompts.section")
       : t("shell.imageStudio");
 

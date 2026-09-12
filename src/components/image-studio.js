@@ -11,7 +11,7 @@ import { MODEL_SELECT_EVENT } from "@/components/model-showcase-button";
 import InspirationGallery from "@/components/inspiration-gallery";
 import ResultViewer from "@/components/result-viewer";
 import { useI18n } from "@/i18n/provider";
-import { ArrowIcon, CheckIcon, CoinsIcon, DiceIcon, ImagePlusIcon, NoCardIcon, SparkIcon, SparklesIcon } from "@/components/ui";
+import { ArrowIcon, CheckIcon, CloseIcon, CoinsIcon, DiceIcon, ImagePlusIcon, NoCardIcon, SparkIcon, SparklesIcon } from "@/components/ui";
 import Hero from "@/components/blocks/hero";
 import { loginPathWithRedirect } from "@/lib/auth-redirect";
 
@@ -26,18 +26,21 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default function ImageStudio({ models = [], defaultModel = "z-image", howItWorks = null, modelShowcase = null, faq = null, cta = null }) {
   const router = useRouter(); const fileInput = useRef(null);
+  const referencesRef = useRef([]);
   const pathname = usePathname();
   const { messages, path, t } = useI18n();
   const loginHref = loginPathWithRedirect(path("/login"), pathname);
   const [prompt, setPrompt] = useState(""); const [model, setModel] = useState(defaultModel); const [ratio, setRatio] = useState("1:1"); const [imageCount, setImageCount] = useState(1);
   const [settingsRestored, setSettingsRestored] = useState(false);
-  const [reference, setReference] = useState(null); const [pending, setPending] = useState(false); const [result, setResult] = useState(null); const [error, setError] = useState(""); const [creditsShort, setCreditsShort] = useState(false);
+  const [references, setReferences] = useState([]); const [pending, setPending] = useState(false); const [result, setResult] = useState(null); const [error, setError] = useState(""); const [creditsShort, setCreditsShort] = useState(false);
 
   // —— 当前模型的能力声明（来自 /studio/page.js 注入的注册表；加模型自动生效）——
   const modelOptions = models.map(({ id, label, icon }) => ({ value: id, label, icon }));
   const activeSpec = models.find((spec) => spec.id === model) || {};
   const ratioOptions = (activeSpec.aspectRatios?.length ? activeSpec.aspectRatios : FALLBACK_RATIOS).map((value) => ({ value, label: value }));
   const maxPrompt = activeSpec.promptMax || 2000;
+  const referenceImageLimit = activeSpec.referenceImageLimit || 0;
+  const referenceSlotCount = Math.min(3, references.length + (references.length < referenceImageLimit ? 1 : 0));
 
   // 浏览器本地只保存真实可用的模型与比例。恢复时重新对照服务端能力清单，
   // 避免模型下线或比例调整后继续提交已经失效的旧值。
@@ -84,6 +87,12 @@ export default function ImageStudio({ models = [], defaultModel = "z-image", how
     if (spec && prompt.length > cap) setPrompt(prompt.slice(0, cap));
     const ratios = spec?.aspectRatios;
     if (ratios && !ratios.includes(ratio)) setRatio(ratios[0]);
+    const nextReferenceLimit = spec?.referenceImageLimit || 0;
+    setReferences((current) => {
+      if (current.length <= nextReferenceLimit) return current;
+      current.slice(nextReferenceLimit).forEach((item) => URL.revokeObjectURL(item.url));
+      return current.slice(0, nextReferenceLimit);
+    });
   }, [models, prompt, ratio]);
 
   useEffect(() => {
@@ -98,8 +107,32 @@ export default function ImageStudio({ models = [], defaultModel = "z-image", how
     return () => window.removeEventListener(MODEL_SELECT_EVENT, selectShowcaseModel);
   }, [models, selectModel]);
 
-  useEffect(() => () => { if (reference?.url?.startsWith("blob:")) URL.revokeObjectURL(reference.url); }, [reference]);
-  function attach(event) { const file = event.target.files?.[0]; if (!file) return; if (file.size > 10 * 1024 * 1024) { setError(t("studio.errors.referenceSize")); return; } setReference({ name: file.name, url: URL.createObjectURL(file) }); setError(""); }
+  useEffect(() => { referencesRef.current = references; }, [references]);
+  useEffect(() => () => { referencesRef.current.forEach((item) => URL.revokeObjectURL(item.url)); }, []);
+
+  function attach(event) {
+    const files = Array.from(event.target.files || []);
+    event.target.value = "";
+    if (!files.length || referenceImageLimit < 1) return;
+    const validFiles = files.filter((file) => file.size <= 10 * 1024 * 1024);
+    const available = Math.max(0, referenceImageLimit - references.length);
+    const accepted = validFiles.slice(0, available);
+    if (accepted.length) {
+      setReferences((current) => [
+        ...current,
+        ...accepted.map((file) => ({ file, name: file.name, url: URL.createObjectURL(file) })),
+      ]);
+    }
+    if (validFiles.length !== files.length) setError(t("studio.errors.referenceSize"));
+    else if (validFiles.length > available) setError(t("studio.errors.referenceLimit", { count: referenceImageLimit }));
+    else setError("");
+  }
+
+  function removeReference(url) {
+    URL.revokeObjectURL(url);
+    setReferences((current) => current.filter((item) => item.url !== url));
+    setError("");
+  }
   function surprise() { setPrompt(suggestions[Math.floor(Math.random() * suggestions.length)]); setError(""); }
   async function generate() {
     if (!prompt.trim()) { setError(t("studio.errors.promptRequired")); return; }
@@ -162,9 +195,23 @@ export default function ImageStudio({ models = [], defaultModel = "z-image", how
     />
     <Card id="image-generator" className="generator-card"><Card.Content>
       <div className="composer-heading"><Label htmlFor="image-prompt" className="prompt-label"><SparkIcon />{t("studio.promptLabel")}</Label><Button variant="ghost" onPress={surprise}><DiceIcon />{t("studio.surprise")}</Button></div>
-      <TextArea id="image-prompt" maxLength={maxPrompt} fullWidth rows={3} value={prompt} onChange={(event) => { setPrompt(event.target.value); setError(""); }} placeholder={t("studio.placeholder")} className="generator-textarea rounded-none" />
-      <div className="generator-meta"><input ref={fileInput} hidden type="file" accept="image/png,image/jpeg,image/webp" onChange={attach} /><Button variant="ghost" onPress={() => fileInput.current.click()}><ImagePlusIcon />{t("studio.addReference")}</Button><span>{prompt.length} / {maxPrompt}</span></div>
-      {reference && <div className="reference-preview"><Image src={reference.url} alt={t("studio.referencePreview")} width={64} height={64} unoptimized /><div><strong>{reference.name}</strong><span>{t("studio.referenceImage")}</span></div><Button size="sm" variant="ghost" onPress={() => setReference(null)}>{t("studio.remove")}</Button></div>}
+      <div className={`prompt-input-layout${referenceImageLimit > 0 ? " has-reference-upload" : ""}`}>
+        {referenceImageLimit > 0 && <div className="reference-strip" style={{ "--reference-columns": referenceSlotCount }}>
+          {references.map((item, index) => <div className="reference-thumbnail" key={item.url} title={item.name}>
+            <Image src={item.url} alt={t("studio.referencePreview")} fill sizes="52px" unoptimized />
+            <span className="reference-thumbnail-index" aria-hidden="true">{index + 1}</span>
+            <button type="button" aria-label={t("studio.remove")} onClick={() => removeReference(item.url)}><CloseIcon /></button>
+          </div>)}
+          {references.length < referenceImageLimit && <>
+            <input ref={fileInput} hidden type="file" multiple={referenceImageLimit > 1} accept="image/png,image/jpeg,image/webp" onChange={attach} />
+            <Button isIconOnly variant="ghost" className="reference-add-button" aria-label={t("studio.addReference")} onPress={() => fileInput.current?.click()}><ImagePlusIcon /></Button>
+          </>}
+        </div>}
+        <div className="prompt-input-wrap">
+          <TextArea id="image-prompt" maxLength={maxPrompt} fullWidth rows={3} value={prompt} onChange={(event) => { setPrompt(event.target.value); setError(""); }} placeholder={t("studio.placeholder")} className="generator-textarea rounded-none" />
+          <span className="prompt-count">{prompt.length} / {maxPrompt}</span>
+        </div>
+      </div>
       {error && <p className="inline-error" role="alert">{error}{creditsShort && <Link href={path("/pricing")}> {t("studio.viewPricing")}</Link>}</p>}
     </Card.Content><Card.Footer className="generator-footer">
       <div className="generator-settings"><ModelPickerPopover label={t("studio.model")} value={model} onChange={selectModel} options={modelOptions} /><ImageSettingsPopover ratios={ratioOptions.map((option) => option.value)} ratio={ratio} onRatioChange={setRatio} quality={activeSpec.qualityLabel || "Standard"} count={imageCount} onCountChange={setImageCount} /></div>

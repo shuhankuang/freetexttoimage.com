@@ -23,6 +23,7 @@ import {
   Sparkles,
   Trash2,
   User,
+  X,
 } from "lucide-react";
 import { BRAND_NAME } from "@/lib/brand";
 
@@ -50,6 +51,7 @@ export const ImageIcon = appIcon(ImageGlyph, 20);
 export const UserIcon = appIcon(User, 20);
 export const LogoutIcon = appIcon(LogOut, 20);
 export const TrashIcon = appIcon(Trash2, 17);
+export const CloseIcon = appIcon(X, 14);
 export const PlusIcon = appIcon(Plus, 18);
 export const DiceIcon = appIcon(Dices, 15);
 export const ImagePlusIcon = appIcon(ImagePlus, 16);

@@ -9,6 +9,7 @@
 //   nsfw         是否开启 nsfw_checker（安全过滤）——故意不放前端，只在此处控制
 //   promptMax    该模型 prompt 上限 → 前端输入框 maxLength 跟着走
 //   aspectRatios 该模型支持的比例枚举 → 前端下拉选项跟着走（切模型自动复位）
+//   referenceImageLimit 参考图的产品侧数量上限；0 表示不展示上传入口
 const BASE = process.env.KIE_BASE || "https://api.kie.ai";
 
 function key() {
@@ -72,7 +73,7 @@ function extractResultUrls(resultJson) {
 }
 
 // 工厂：共享 createTask/getTask 管道；每模型声明自己的 input 与 UI 能力。
-function makeKieProvider({ id, label, icon, fixedInput = {}, nsfw = false, promptMax, aspectRatios, qualityLabel = "Standard", creditCost = 1 }) {
+function makeKieProvider({ id, label, icon, fixedInput = {}, nsfw = false, promptMax, aspectRatios, qualityLabel = "Standard", creditCost = 1, referenceImageLimit = 0 }) {
   return {
     id,
     label,
@@ -82,6 +83,7 @@ function makeKieProvider({ id, label, icon, fixedInput = {}, nsfw = false, promp
     aspectRatios,
     qualityLabel,
     creditCost, // 生成成功扣多少积分，createJob（generation.js）用它去扣款
+    referenceImageLimit,
 
     async createTask({ prompt, aspectRatio, callBackUrl }) {
       const body = await request("/api/v1/jobs/createTask", {
@@ -151,6 +153,7 @@ export const kieWanImage = makeKieProvider({
   qualityLabel: "2K",
   aspectRatios: ["1:1", "4:3", "16:9", "9:16"],
   creditCost: 4,
+  referenceImageLimit: 9,
 });
 
 export const kieGptImage25 = makeKieProvider({
@@ -163,6 +166,7 @@ export const kieGptImage25 = makeKieProvider({
   qualityLabel: "2K",
   aspectRatios: ["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16"],
   creditCost: 2,
+  referenceImageLimit: 16,
 });
 
 export const kieGrokImagine = makeKieProvider({
@@ -175,6 +179,7 @@ export const kieGrokImagine = makeKieProvider({
   qualityLabel: "Pro",
   aspectRatios: ["1:1", "3:2", "2:3", "16:9", "9:16"],
   creditCost: 2,
+  referenceImageLimit: 1,
 });
 
 export const kieNanoBanana2 = makeKieProvider({
@@ -186,6 +191,7 @@ export const kieNanoBanana2 = makeKieProvider({
   qualityLabel: "2K",
   aspectRatios: ["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16"],
   creditCost: 2,
+  referenceImageLimit: 14,
 });
 
 export const kieFlux2Pro = makeKieProvider({
@@ -198,6 +204,7 @@ export const kieFlux2Pro = makeKieProvider({
   qualityLabel: "2K",
   aspectRatios: ["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16"],
   creditCost: 2,
+  referenceImageLimit: 8,
 });
 
 export const kieNanoBananaPro = makeKieProvider({
@@ -209,6 +216,7 @@ export const kieNanoBananaPro = makeKieProvider({
   qualityLabel: "2K",
   aspectRatios: ["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16"],
   creditCost: 2,
+  referenceImageLimit: 8,
 });
 
 export const kieSeedream45 = makeKieProvider({
@@ -221,4 +229,5 @@ export const kieSeedream45 = makeKieProvider({
   qualityLabel: "2K",
   aspectRatios: ["1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16"],
   creditCost: 2,
+  referenceImageLimit: 14,
 });

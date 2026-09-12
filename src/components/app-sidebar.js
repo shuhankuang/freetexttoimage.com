@@ -33,7 +33,7 @@ export default async function AppSidebar({ activePath = "/", locale, showMyCreat
       <span className="sidebar-nav-label">{messages.modelPrompts.section}</span>
       <div className="sidebar-nav-group">
         {MODEL_PROMPT_PAGES.map((model, index) => {
-          const href = `/model-prompts/${model.slug}`;
+          const href = `/prompts/${model.slug}`;
           return <Link className={activeClass(href)} href={path(href)} key={model.slug}>
             <PromptCardsIcon />
             {messages.modelPrompts.models[model.key]}

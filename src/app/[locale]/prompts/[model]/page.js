@@ -31,7 +31,7 @@ export default async function ModelPromptPage({ params }) {
   const messages = await getDictionary(locale);
   const copy = messages.modelPrompts;
   const name = copy.models[model.key];
-  const activePath = `/model-prompts/${model.slug}`;
+  const activePath = `/prompts/${model.slug}`;
   const items = await getModelPromptItems(model);
 
   return <ServerAppShell activePath={activePath} publicView locale={locale}>
