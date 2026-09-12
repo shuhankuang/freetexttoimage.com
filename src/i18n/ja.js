@@ -34,9 +34,8 @@ const ja = {
     description: "リアルな写真からクリエイティブなデザインまで、{model}向けのプロンプト例と出発点を紹介します。",
     developing: "このプロンプト集は現在準備中です。",
     models: {
-      gptImage25: "GPT Image 2.5",
-      nanoBananaPro: "Nano Banana Pro",
-      nanoBanana2: "Nano Banana 2",
+      gptImage: "GPT Image",
+      nanoBanana: "Nano Banana",
     },
     gallery: {
       listLabel: "プロンプト例のギャラリー",

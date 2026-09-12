@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { open, readFile, rm } from "node:fs/promises";
+import { open, readFile, readdir, rm, stat } from "node:fs/promises";
 import path from "node:path";
 import { loadEnvFile } from "node:process";
 import { createClient } from "@libsql/client";
@@ -42,6 +42,18 @@ function promptValue(item, source) {
   return requiredString(item.prompt, "prompt", source);
 }
 
+function authorFrom(item, source) {
+  const sourceUrl = requiredString(item.twitterUrl, "twitterUrl", source);
+  let handle = typeof item.userScreenName === "string" ? item.userScreenName.trim().replace(/^@/, "") : "";
+  if (!handle) {
+    const url = new URL(sourceUrl);
+    handle = url.pathname.split("/").filter(Boolean)[0] || "";
+  }
+  if (!handle) throw new Error(`${source}: unable to derive author handle`);
+  const name = typeof item.userName === "string" && item.userName.trim() ? item.userName.trim() : handle;
+  return { name, handle, sourceUrl };
+}
+
 function normalizeItems(raw, filePath) {
   if (!Array.isArray(raw)) throw new Error(`${filePath}: root must be an array`);
   const ids = new Set();
@@ -50,7 +62,8 @@ function normalizeItems(raw, filePath) {
     const sourceId = requiredString(String(item.tweetId || ""), "tweetId", source);
     const model = resolveModelPromptPage(requiredString(item.model, "model", source));
     if (!model) throw new Error(`${source}: unknown model label "${item.model}"`);
-    const id = `${model.slug}:${sourceId}`;
+    const author = authorFrom(item, source);
+    const id = `${model.sourceKey}:${sourceId}`;
     if (ids.has(id)) throw new Error(`${source}: duplicate prompt id ${id}`);
     ids.add(id);
     const publishedAt = new Date(requiredString(item.publishedAt, "publishedAt", source)).getTime();
@@ -59,13 +72,13 @@ function normalizeItems(raw, filePath) {
       id,
       sourceId,
       modelSlug: model.slug,
-      modelLabel: item.model.trim(),
+      modelLabel: model.sourceLabel,
       prompt: promptValue(item, source),
       promptType: item.prompt_type === "json" ? "json" : "text",
       title: typeof item.title === "string" && item.title.trim() ? item.title.trim() : null,
-      authorName: requiredString(item.userName || item.userScreenName, "userName", source),
-      authorHandle: requiredString(item.userScreenName, "userScreenName", source),
-      sourceUrl: requiredString(item.twitterUrl, "twitterUrl", source),
+      authorName: author.name,
+      authorHandle: author.handle,
+      sourceUrl: author.sourceUrl,
       viewCount: Number.isFinite(Number(item.viewCount)) ? Number(item.viewCount) : null,
       publishedAt,
       imageUrls: imageUrls(item, source),
@@ -135,7 +148,31 @@ async function loadExisting(db, ids) {
 }
 
 function stableComparable(row) {
-  return JSON.stringify({ ...row, viewCount: undefined, createdAt: undefined, updatedAt: undefined });
+  return JSON.stringify({
+    modelSlug: row.modelSlug,
+    prompt: row.prompt,
+    promptType: row.promptType,
+    sourceUrl: row.sourceUrl,
+    publishedAt: row.publishedAt,
+    images: row.images,
+  });
+}
+
+async function collectJsonFiles(input) {
+  const absolute = path.resolve(input);
+  const info = await stat(absolute);
+  if (info.isFile()) {
+    if (!absolute.endsWith(".json")) throw new Error(`${input}: expected a .json file or directory`);
+    return [absolute];
+  }
+  if (!info.isDirectory()) throw new Error(`${input}: expected a .json file or directory`);
+  const entries = await readdir(absolute, { withFileTypes: true });
+  const nested = await Promise.all(entries.sort((a, b) => a.name.localeCompare(b.name)).map((entry) => {
+    const child = path.join(absolute, entry.name);
+    if (entry.isDirectory()) return collectJsonFiles(child);
+    return entry.isFile() && entry.name.endsWith(".json") ? [child] : [];
+  }));
+  return nested.flat();
 }
 
 async function importFile(filePath, db, storage) {
@@ -203,15 +240,20 @@ async function importFile(filePath, db, storage) {
 }
 
 async function main() {
-  const files = inputs.length ? inputs : ["data/img-20260911-GPT2.5-86-items.json"];
-  const validated = [];
-  for (const input of files) {
-    const filePath = path.resolve(input);
+  const requested = inputs.length ? inputs : ["data/img-20260911-GPT2.5-86-items.json"];
+  const files = [...new Set((await Promise.all(requested.map(collectJsonFiles))).flat())].sort();
+  if (!files.length) throw new Error("No JSON files found");
+  let itemCount = 0;
+  let imageCount = 0;
+  for (const filePath of files) {
     const contents = await readFile(filePath, "utf8");
-    validated.push({ filePath, items: normalizeItems(JSON.parse(contents), filePath) });
+    const raw = JSON.parse(contents);
+    const items = normalizeItems(raw, filePath);
+    itemCount += items.length;
+    imageCount += items.reduce((total, item) => total + item.imageUrls.length, 0);
   }
+  console.log(`✓ validated ${files.length} files, ${itemCount} importable prompts, ${imageCount} image references`);
   if (dryRun) {
-    for (const { filePath, items } of validated) console.log(`✓ ${path.relative(process.cwd(), filePath)}: ${items.length} prompts, ${new Set(items.flatMap((item) => item.imageUrls)).size} source images`);
     return;
   }
   const lock = await open(lockPath, "wx").catch(() => { throw new Error("Another prompt import is running (.prompt-import.lock exists)."); });
@@ -222,7 +264,7 @@ async function main() {
     const db = drizzle(createClient({ url, authToken }));
     const storage = await import("../src/lib/storage.js");
     if (!storage.s3Configured || !process.env.S3_PUBLIC_URL) throw new Error("S3 storage and S3_PUBLIC_URL must be configured");
-    for (const { filePath } of validated) await importFile(filePath, db, storage);
+    for (const filePath of files) await importFile(filePath, db, storage);
   } finally {
     await lock.close();
     await rm(lockPath, { force: true });

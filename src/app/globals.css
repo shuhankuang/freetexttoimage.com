@@ -708,15 +708,15 @@ body { font-family: Arial, Helvetica, sans-serif; }
 .model-prompt-detail-source > a:last-child:hover { color: var(--accent); }
 .model-prompt-detail-source > a:last-child svg { width: 14px; height: 14px; transform: rotate(-45deg); }
 .model-prompt-text-block { min-height: 0; padding: 0 0 28px; border-bottom: 1px solid #e3e2d9; flex: 1; display: flex; flex-direction: column; }
-.model-prompt-text-block > div { margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.model-prompt-text-block > div > span { color: #979c90; font-size: 12px; }
+.model-prompt-text-head { margin-bottom: 18px; flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.model-prompt-text-head > span { color: #979c90; font-size: 12px; }
 .model-prompt-meta-actions { flex: none; display: inline-flex; align-items: center; gap: 11px; }
 .model-prompt-type { display: inline-flex; align-items: center; gap: 6px; color: #778170; font-size: 11.5px; font-weight: 600; line-height: 1; white-space: nowrap; }
 .model-prompt-type img { width: 14px; height: 14px; object-fit: contain; opacity: .72; }
 .model-prompt-text-block button { display: inline-flex; align-items: center; gap: 6px; padding: 2px; border: 0; background: transparent; color: #788171; font-size: 12px; cursor: pointer; }
 .model-prompt-meta-actions > button { padding-left: 11px; border-left: 1px solid #dcddd4; }
 .model-prompt-text-block button:hover { color: #4e5a46; }
-.model-prompt-prompt-scroll { min-height: 0; max-height: 100%; flex: 0 1 auto; align-self: stretch; display: block; padding: 20px 10px 0 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; text-align: left; }
+.model-prompt-prompt-scroll { min-height: 0; flex: 1 1 auto; align-self: stretch; display: block; padding: 0 10px 0 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; text-align: left; }
 .model-prompt-prompt-scroll p,.model-prompt-prompt-scroll pre { width: 100%; margin: 0; display: block; color: #50574a; font: inherit; font-size: 15px; line-height: 1.65; white-space: pre-wrap; word-break: break-word; }
 .model-prompt-prompt-scroll::-webkit-scrollbar { width: 6px; }
 .model-prompt-prompt-scroll::-webkit-scrollbar-thumb { border-radius: 999px; background: #d5d7cd; }

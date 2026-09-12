@@ -11,6 +11,8 @@
     "db:setup": "node scripts/setup-db.mjs",
     "prompts:import": "node scripts/import-prompt-data.mjs",
     "prompts:import:dry": "node scripts/import-prompt-data.mjs --dry-run",
+    "prompts:import:data01": "node scripts/import-prompt-data.mjs data-01",
+    "prompts:import:data01:dry": "node scripts/import-prompt-data.mjs data-01 --dry-run",
     "stripe:setup:production": "node scripts/setup-stripe-production.mjs"
   },
   "dependencies": {

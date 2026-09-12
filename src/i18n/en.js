@@ -34,9 +34,8 @@ const en = {
     description: "Explore prompt examples and starting points made for {model}, from realistic photos to creative designs.",
     developing: "This prompt collection is being prepared.",
     models: {
-      gptImage25: "GPT Image 2.5",
-      nanoBananaPro: "Nano Banana Pro",
-      nanoBanana2: "Nano Banana 2",
+      gptImage: "GPT Image",
+      nanoBanana: "Nano Banana",
     },
     gallery: {
       listLabel: "Prompt example gallery",

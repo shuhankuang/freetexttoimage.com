@@ -215,14 +215,14 @@ export default function ModelPromptGallery({ initialItems, initialCursor, model,
                   <a href={active.sourceUrl} target="_blank" rel="noreferrer">{copy.viewOnX}<ArrowIcon /></a>
                 </div>
                 <div className="model-prompt-text-block">
-                  <div>
+                  <div className="model-prompt-text-head">
                     <span>{copy.prompt}</span>
                     <span className="model-prompt-meta-actions">
                       <span className="model-prompt-type"><Image src={active.modelIcon} alt="" width={14} height={14} />{active.model}</span>
                       <button type="button" onClick={handleCopy}>{copied ? <CheckIcon /> : <CopyIcon />}{copied ? copy.copied : copy.copy}</button>
                     </span>
                   </div>
-                  <div className="model-prompt-prompt-scroll">
+                  <div className="model-prompt-prompt-scroll" key={active.id}>
                     {active.promptType === "json" ? <pre>{active.prompt}</pre> : <p>{active.prompt}</p>}
                   </div>
                 </div>
