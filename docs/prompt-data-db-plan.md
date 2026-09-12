@@ -32,15 +32,18 @@ Prompt 数据使用 Turso 保存，原图、两档缩略图与管理员上传的
 
 ## 首次导入
 
-首次上线的 401 个归档文件建议从本地执行，避免浏览器上传限制和 Web 请求超时：
+首次上线的大批量归档建议从本地加入正式队列，图片下载和缩略图处理仍由服务器 Worker 完成：
 
 ```bash
 pnpm db:setup:production
 pnpm prompts:import:dry data-01
-pnpm prompts:import:production data-01 --continue-on-error
+pnpm prompts:queue:production data-01
+pnpm prompts:queue:production data-01 --apply
 ```
 
-脚本会先扫描并排序全部文件，再开始写入。文件账本确保已完成文件再次运行时直接跳过。失败文件可在修复后重跑；`--continue-on-error` 会继续处理其他文件，并最终以非零状态退出，便于发现不完整导入。
+队列脚本会先按日期、系列和分卷号验证全部文件，跳过已经上传的内容 hash。带 `--apply` 时，它先把所有剩余源 JSON 上传到 B2；只有全部上传成功后才写入队列，避免 Worker 在更旧文件尚未就绪时提前处理较新的文件。
+
+`pnpm prompts:import:production data-01 --continue-on-error` 仍可用于本地直接导入，但它会在本机下载和处理所有图片，不适合日常正式环境批量发布。
 
 ## Coolify 配置
 

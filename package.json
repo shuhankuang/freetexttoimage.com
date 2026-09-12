@@ -16,6 +16,7 @@
     "prompts:import:data01": "node scripts/import-prompt-data.mjs data-01",
     "prompts:import:data01:dry": "node scripts/import-prompt-data.mjs data-01 --dry-run",
     "prompts:import:production": "node scripts/import-prompt-data.mjs --env=.env.production",
+    "prompts:queue:production": "node scripts/queue-prompt-data.mjs --env=.env.production",
     "prompts:worker": "node scripts/prompt-import-worker.mjs",
     "prompts:worker:check": "node scripts/prompt-import-worker.mjs --check",
     "prompts:worker:check:production": "node scripts/prompt-import-worker.mjs --env=.env.production --check",

@@ -138,8 +138,7 @@ export async function loadExistingPromptItems(db, ids) {
   return new Map(found.map((row) => [row.sourceId, row]));
 }
 
-export async function previewPromptItems(db, items) {
-  const existing = await loadExistingPromptItems(db, items.map((item) => item.sourceId));
+export function summarizePromptItems(items, existing) {
   const result = { total: items.length, newCount: 0, duplicateCount: 0, changedCount: 0, changes: [] };
   for (const item of items) {
     const current = existing.get(item.sourceId);
@@ -155,6 +154,11 @@ export async function previewPromptItems(db, items) {
     }
   }
   return result;
+}
+
+export async function previewPromptItems(db, items) {
+  const existing = await loadExistingPromptItems(db, items.map((item) => item.sourceId));
+  return summarizePromptItems(items, existing);
 }
 
 async function downloadImage(url, attempt = 0) {

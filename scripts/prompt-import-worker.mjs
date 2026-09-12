@@ -82,6 +82,11 @@ async function runJob(job) {
     const raw = JSON.parse((await storage.getObjectBuffer(job.objectKey)).toString("utf8"));
     items = core.normalizePromptItems(raw, job.fileName);
     existing = await core.loadExistingPromptItems(db, items.map((item) => item.sourceId));
+    const preview = core.summarizePromptItems(items, existing);
+    await db.update(schema.promptImportJobs).set({
+      totalCount: preview.total, newCount: preview.newCount, duplicateCount: preview.duplicateCount,
+      changedCount: preview.changedCount, changes: preview.changes,
+    }).where(eq(schema.promptImportJobs.id, job.id));
   } catch (error) {
     const completedAt = new Date().toISOString();
     await db.update(schema.promptImportJobs).set({
