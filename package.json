@@ -2,6 +2,7 @@
   "name": "free-text-to-image",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -9,10 +10,15 @@
     "lint": "eslint",
     "db:generate": "drizzle-kit generate",
     "db:setup": "node scripts/setup-db.mjs",
+    "db:setup:production": "node scripts/setup-db.mjs --env=.env.production",
     "prompts:import": "node scripts/import-prompt-data.mjs",
     "prompts:import:dry": "node scripts/import-prompt-data.mjs --dry-run",
     "prompts:import:data01": "node scripts/import-prompt-data.mjs data-01",
     "prompts:import:data01:dry": "node scripts/import-prompt-data.mjs data-01 --dry-run",
+    "prompts:import:production": "node scripts/import-prompt-data.mjs --env=.env.production",
+    "prompts:worker": "node scripts/prompt-import-worker.mjs",
+    "prompts:worker:check": "node scripts/prompt-import-worker.mjs --check",
+    "prompts:worker:check:production": "node scripts/prompt-import-worker.mjs --env=.env.production --check",
     "stripe:setup:production": "node scripts/setup-stripe-production.mjs"
   },
   "dependencies": {

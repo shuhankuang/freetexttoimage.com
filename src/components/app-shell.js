@@ -8,9 +8,9 @@ import { authClient } from "@/lib/auth-client";
 import { loginPathWithRedirect } from "@/lib/auth-redirect";
 import LanguageSwitcher from "@/components/language-switcher";
 import { useI18n } from "@/i18n/provider";
-import { CoinsIcon, LogoutIcon, UserIcon } from "@/components/ui";
+import { CoinsIcon, LogoutIcon, PromptCardsIcon, UserIcon } from "@/components/ui";
 
-export default function AppShell({ children, footer, publicView = false, sidebar }) {
+export default function AppShell({ children, footer, publicView = false, showAdmin = false, sidebar }) {
   const rawPathname = usePathname();
   const pathname = rawPathname.replace(/^\/en(?=\/|$)/, "") || "/";
   const router = useRouter();
@@ -28,6 +28,7 @@ export default function AppShell({ children, footer, publicView = false, sidebar
   const explorePath = path("/explore");
   const promptsPath = path("/prompts");
   const loginPath = path("/login");
+  const adminPath = path("/admin/prompts");
   const loginHref = loginPathWithRedirect(loginPath, pathname);
 
   useEffect(() => {
@@ -71,6 +72,8 @@ export default function AppShell({ children, footer, publicView = false, sidebar
           ? t("shell.explore")
           : pathname.startsWith(`${promptsPath}/`)
             ? t("modelPrompts.section")
+          : pathname === adminPath
+            ? "Prompt imports"
       : t("shell.imageStudio");
 
   return <div className="app-frame">
@@ -91,12 +94,16 @@ export default function AppShell({ children, footer, publicView = false, sidebar
                   aria-label={t("shell.account")}
                   onAction={(key) => {
                     if (key === "profile") router.push(profilePath);
+                    if (key === "admin") router.push(adminPath);
                     if (key === "logout") setLogoutOpen(true);
                   }}
                 >
                   <Dropdown.Item id="profile" textValue={t("shell.profileBilling")}>
                     <UserIcon /><span>{t("shell.profileBilling")}</span>
                   </Dropdown.Item>
+                  {showAdmin && <Dropdown.Item id="admin" textValue="Prompt imports">
+                    <PromptCardsIcon /><span>Prompt imports</span>
+                  </Dropdown.Item>}
                   <Dropdown.Item id="logout" textValue={t("shell.signOut")}>
                     <LogoutIcon /><span>{t("shell.signOut")}</span>
                   </Dropdown.Item>

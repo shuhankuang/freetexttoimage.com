@@ -2,227 +2,31 @@ import { createHash } from "node:crypto";
 import { open, readFile, readdir, rm, stat } from "node:fs/promises";
 import path from "node:path";
 import { loadEnvFile } from "node:process";
-import { createClient } from "@libsql/client";
-import { drizzle } from "drizzle-orm/libsql";
-import { inArray, sql } from "drizzle-orm";
-import sharp from "sharp";
-import { promptImportFiles, promptItems } from "../src/lib/schema.js";
-import { resolveModelPromptPage } from "../src/lib/model-prompt-pages.js";
 
-const dryRun = process.argv.includes("--dry-run");
-const inputs = process.argv.slice(2).filter((value) => !value.startsWith("--"));
+const args = process.argv.slice(2);
+const dryRun = args.includes("--dry-run");
+const continueOnError = args.includes("--continue-on-error");
+const envArg = args.find((value) => value.startsWith("--env="));
+const envFile = envArg?.slice("--env=".length) || ".env.local";
+const inputs = args.filter((value) => !value.startsWith("--"));
 const lockPath = path.join(process.cwd(), ".prompt-import.lock");
-const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
-const CACHE_HEADERS = { "Cache-Control": "public, max-age=31536000, immutable" };
-const IMPORT_VERSION = "tweet-id-thumb-v4";
-const COVER_THUMBNAIL_WIDTH = 640;
-const DETAIL_THUMBNAIL_WIDTH = 160;
 
-try { loadEnvFile(".env.local"); } catch {}
-
-function requiredString(value, field, source) {
-  const normalized = typeof value === "string" ? value.trim() : "";
-  if (!normalized) throw new Error(`${source}: missing ${field}`);
-  return normalized;
+try { loadEnvFile(envFile); } catch (error) {
+  if (envArg) throw new Error(`Unable to load ${envFile}: ${error.message}`);
 }
 
-function imageUrls(item, source) {
-  const cover = requiredString(item.coverUrl, "coverUrl", source);
-  const listed = Array.isArray(item.images) ? item.images.map((image) => image?.url).filter(Boolean) : [];
-  if (!listed.includes(cover)) throw new Error(`${source}: coverUrl must also exist in images[]`);
-  const urls = [...new Set([cover, ...listed])];
-  for (const value of urls) {
-    const url = new URL(value);
-    if (!['http:', 'https:'].includes(url.protocol)) throw new Error(`${source}: unsupported image URL`);
-  }
-  return urls;
-}
-
-function promptValue(item, source) {
-  if (item.prompt_type === "json" && item.prompt && typeof item.prompt === "object") {
-    return JSON.stringify(item.prompt, null, 2);
-  }
-  return requiredString(item.prompt, "prompt", source);
-}
-
-function authorFrom(item, source) {
-  const sourceUrl = requiredString(item.twitterUrl, "twitterUrl", source);
-  let handle = typeof item.userScreenName === "string" ? item.userScreenName.trim().replace(/^@/, "") : "";
-  if (!handle) {
-    const url = new URL(sourceUrl);
-    handle = url.pathname.split("/").filter(Boolean)[0] || "";
-  }
-  if (!handle) throw new Error(`${source}: unable to derive author handle`);
-  const name = typeof item.userName === "string" && item.userName.trim() ? item.userName.trim() : handle;
-  return { name, handle, sourceUrl };
-}
-
-function normalizeItems(raw, filePath) {
-  if (!Array.isArray(raw)) throw new Error(`${filePath}: root must be an array`);
-  const itemsByTweetId = new Map();
-  raw.forEach((item, index) => {
-    const source = `${filePath}[${index}]`;
-    const sourceId = requiredString(String(item.tweetId || ""), "tweetId", source);
-    const model = resolveModelPromptPage(requiredString(item.model, "model", source));
-    if (!model) throw new Error(`${source}: unknown model label "${item.model}"`);
-    const author = authorFrom(item, source);
-    const id = sourceId;
-    const publishedAt = new Date(requiredString(item.publishedAt, "publishedAt", source)).getTime();
-    if (!Number.isSafeInteger(publishedAt)) throw new Error(`${source}: invalid publishedAt`);
-    const normalized = {
-      id,
-      sourceId,
-      modelSlug: model.slug,
-      modelLabel: model.sourceLabel,
-      prompt: promptValue(item, source),
-      promptType: item.prompt_type === "json" ? "json" : "text",
-      title: typeof item.title === "string" && item.title.trim() ? item.title.trim() : null,
-      authorName: author.name,
-      authorHandle: author.handle,
-      sourceUrl: author.sourceUrl,
-      viewCount: Number.isFinite(Number(item.viewCount)) ? Number(item.viewCount) : null,
-      publishedAt,
-      imageUrls: imageUrls(item, source),
-    };
-    const existing = itemsByTweetId.get(id);
-    if (!existing) {
-      itemsByTweetId.set(id, normalized);
-    } else if ((normalized.viewCount ?? -1) > (existing.viewCount ?? -1)) {
-      existing.viewCount = normalized.viewCount;
-    }
-  });
-  return [...itemsByTweetId.values()];
-}
-
-async function download(url, attempt = 0) {
-  try {
-    const response = await fetch(url, { signal: AbortSignal.timeout(30_000), headers: { "User-Agent": "FreeTexttoImage prompt importer" } });
-    if (!response.ok) {
-      if ((response.status === 429 || response.status >= 500) && attempt < 3) throw new Error(`retry:${response.status}`);
-      throw new Error(`HTTP ${response.status} for ${url}`);
-    }
-    const declared = Number(response.headers.get("content-length"));
-    if (declared > MAX_IMAGE_BYTES) throw new Error(`Image exceeds 20 MB: ${url}`);
-    const reader = response.body.getReader();
-    const chunks = [];
-    let size = 0;
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      size += value.byteLength;
-      if (size > MAX_IMAGE_BYTES) { await reader.cancel(); throw new Error(`Image exceeds 20 MB: ${url}`); }
-      chunks.push(value);
-    }
-    return Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)), size);
-  } catch (error) {
-    if (attempt >= 3 || (!String(error?.message).startsWith("retry:") && error?.name !== "TimeoutError" && error?.name !== "TypeError")) throw error;
-    await new Promise((resolve) => setTimeout(resolve, 500 * (2 ** attempt)));
-    return download(url, attempt + 1);
-  }
-}
-
-function extension(format) {
-  return ({ jpeg: "jpg", png: "png", webp: "webp", gif: "gif", avif: "avif" })[format];
-}
-
-async function mapConcurrent(values, concurrency, task) {
-  const results = new Array(values.length);
-  let cursor = 0;
-  await Promise.all(Array.from({ length: Math.min(concurrency, values.length) }, async () => {
-    while (cursor < values.length) {
-      const index = cursor++;
-      results[index] = await task(values[index], index);
-    }
-  }));
-  return results;
-}
-
-async function retryStorage(task, attempt = 0) {
-  try {
-    return await task();
-  } catch (error) {
-    if (attempt >= 4) throw error;
-    await new Promise((resolve) => setTimeout(resolve, 600 * (2 ** attempt)));
-    return retryStorage(task, attempt + 1);
-  }
-}
-
-async function loadExisting(db, ids) {
-  const found = [];
-  for (let index = 0; index < ids.length; index += 100) {
-    found.push(...await db.select().from(promptItems).where(inArray(promptItems.sourceId, ids.slice(index, index + 100))));
-  }
-  return new Map(found.map((row) => [row.sourceId, row]));
-}
-
-async function upgradeExistingThumbnails(db, storage, rows) {
-  const tasks = new Map();
-  for (const row of rows) {
-    if (!Array.isArray(row.images)) continue;
-    row.images.forEach((image, index) => {
-      if (!image?.hash || !image?.originalKey) return;
-      const detailKey = `prompts/thumb/detail-v3/${image.hash}.webp`;
-      if (image.thumbnailKey !== detailKey) tasks.set(detailKey, {
-        key: detailKey,
-        originalKey: image.originalKey,
-        width: DETAIL_THUMBNAIL_WIDTH,
-        quality: 74,
-      });
-      if (index === 0) {
-        const coverKey = `prompts/thumb/cover-v2/${image.hash}.webp`;
-        if (image.coverThumbnailKey !== coverKey) tasks.set(coverKey, {
-          key: coverKey,
-          originalKey: image.originalKey,
-          width: COVER_THUMBNAIL_WIDTH,
-          quality: 82,
-        });
-      }
-    });
-  }
-  const thumbnailTasks = [...tasks.values()];
-  let completedThumbnails = 0;
-  await mapConcurrent(thumbnailTasks, 4, async (task) => {
-    if (!(await retryStorage(() => storage.objectExists(task.key)))) {
-      const original = await retryStorage(() => storage.getObjectBuffer(task.originalKey));
-      const thumbnail = await sharp(original, { animated: false }).rotate().resize({ width: task.width }).webp({ quality: task.quality }).toBuffer();
-      await retryStorage(() => storage.uploadObject(task.key, thumbnail, "image/webp", CACHE_HEADERS));
-    }
-    completedThumbnails += 1;
-    process.stdout.write(`\r  thumbnail upgrades ${completedThumbnails}/${thumbnailTasks.length}`);
-  });
-  if (thumbnailTasks.length) process.stdout.write("\n");
-  if (!tasks.size) return 0;
-
-  let updated = 0;
-  const updatedAt = new Date().toISOString();
-  for (const row of rows) {
-    if (!Array.isArray(row.images)) continue;
-    let changed = false;
-    const images = row.images.map((image, index) => {
-      if (!image?.hash) return image;
-      const thumbnailKey = `prompts/thumb/detail-v3/${image.hash}.webp`;
-      const coverThumbnailKey = index === 0 ? `prompts/thumb/cover-v2/${image.hash}.webp` : image.coverThumbnailKey;
-      if (image.thumbnailKey === thumbnailKey && image.coverThumbnailKey === coverThumbnailKey) return image;
-      changed = true;
-      return { ...image, thumbnailKey, ...(index === 0 ? { coverThumbnailKey } : {}) };
-    });
-    if (!changed) continue;
-    await db.update(promptItems).set({ images, updatedAt }).where(sql`${promptItems.id} = ${row.id}`);
-    updated += 1;
-  }
-  return updated;
-}
+const [{ createClient }, { drizzle }, { eq }, schema, core, storage] = await Promise.all([
+  import("@libsql/client"), import("drizzle-orm/libsql"), import("drizzle-orm"),
+  import("../src/lib/schema.js"), import("../src/lib/prompt-import-core.js"), import("../src/lib/storage.js"),
+]);
 
 async function collectJsonFiles(input) {
   const absolute = path.resolve(input);
   const info = await stat(absolute);
-  if (info.isFile()) {
-    if (!absolute.endsWith(".json")) throw new Error(`${input}: expected a .json file or directory`);
-    return [absolute];
-  }
+  if (info.isFile()) return [absolute];
   if (!info.isDirectory()) throw new Error(`${input}: expected a .json file or directory`);
   const entries = await readdir(absolute, { withFileTypes: true });
-  const nested = await Promise.all(entries.sort((a, b) => a.name.localeCompare(b.name)).map((entry) => {
+  const nested = await Promise.all(entries.map((entry) => {
     const child = path.join(absolute, entry.name);
     if (entry.isDirectory()) return collectJsonFiles(child);
     return entry.isFile() && entry.name.endsWith(".json") ? [child] : [];
@@ -230,130 +34,77 @@ async function collectJsonFiles(input) {
   return nested.flat();
 }
 
-async function importFile(filePath, db, storage) {
+async function readSource(filePath) {
   const contents = await readFile(filePath);
-  const fileHash = createHash("sha256").update(IMPORT_VERSION).update("\0").update(contents).digest("hex");
-  const items = normalizeItems(JSON.parse(contents.toString("utf8")), filePath);
-  if (dryRun) {
-    console.log(`✓ ${filePath}: ${items.length} prompts, ${new Set(items.flatMap((item) => item.imageUrls)).size} source images`);
-    return;
-  }
+  if (contents.byteLength > core.MAX_JSON_BYTES) throw new Error(`${filePath}: JSON exceeds 2 MB`);
+  const order = core.parsePromptFileName(filePath);
+  const items = core.normalizePromptItems(JSON.parse(contents.toString("utf8")), filePath);
+  return { filePath, contents, items, ...order };
+}
 
-  const [ledger] = await db.select().from(promptImportFiles).where(sql`${promptImportFiles.fileHash} = ${fileHash}`).limit(1);
-  if (ledger?.status === "completed") { console.log(`↷ ${filePath}: already imported`); return; }
+async function importSource(source, db) {
+  const fileHash = createHash("sha256").update(core.PROMPT_IMPORT_VERSION).update("\0").update(source.contents).digest("hex");
+  const [ledger] = await db.select().from(schema.promptImportFiles).where(eq(schema.promptImportFiles.fileHash, fileHash)).limit(1);
+  if (ledger?.status === "completed") { console.log(`↷ ${source.fileName}: already imported`); return; }
   const startedAt = new Date().toISOString();
-  await db.insert(promptImportFiles).values({ fileHash, filePath, status: "running", itemCount: items.length, startedAt })
-    .onConflictDoUpdate({ target: promptImportFiles.fileHash, set: { status: "running", error: null, startedAt, completedAt: null } });
-
-  try {
-    const existing = await loadExisting(db, items.map((item) => item.id));
-    const upgradedCount = await upgradeExistingThumbnails(db, storage, [...existing.values()]);
-    const pendingItems = items.filter((item) => !existing.has(item.id));
-    const duplicateCount = items.length - pendingItems.length;
-    if (!pendingItems.length) {
-      await db.update(promptImportFiles).set({ status: "completed", completedAt: new Date().toISOString(), error: null }).where(sql`${promptImportFiles.fileHash} = ${fileHash}`);
-      console.log(`↷ ${filePath}: ${duplicateCount} duplicate tweetIds skipped${upgradedCount ? `, upgraded ${upgradedCount} thumbnail sets` : ""}`);
-      return;
-    }
-
-    const uniqueUrls = [...new Set(pendingItems.flatMap((item) => item.imageUrls))];
-    const coverUrls = new Set(pendingItems.map((item) => item.imageUrls[0]));
-    const detailUrls = new Set(pendingItems.flatMap((item) => item.imageUrls));
-    let completedImages = 0;
-    const assets = await mapConcurrent(uniqueUrls, 4, async (url) => {
-      const buffer = await download(url);
-      const hash = createHash("sha256").update(buffer).digest("hex");
-      const metadata = await sharp(buffer, { animated: false, limitInputPixels: 80_000_000 }).metadata();
-      const ext = extension(metadata.format);
-      if (!ext || !metadata.width || !metadata.height) throw new Error(`Unsupported image format: ${url}`);
-      const swapped = [5, 6, 7, 8].includes(metadata.orientation);
-      const originalKey = `prompts/original/${hash}.${ext}`;
-      const coverThumbnailKey = `prompts/thumb/cover-v2/${hash}.webp`;
-      const detailThumbnailKey = `prompts/thumb/detail-v3/${hash}.webp`;
-      if (!(await retryStorage(() => storage.objectExists(originalKey)))) {
-        await retryStorage(() => storage.uploadObject(originalKey, buffer, `image/${metadata.format === "jpeg" ? "jpeg" : metadata.format}`, CACHE_HEADERS));
-      }
-      if (coverUrls.has(url) && !(await retryStorage(() => storage.objectExists(coverThumbnailKey)))) {
-        const thumb = await sharp(buffer, { animated: false }).rotate().resize({ width: COVER_THUMBNAIL_WIDTH }).webp({ quality: 82 }).toBuffer();
-        await retryStorage(() => storage.uploadObject(coverThumbnailKey, thumb, "image/webp", CACHE_HEADERS));
-      }
-      if (detailUrls.has(url) && !(await retryStorage(() => storage.objectExists(detailThumbnailKey)))) {
-        const thumb = await sharp(buffer, { animated: false }).rotate().resize({ width: DETAIL_THUMBNAIL_WIDTH }).webp({ quality: 74 }).toBuffer();
-        await retryStorage(() => storage.uploadObject(detailThumbnailKey, thumb, "image/webp", CACHE_HEADERS));
-      }
-      completedImages += 1;
-      process.stdout.write(`\r  images ${completedImages}/${uniqueUrls.length}`);
-      return { url, hash, originalKey, coverThumbnailKey, detailThumbnailKey, width: swapped ? metadata.height : metadata.width, height: swapped ? metadata.width : metadata.height };
-    });
-    process.stdout.write("\n");
-    const byUrl = new Map(assets.map((asset) => [asset.url, asset]));
-    const now = new Date().toISOString();
-    const rows = pendingItems.map(({ imageUrls: urls, ...item }) => {
-      const seen = new Set();
-      const images = urls.map((url) => byUrl.get(url)).filter((asset) => asset && !seen.has(asset.hash) && seen.add(asset.hash))
-        .map(({ hash, originalKey, coverThumbnailKey, detailThumbnailKey, width, height }, index) => ({
-          hash,
-          originalKey,
-          thumbnailKey: detailThumbnailKey,
-          ...(index === 0 ? { coverThumbnailKey } : {}),
-          width,
-          height,
-        }));
-      return { ...item, images, createdAt: now, updatedAt: now };
-    });
-    for (let index = 0; index < rows.length; index += 40) {
-      await db.insert(promptItems).values(rows.slice(index, index + 40)).onConflictDoUpdate({
-        target: promptItems.id,
-        set: { viewCount: sql`CASE WHEN excluded.view_count IS NULL THEN ${promptItems.viewCount} WHEN ${promptItems.viewCount} IS NULL OR excluded.view_count > ${promptItems.viewCount} THEN excluded.view_count ELSE ${promptItems.viewCount} END`, updatedAt: now },
-      });
-    }
-    await db.update(promptImportFiles).set({ status: "completed", completedAt: new Date().toISOString(), error: null }).where(sql`${promptImportFiles.fileHash} = ${fileHash}`);
-    console.log(`✓ ${filePath}: imported ${rows.length} prompts${duplicateCount ? `, skipped ${duplicateCount} duplicate tweetIds` : ""}${upgradedCount ? `, upgraded ${upgradedCount} thumbnail sets` : ""}`);
-  } catch (error) {
-    await db.update(promptImportFiles).set({ status: "failed", completedAt: new Date().toISOString(), error: String(error?.message || error).slice(0, 2000) }).where(sql`${promptImportFiles.fileHash} = ${fileHash}`);
-    throw error;
+  await db.insert(schema.promptImportFiles).values({ fileHash, filePath: source.filePath, status: "running", itemCount: source.items.length, startedAt })
+    .onConflictDoUpdate({ target: schema.promptImportFiles.fileHash, set: { status: "running", error: null, startedAt, completedAt: null } });
+  const existing = await core.loadExistingPromptItems(db, source.items.map((item) => item.sourceId));
+  let inserted = 0;
+  let skipped = 0;
+  const errors = [];
+  for (let index = 0; index < source.items.length; index += 1) {
+    const item = source.items[index];
+    if (existing.has(item.sourceId)) { skipped += 1; continue; }
+    try {
+      await core.importPromptItem({ db, storage, item, concurrency: 4 });
+      inserted += 1;
+    } catch (error) { errors.push(`${item.sourceId}: ${error?.message || error}`); }
+    process.stdout.write(`\r  prompts ${index + 1}/${source.items.length}${errors.length ? ` (${errors.length} failed)` : ""}`);
   }
+  process.stdout.write("\n");
+  const completedAt = new Date().toISOString();
+  if (errors.length) {
+    await db.update(schema.promptImportFiles).set({ status: "failed", error: errors.slice(0, 20).join("\n").slice(0, 2000), completedAt }).where(eq(schema.promptImportFiles.fileHash, fileHash));
+    throw new Error(`${source.fileName}: ${errors.length} prompts failed`);
+  }
+  await db.update(schema.promptImportFiles).set({ status: "completed", error: null, completedAt }).where(eq(schema.promptImportFiles.fileHash, fileHash));
+  console.log(`✓ ${source.fileName}: inserted ${inserted}, skipped ${skipped}`);
 }
 
 async function main() {
   const requested = inputs.length ? inputs : ["data/img-20260911-GPT2.5-86-items.json"];
-  const files = [...new Set((await Promise.all(requested.map(collectJsonFiles))).flat())].sort();
-  if (!files.length) throw new Error("No JSON files found");
-  let itemCount = 0;
-  let imageCount = 0;
+  const paths = [...new Set((await Promise.all(requested.map(collectJsonFiles))).flat())];
+  const sources = (await Promise.all(paths.map(readSource))).sort(core.comparePromptFiles);
+  if (!sources.length) throw new Error("No JSON files found");
+  const uniqueTweetIds = new Set();
   let duplicateCount = 0;
-  const tweetIds = new Set();
-  for (const filePath of files) {
-    const contents = await readFile(filePath, "utf8");
-    const raw = JSON.parse(contents);
-    const items = normalizeItems(raw, filePath);
-    for (const item of items) {
-      if (tweetIds.has(item.sourceId)) {
-        duplicateCount += 1;
-        continue;
-      }
-      tweetIds.add(item.sourceId);
-      itemCount += 1;
-      imageCount += item.imageUrls.length;
-    }
+  let imageCount = 0;
+  for (const source of sources) for (const item of source.items) {
+    if (uniqueTweetIds.has(item.sourceId)) duplicateCount += 1;
+    else { uniqueTweetIds.add(item.sourceId); imageCount += item.imageUrls.length; }
   }
-  console.log(`✓ validated ${files.length} files, ${itemCount} unique prompts, ${imageCount} image references${duplicateCount ? `, ${duplicateCount} duplicate tweetIds` : ""}`);
-  if (dryRun) {
-    return;
-  }
+  console.log(`✓ ${sources.length} files sorted ${sources[0].sourceDate} → ${sources.at(-1).sourceDate}`);
+  console.log(`✓ ${uniqueTweetIds.size} unique prompts, ${imageCount} image references, ${duplicateCount} duplicate tweetIds`);
+  if (dryRun) return;
+  const url = process.env.TURSO_DATABASE_URL;
+  const authToken = process.env.TURSO_AUTH_TOKEN;
+  if (!url || !authToken) throw new Error(`Set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN in ${envFile}`);
+  if (!storage.s3Configured || !process.env.S3_PUBLIC_URL) throw new Error(`Set S3 storage variables in ${envFile}`);
+  const db = drizzle(createClient({ url, authToken }));
   const lock = await open(lockPath, "wx").catch(() => { throw new Error("Another prompt import is running (.prompt-import.lock exists)."); });
+  const failed = [];
   try {
-    const url = process.env.TURSO_DATABASE_URL;
-    const authToken = process.env.TURSO_AUTH_TOKEN;
-    if (!url || !authToken) throw new Error("Set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN in .env.local");
-    const db = drizzle(createClient({ url, authToken }));
-    const storage = await import("../src/lib/storage.js");
-    if (!storage.s3Configured || !process.env.S3_PUBLIC_URL) throw new Error("S3 storage and S3_PUBLIC_URL must be configured");
-    for (const filePath of files) await importFile(filePath, db, storage);
-  } finally {
-    await lock.close();
-    await rm(lockPath, { force: true });
-  }
+    for (const source of sources) {
+      try { await importSource(source, db); }
+      catch (error) {
+        failed.push(error.message);
+        console.error(`✗ ${error.message}`);
+        if (!continueOnError) throw error;
+      }
+    }
+  } finally { await lock.close(); await rm(lockPath, { force: true }); }
+  if (failed.length) throw new Error(`${failed.length} files failed:\n${failed.join("\n")}`);
 }
 
 main().catch((error) => { console.error(`\n✗ ${error?.message || error}`); process.exitCode = 1; });

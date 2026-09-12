@@ -69,11 +69,11 @@ export async function listModelPromptItems(modelSlug, { cursor, limit = PROMPT_P
   };
 }
 
-const cachedFirstPage = unstable_cache((slug) => listModelPromptItems(slug), ["model-prompt-first-page-v8"], { revalidate: 300 });
+const cachedFirstPage = unstable_cache((slug) => listModelPromptItems(slug), ["model-prompt-first-page-v9"], { revalidate: 300, tags: ["prompt-gallery"] });
 const cachedCounts = unstable_cache(async () => {
   const rows = await db.select({ modelSlug: promptItems.modelSlug, count: sql`count(*)` }).from(promptItems).groupBy(promptItems.modelSlug);
   return Object.fromEntries(rows.map((row) => [row.modelSlug, Number(row.count)]));
-}, ["model-prompt-counts-v6"], { revalidate: 300 });
+}, ["model-prompt-counts-v7"], { revalidate: 300, tags: ["prompt-gallery"] });
 
 export function getModelPromptFirstPage(modelSlug) {
   return cachedFirstPage(modelSlug);

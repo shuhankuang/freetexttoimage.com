@@ -172,6 +172,7 @@ export const promptItems = sqliteTable(
   {
     id: text("id").primaryKey(),
     sourceId: text("source_id").notNull(),
+    sourceFingerprint: text("source_fingerprint"),
     modelSlug: text("model_slug").notNull(),
     modelLabel: text("model_label").notNull(),
     prompt: text("prompt").notNull(),
@@ -200,4 +201,46 @@ export const promptImportFiles = sqliteTable("prompt_import_files", {
   error: text("error"),
   startedAt: text("started_at").notNull(),
   completedAt: text("completed_at"),
+});
+
+export const promptImportJobs = sqliteTable(
+  "prompt_import_jobs",
+  {
+    id: text("id").primaryKey(),
+    contentHash: text("content_hash").notNull(),
+    fileName: text("file_name").notNull(),
+    objectKey: text("object_key").notNull(),
+    sourceDate: integer("source_date").notNull(),
+    seriesName: text("series_name").notNull(),
+    sequence: integer("sequence").notNull().default(1),
+    status: text("status").notNull().default("preview"),
+    allowUpdates: integer("allow_updates", { mode: "boolean" }).notNull().default(false),
+    totalCount: integer("total_count").notNull().default(0),
+    newCount: integer("new_count").notNull().default(0),
+    duplicateCount: integer("duplicate_count").notNull().default(0),
+    changedCount: integer("changed_count").notNull().default(0),
+    processedCount: integer("processed_count").notNull().default(0),
+    insertedCount: integer("inserted_count").notNull().default(0),
+    updatedCount: integer("updated_count").notNull().default(0),
+    skippedCount: integer("skipped_count").notNull().default(0),
+    failedCount: integer("failed_count").notNull().default(0),
+    changes: text("changes_json", { mode: "json" }).notNull().default([]),
+    errors: text("errors_json", { mode: "json" }).notNull().default([]),
+    createdBy: text("created_by").notNull(),
+    createdAt: text("created_at").notNull(),
+    confirmedAt: text("confirmed_at"),
+    startedAt: text("started_at"),
+    heartbeatAt: text("heartbeat_at"),
+    completedAt: text("completed_at"),
+  },
+  (table) => [
+    uniqueIndex("idx_prompt_import_jobs_content_hash").on(table.contentHash),
+    index("idx_prompt_import_jobs_queue").on(table.status, table.sourceDate, table.seriesName, table.sequence, table.fileName),
+  ]
+);
+
+export const promptImportWorkerLocks = sqliteTable("prompt_import_worker_locks", {
+  id: text("id").primaryKey(),
+  owner: text("owner").notNull(),
+  expiresAt: integer("expires_at").notNull(),
 });
