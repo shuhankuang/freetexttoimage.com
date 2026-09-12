@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, index, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 // Drizzle schema — 字段/类型已经按迁移前的实际表结构核对，并由 drizzle/ 迁移记录维护。
 // better-auth 四张表的日期列实际存的是
@@ -187,6 +187,7 @@ export const promptItems = sqliteTable(
     updatedAt: text("updated_at").notNull(),
   },
   (table) => [
+    uniqueIndex("idx_prompt_items_source_id").on(table.sourceId),
     index("idx_prompt_items_model_page").on(table.modelSlug, table.publishedAt, table.id),
   ]
 );

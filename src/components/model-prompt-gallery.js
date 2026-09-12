@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button, Modal, Spinner } from "@heroui/react";
-import { ArrowIcon, CheckIcon, CopyIcon } from "@/components/ui";
+import { ArrowIcon, CheckIcon, CopyIcon, ImageIcon as PlaceholderImageIcon } from "@/components/ui";
 import { useI18n } from "@/i18n/provider";
 
 function PromptImageCard({ item, onOpen, copy }) {
@@ -25,7 +25,7 @@ function PromptImageCard({ item, onOpen, copy }) {
         {status === "loading" ? <Spinner size="sm" /> : copy.imageUnavailable}
       </span>}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img ref={imageRef} src={cover.thumbUrl} alt={item.title} loading="lazy" decoding="async" onLoad={() => setStatus("loaded")} onError={() => setStatus("error")} />
+      <img ref={imageRef} src={cover.coverUrl || cover.thumbUrl} alt={item.title} loading="lazy" decoding="async" onLoad={() => setStatus("loaded")} onError={() => setStatus("error")} />
       <span className="model-prompt-overlay">
         <span className="model-prompt-source">
           <strong>{item.authorName}</strong>
@@ -62,6 +62,32 @@ function PromptDetailImage({ image, alt, unavailable }) {
       onError={() => setStatus("error")}
     />
   </>;
+}
+
+function PromptThumbnail({ image, active, label, onSelect }) {
+  const [status, setStatus] = useState("loading");
+  const imageRef = useRef(null);
+
+  useEffect(() => {
+    const element = imageRef.current;
+    if (!element?.complete) return;
+    setStatus(element.naturalWidth > 0 ? "loaded" : "error");
+  }, []);
+
+  return <button
+    type="button"
+    className={`${active ? "is-active " : ""}${status === "loaded" ? "is-loaded" : status === "error" ? "is-error" : "is-loading"}`}
+    aria-pressed={active}
+    aria-label={label}
+    aria-busy={status === "loading"}
+    onClick={onSelect}
+  >
+    {status !== "loaded" && <span className="model-prompt-thumbnail-loading" aria-hidden="true">
+      {status === "loading" ? <Spinner size="sm" /> : <PlaceholderImageIcon size={17} />}
+    </span>}
+    {/* eslint-disable-next-line @next/next/no-img-element */}
+    <img ref={imageRef} src={image.thumbUrl} alt="" loading="lazy" decoding="async" onLoad={() => setStatus("loaded")} onError={() => setStatus("error")} />
+  </button>;
 }
 
 async function copyText(text) {
@@ -201,10 +227,7 @@ export default function ModelPromptGallery({ initialItems, initialCursor, model,
                   </>}
                 </div>
                 {active.images.length > 1 && <div className="model-prompt-thumbnails" aria-label={copy.imageGallery}>
-                  {active.images.map((image, index) => <button type="button" className={image.id === activeImage?.id ? "is-active" : ""} aria-pressed={image.id === activeImage?.id} aria-label={copy.showImage.replace("{number}", index + 1)} onClick={() => setActiveImage(image)} key={image.id}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={image.thumbUrl} alt="" loading="lazy" decoding="async" />
-                  </button>)}
+                  {active.images.map((image, index) => <PromptThumbnail image={image} active={image.id === activeImage?.id} label={copy.showImage.replace("{number}", index + 1)} onSelect={() => setActiveImage(image)} key={image.id} />)}
                 </div>}
               </div>
               <aside className="model-prompt-detail-copy">

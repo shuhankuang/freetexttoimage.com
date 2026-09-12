@@ -14,6 +14,9 @@ const inputs = process.argv.slice(2).filter((value) => !value.startsWith("--"));
 const lockPath = path.join(process.cwd(), ".prompt-import.lock");
 const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
 const CACHE_HEADERS = { "Cache-Control": "public, max-age=31536000, immutable" };
+const IMPORT_VERSION = "tweet-id-thumb-v4";
+const COVER_THUMBNAIL_WIDTH = 640;
+const DETAIL_THUMBNAIL_WIDTH = 160;
 
 try { loadEnvFile(".env.local"); } catch {}
 
@@ -56,19 +59,17 @@ function authorFrom(item, source) {
 
 function normalizeItems(raw, filePath) {
   if (!Array.isArray(raw)) throw new Error(`${filePath}: root must be an array`);
-  const ids = new Set();
-  return raw.map((item, index) => {
+  const itemsByTweetId = new Map();
+  raw.forEach((item, index) => {
     const source = `${filePath}[${index}]`;
     const sourceId = requiredString(String(item.tweetId || ""), "tweetId", source);
     const model = resolveModelPromptPage(requiredString(item.model, "model", source));
     if (!model) throw new Error(`${source}: unknown model label "${item.model}"`);
     const author = authorFrom(item, source);
-    const id = `${model.sourceKey}:${sourceId}`;
-    if (ids.has(id)) throw new Error(`${source}: duplicate prompt id ${id}`);
-    ids.add(id);
+    const id = sourceId;
     const publishedAt = new Date(requiredString(item.publishedAt, "publishedAt", source)).getTime();
     if (!Number.isSafeInteger(publishedAt)) throw new Error(`${source}: invalid publishedAt`);
-    return {
+    const normalized = {
       id,
       sourceId,
       modelSlug: model.slug,
@@ -83,7 +84,14 @@ function normalizeItems(raw, filePath) {
       publishedAt,
       imageUrls: imageUrls(item, source),
     };
+    const existing = itemsByTweetId.get(id);
+    if (!existing) {
+      itemsByTweetId.set(id, normalized);
+    } else if ((normalized.viewCount ?? -1) > (existing.viewCount ?? -1)) {
+      existing.viewCount = normalized.viewCount;
+    }
   });
+  return [...itemsByTweetId.values()];
 }
 
 async function download(url, attempt = 0) {
@@ -142,20 +150,67 @@ async function retryStorage(task, attempt = 0) {
 async function loadExisting(db, ids) {
   const found = [];
   for (let index = 0; index < ids.length; index += 100) {
-    found.push(...await db.select().from(promptItems).where(inArray(promptItems.id, ids.slice(index, index + 100))));
+    found.push(...await db.select().from(promptItems).where(inArray(promptItems.sourceId, ids.slice(index, index + 100))));
   }
-  return new Map(found.map((row) => [row.id, row]));
+  return new Map(found.map((row) => [row.sourceId, row]));
 }
 
-function stableComparable(row) {
-  return JSON.stringify({
-    modelSlug: row.modelSlug,
-    prompt: row.prompt,
-    promptType: row.promptType,
-    sourceUrl: row.sourceUrl,
-    publishedAt: row.publishedAt,
-    images: row.images,
+async function upgradeExistingThumbnails(db, storage, rows) {
+  const tasks = new Map();
+  for (const row of rows) {
+    if (!Array.isArray(row.images)) continue;
+    row.images.forEach((image, index) => {
+      if (!image?.hash || !image?.originalKey) return;
+      const detailKey = `prompts/thumb/detail-v3/${image.hash}.webp`;
+      if (image.thumbnailKey !== detailKey) tasks.set(detailKey, {
+        key: detailKey,
+        originalKey: image.originalKey,
+        width: DETAIL_THUMBNAIL_WIDTH,
+        quality: 74,
+      });
+      if (index === 0) {
+        const coverKey = `prompts/thumb/cover-v2/${image.hash}.webp`;
+        if (image.coverThumbnailKey !== coverKey) tasks.set(coverKey, {
+          key: coverKey,
+          originalKey: image.originalKey,
+          width: COVER_THUMBNAIL_WIDTH,
+          quality: 82,
+        });
+      }
+    });
+  }
+  const thumbnailTasks = [...tasks.values()];
+  let completedThumbnails = 0;
+  await mapConcurrent(thumbnailTasks, 4, async (task) => {
+    if (!(await retryStorage(() => storage.objectExists(task.key)))) {
+      const original = await retryStorage(() => storage.getObjectBuffer(task.originalKey));
+      const thumbnail = await sharp(original, { animated: false }).rotate().resize({ width: task.width }).webp({ quality: task.quality }).toBuffer();
+      await retryStorage(() => storage.uploadObject(task.key, thumbnail, "image/webp", CACHE_HEADERS));
+    }
+    completedThumbnails += 1;
+    process.stdout.write(`\r  thumbnail upgrades ${completedThumbnails}/${thumbnailTasks.length}`);
   });
+  if (thumbnailTasks.length) process.stdout.write("\n");
+  if (!tasks.size) return 0;
+
+  let updated = 0;
+  const updatedAt = new Date().toISOString();
+  for (const row of rows) {
+    if (!Array.isArray(row.images)) continue;
+    let changed = false;
+    const images = row.images.map((image, index) => {
+      if (!image?.hash) return image;
+      const thumbnailKey = `prompts/thumb/detail-v3/${image.hash}.webp`;
+      const coverThumbnailKey = index === 0 ? `prompts/thumb/cover-v2/${image.hash}.webp` : image.coverThumbnailKey;
+      if (image.thumbnailKey === thumbnailKey && image.coverThumbnailKey === coverThumbnailKey) return image;
+      changed = true;
+      return { ...image, thumbnailKey, ...(index === 0 ? { coverThumbnailKey } : {}) };
+    });
+    if (!changed) continue;
+    await db.update(promptItems).set({ images, updatedAt }).where(sql`${promptItems.id} = ${row.id}`);
+    updated += 1;
+  }
+  return updated;
 }
 
 async function collectJsonFiles(input) {
@@ -177,7 +232,7 @@ async function collectJsonFiles(input) {
 
 async function importFile(filePath, db, storage) {
   const contents = await readFile(filePath);
-  const fileHash = createHash("sha256").update(contents).digest("hex");
+  const fileHash = createHash("sha256").update(IMPORT_VERSION).update("\0").update(contents).digest("hex");
   const items = normalizeItems(JSON.parse(contents.toString("utf8")), filePath);
   if (dryRun) {
     console.log(`✓ ${filePath}: ${items.length} prompts, ${new Set(items.flatMap((item) => item.imageUrls)).size} source images`);
@@ -191,8 +246,21 @@ async function importFile(filePath, db, storage) {
     .onConflictDoUpdate({ target: promptImportFiles.fileHash, set: { status: "running", error: null, startedAt, completedAt: null } });
 
   try {
-    const uniqueUrls = [...new Set(items.flatMap((item) => item.imageUrls))];
-    const assets = await mapConcurrent(uniqueUrls, 4, async (url, index) => {
+    const existing = await loadExisting(db, items.map((item) => item.id));
+    const upgradedCount = await upgradeExistingThumbnails(db, storage, [...existing.values()]);
+    const pendingItems = items.filter((item) => !existing.has(item.id));
+    const duplicateCount = items.length - pendingItems.length;
+    if (!pendingItems.length) {
+      await db.update(promptImportFiles).set({ status: "completed", completedAt: new Date().toISOString(), error: null }).where(sql`${promptImportFiles.fileHash} = ${fileHash}`);
+      console.log(`↷ ${filePath}: ${duplicateCount} duplicate tweetIds skipped${upgradedCount ? `, upgraded ${upgradedCount} thumbnail sets` : ""}`);
+      return;
+    }
+
+    const uniqueUrls = [...new Set(pendingItems.flatMap((item) => item.imageUrls))];
+    const coverUrls = new Set(pendingItems.map((item) => item.imageUrls[0]));
+    const detailUrls = new Set(pendingItems.flatMap((item) => item.imageUrls));
+    let completedImages = 0;
+    const assets = await mapConcurrent(uniqueUrls, 4, async (url) => {
       const buffer = await download(url);
       const hash = createHash("sha256").update(buffer).digest("hex");
       const metadata = await sharp(buffer, { animated: false, limitInputPixels: 80_000_000 }).metadata();
@@ -200,31 +268,39 @@ async function importFile(filePath, db, storage) {
       if (!ext || !metadata.width || !metadata.height) throw new Error(`Unsupported image format: ${url}`);
       const swapped = [5, 6, 7, 8].includes(metadata.orientation);
       const originalKey = `prompts/original/${hash}.${ext}`;
-      const thumbnailKey = `prompts/thumb/v1/${hash}.webp`;
+      const coverThumbnailKey = `prompts/thumb/cover-v2/${hash}.webp`;
+      const detailThumbnailKey = `prompts/thumb/detail-v3/${hash}.webp`;
       if (!(await retryStorage(() => storage.objectExists(originalKey)))) {
         await retryStorage(() => storage.uploadObject(originalKey, buffer, `image/${metadata.format === "jpeg" ? "jpeg" : metadata.format}`, CACHE_HEADERS));
       }
-      if (!(await retryStorage(() => storage.objectExists(thumbnailKey)))) {
-        const thumb = await sharp(buffer, { animated: false }).rotate().resize({ width: 480, height: 480, fit: "inside", withoutEnlargement: true }).webp({ quality: 78 }).toBuffer();
-        await retryStorage(() => storage.uploadObject(thumbnailKey, thumb, "image/webp", CACHE_HEADERS));
+      if (coverUrls.has(url) && !(await retryStorage(() => storage.objectExists(coverThumbnailKey)))) {
+        const thumb = await sharp(buffer, { animated: false }).rotate().resize({ width: COVER_THUMBNAIL_WIDTH }).webp({ quality: 82 }).toBuffer();
+        await retryStorage(() => storage.uploadObject(coverThumbnailKey, thumb, "image/webp", CACHE_HEADERS));
       }
-      process.stdout.write(`\r  images ${index + 1}/${uniqueUrls.length}`);
-      return { url, hash, originalKey, thumbnailKey, width: swapped ? metadata.height : metadata.width, height: swapped ? metadata.width : metadata.height };
+      if (detailUrls.has(url) && !(await retryStorage(() => storage.objectExists(detailThumbnailKey)))) {
+        const thumb = await sharp(buffer, { animated: false }).rotate().resize({ width: DETAIL_THUMBNAIL_WIDTH }).webp({ quality: 74 }).toBuffer();
+        await retryStorage(() => storage.uploadObject(detailThumbnailKey, thumb, "image/webp", CACHE_HEADERS));
+      }
+      completedImages += 1;
+      process.stdout.write(`\r  images ${completedImages}/${uniqueUrls.length}`);
+      return { url, hash, originalKey, coverThumbnailKey, detailThumbnailKey, width: swapped ? metadata.height : metadata.width, height: swapped ? metadata.width : metadata.height };
     });
     process.stdout.write("\n");
     const byUrl = new Map(assets.map((asset) => [asset.url, asset]));
     const now = new Date().toISOString();
-    const rows = items.map(({ imageUrls: urls, ...item }) => {
+    const rows = pendingItems.map(({ imageUrls: urls, ...item }) => {
       const seen = new Set();
       const images = urls.map((url) => byUrl.get(url)).filter((asset) => asset && !seen.has(asset.hash) && seen.add(asset.hash))
-        .map(({ hash, originalKey, thumbnailKey, width, height }) => ({ hash, originalKey, thumbnailKey, width, height }));
+        .map(({ hash, originalKey, coverThumbnailKey, detailThumbnailKey, width, height }, index) => ({
+          hash,
+          originalKey,
+          thumbnailKey: detailThumbnailKey,
+          ...(index === 0 ? { coverThumbnailKey } : {}),
+          width,
+          height,
+        }));
       return { ...item, images, createdAt: now, updatedAt: now };
     });
-    const existing = await loadExisting(db, rows.map((row) => row.id));
-    for (const row of rows) {
-      const old = existing.get(row.id);
-      if (old && stableComparable(old) !== stableComparable({ ...row, viewCount: old.viewCount })) throw new Error(`Prompt conflict for ${row.id}`);
-    }
     for (let index = 0; index < rows.length; index += 40) {
       await db.insert(promptItems).values(rows.slice(index, index + 40)).onConflictDoUpdate({
         target: promptItems.id,
@@ -232,7 +308,7 @@ async function importFile(filePath, db, storage) {
       });
     }
     await db.update(promptImportFiles).set({ status: "completed", completedAt: new Date().toISOString(), error: null }).where(sql`${promptImportFiles.fileHash} = ${fileHash}`);
-    console.log(`✓ ${filePath}: imported ${rows.length} prompts`);
+    console.log(`✓ ${filePath}: imported ${rows.length} prompts${duplicateCount ? `, skipped ${duplicateCount} duplicate tweetIds` : ""}${upgradedCount ? `, upgraded ${upgradedCount} thumbnail sets` : ""}`);
   } catch (error) {
     await db.update(promptImportFiles).set({ status: "failed", completedAt: new Date().toISOString(), error: String(error?.message || error).slice(0, 2000) }).where(sql`${promptImportFiles.fileHash} = ${fileHash}`);
     throw error;
@@ -245,14 +321,23 @@ async function main() {
   if (!files.length) throw new Error("No JSON files found");
   let itemCount = 0;
   let imageCount = 0;
+  let duplicateCount = 0;
+  const tweetIds = new Set();
   for (const filePath of files) {
     const contents = await readFile(filePath, "utf8");
     const raw = JSON.parse(contents);
     const items = normalizeItems(raw, filePath);
-    itemCount += items.length;
-    imageCount += items.reduce((total, item) => total + item.imageUrls.length, 0);
+    for (const item of items) {
+      if (tweetIds.has(item.sourceId)) {
+        duplicateCount += 1;
+        continue;
+      }
+      tweetIds.add(item.sourceId);
+      itemCount += 1;
+      imageCount += item.imageUrls.length;
+    }
   }
-  console.log(`✓ validated ${files.length} files, ${itemCount} importable prompts, ${imageCount} image references`);
+  console.log(`✓ validated ${files.length} files, ${itemCount} unique prompts, ${imageCount} image references${duplicateCount ? `, ${duplicateCount} duplicate tweetIds` : ""}`);
   if (dryRun) {
     return;
   }
