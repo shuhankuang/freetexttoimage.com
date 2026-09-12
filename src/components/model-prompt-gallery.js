@@ -37,6 +37,33 @@ function PromptImageCard({ item, onOpen, copy }) {
   </article>;
 }
 
+function PromptDetailImage({ image, alt, unavailable }) {
+  const [status, setStatus] = useState("loading");
+  const imageRef = useRef(null);
+
+  useEffect(() => {
+    const element = imageRef.current;
+    if (!element?.complete) return;
+    setStatus(element.naturalWidth > 0 ? "loaded" : "error");
+  }, []);
+
+  return <>
+    {status !== "loaded" && <span className={`model-prompt-stage-loading${status === "error" ? " is-error" : ""}`} role={status === "error" ? "status" : undefined}>
+      {status === "loading" ? <Spinner size="sm" /> : unavailable}
+    </span>}
+    {/* eslint-disable-next-line @next/next/no-img-element */}
+    <img
+      ref={imageRef}
+      className={status === "loaded" ? "is-loaded" : ""}
+      src={image.displayUrl}
+      alt={alt}
+      decoding="async"
+      onLoad={() => setStatus("loaded")}
+      onError={() => setStatus("error")}
+    />
+  </>;
+}
+
 async function copyText(text) {
   try {
     await navigator.clipboard.writeText(text);
@@ -167,8 +194,7 @@ export default function ModelPromptGallery({ initialItems, initialCursor, model,
             {active && <div className="model-prompt-detail">
               <div className="model-prompt-detail-image">
                 <div className="model-prompt-detail-stage">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img key={activeImage?.id} src={activeImage?.displayUrl || active.images[0].displayUrl} alt={active.title} />
+                  <PromptDetailImage key={activeImage?.id} image={activeImage || active.images[0]} alt={active.title} unavailable={copy.imageUnavailable} />
                   {active.images.length > 1 && <>
                     <button type="button" className="model-prompt-stage-nav prev" onClick={() => stepImage(-1)} aria-label={copy.prevImage}><ArrowIcon /></button>
                     <button type="button" className="model-prompt-stage-nav next" onClick={() => stepImage(1)} aria-label={copy.nextImage}><ArrowIcon /></button>
