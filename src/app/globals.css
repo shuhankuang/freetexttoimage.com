@@ -164,7 +164,7 @@ button, input, textarea { font: inherit; }
 .image-prompt-hero > p:not(.hero-title) { max-width: 650px; }
 .creative-heading.image-prompt-hero > .hero-title { max-width: none; margin-inline: auto; text-wrap: balance; }
 @media (min-width: 1201px) { .creative-heading.image-prompt-hero > .hero-title { white-space: nowrap; } }
-.image-prompt-workspace { scroll-margin-top: 28px; display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 14px; align-items: stretch; }
+.image-prompt-workspace { scroll-margin-top: 96px; display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 14px; align-items: stretch; }
 .image-prompt-card { border: 1px solid #dedfd4 !important; border-radius: 15px !important; background: #fffdf9 !important; box-shadow: 0 14px 36px rgba(47,50,40,.04) !important; overflow: hidden !important; }
 .image-prompt-card .card__content { min-height: 490px; padding: 20px !important; display: flex; flex-direction: column; align-items: stretch; }
 .image-prompt-heading-row { min-height: 49px; display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
@@ -511,7 +511,7 @@ body { font-family: Arial, Helvetica, sans-serif; }
 .title-flower { display: inline-block; margin-left: 2px; color: #cf815b; vertical-align: top; transform: translate(9px, -15px); }
 .creative-heading > p:not(.hero-title) { margin: 0 auto; color: #7d8473; font-size: 15px; line-height: 1.7; }
 .image-studio .generator-card { max-width: 890px; margin: auto; gap: 0; border-radius: 15px; background: #fff; box-shadow: 0 6px 24px #303c2010 !important; overflow: hidden !important; }
-.image-studio #image-generator { scroll-margin-top: 28px; }
+.image-studio #image-generator { scroll-margin-top: 96px; }
 .image-studio .generator-card .card__content { padding: 17px 22px 8px; }
 .composer-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .composer-heading .prompt-label { display: flex; gap: 8px; align-items: center; color: #747f68; font-weight: 400; margin: 0; font-size: 14px; }

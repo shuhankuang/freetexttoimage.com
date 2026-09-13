@@ -10,7 +10,7 @@ export function proxy(request) {
   if (segment === defaultLocale) {
     const url = request.nextUrl.clone();
     url.pathname = pathname.replace(/^\/en(?=\/|$)/, "") || "/";
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(url, 308);
   }
 
   const url = request.nextUrl.clone();

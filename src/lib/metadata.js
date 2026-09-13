@@ -2,6 +2,8 @@ import { localePath } from "@/i18n/config";
 import { BRAND_NAME } from "@/lib/brand";
 
 const SOCIAL_LOCALES = { en: "en_US", ja: "ja_JP" };
+// public/og.png 的实际像素尺寸——声明的宽高要跟文件对上，别处平台按错误尺寸裁切预览图。
+const OG_IMAGE = { url: "/og.png", width: 1200, height: 675, alt: BRAND_NAME };
 
 export function buildPublicMetadata({ locale, path = "/", title, description, absoluteTitle = false }) {
   const canonical = localePath(locale, path);
@@ -23,11 +25,13 @@ export function buildPublicMetadata({ locale, path = "/", title, description, ab
       locale: SOCIAL_LOCALES[locale] || SOCIAL_LOCALES.en,
       title: socialTitle,
       description,
+      images: [OG_IMAGE],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title: socialTitle,
       description,
+      images: [OG_IMAGE.url],
     },
   };
 }

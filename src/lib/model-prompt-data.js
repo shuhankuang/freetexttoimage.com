@@ -37,11 +37,23 @@ function normalizeImages(value) {
   })).filter((image) => image.id && image.displayUrl && image.thumbUrl);
 }
 
+// row.title 基本都是空的（数据来自 Twitter 抓取，原始记录不带标题），
+// alt/aria-label 用它兜底只会渲染出一堆重复的 "Untitled prompt"，图片搜索等于白搭。
+// 优先截一段真实的 prompt 文本做描述，比占位字符串有意义得多。
+function imageAltText(row) {
+  const title = row.title?.trim();
+  if (title) return title;
+  const prompt = row.prompt?.trim();
+  if (!prompt) return "Untitled prompt";
+  return prompt.length > 120 ? `${prompt.slice(0, 119).trimEnd()}…` : prompt;
+}
+
 function toPublicItem(row) {
   const model = getModelPromptPage(row.modelSlug);
   return {
     id: row.id,
     title: row.title || "Untitled prompt",
+    imageAlt: imageAltText(row),
     prompt: row.prompt,
     promptType: row.promptType,
     model: row.modelLabel,

@@ -20,12 +20,12 @@ function PromptImageCard({ item, onOpen, copy }) {
   }, []);
 
   return <article className="model-prompt-card">
-    <button type="button" className={`model-prompt-image${loaded ? " is-loaded" : status === "error" ? " is-error" : ""}`} style={{ aspectRatio: `${cover.width || 4} / ${cover.height || 5}` }} onClick={() => onOpen(item)} aria-label={copy.open.replace("{title}", item.title)} aria-busy={status === "loading"} disabled={status === "error"}>
+    <button type="button" className={`model-prompt-image${loaded ? " is-loaded" : status === "error" ? " is-error" : ""}`} style={{ aspectRatio: `${cover.width || 4} / ${cover.height || 5}` }} onClick={() => onOpen(item)} aria-label={copy.open.replace("{title}", item.imageAlt)} aria-busy={status === "loading"} disabled={status === "error"}>
       {status !== "loaded" && <span className="model-prompt-loading" aria-hidden={status === "loading"}>
         {status === "loading" ? <Spinner size="sm" /> : copy.imageUnavailable}
       </span>}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img ref={imageRef} src={cover.coverUrl || cover.thumbUrl} alt={item.title} loading="lazy" decoding="async" onLoad={() => setStatus("loaded")} onError={() => setStatus("error")} />
+      <img ref={imageRef} src={cover.coverUrl || cover.thumbUrl} alt={item.imageAlt} loading="lazy" decoding="async" onLoad={() => setStatus("loaded")} onError={() => setStatus("error")} />
       <span className="model-prompt-overlay">
         <span className="model-prompt-source">
           <strong>{item.authorName}</strong>
@@ -233,7 +233,7 @@ export default function ModelPromptGallery({ initialItems, initialCursor, model,
             {active && <div className="model-prompt-detail">
               <div className="model-prompt-detail-image">
                 <div className="model-prompt-detail-stage">
-                  <PromptDetailImage key={activeImage?.id} image={activeImage || active.images[0]} alt={active.title} unavailable={copy.imageUnavailable} />
+                  <PromptDetailImage key={activeImage?.id} image={activeImage || active.images[0]} alt={active.imageAlt} unavailable={copy.imageUnavailable} />
                   {active.images.length > 1 && <>
                     <button type="button" className="model-prompt-stage-nav prev" onClick={() => stepImage(-1)} aria-label={copy.prevImage}><ArrowIcon /></button>
                     <button type="button" className="model-prompt-stage-nav next" onClick={() => stepImage(1)} aria-label={copy.nextImage}><ArrowIcon /></button>
