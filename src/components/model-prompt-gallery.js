@@ -120,8 +120,21 @@ export default function ModelPromptGallery({ initialItems, initialCursor, model,
   const [loadFailed, setLoadFailed] = useState(false);
   const loadMoreRef = useRef(null);
   const hasMore = Boolean(nextCursor);
+  // 按索引轮流分配（index % columnCount）会让每列的图片数一样多，但图片高矮不一，
+  // 列与列的实际渲染高度经常差很多，短的那列会先出现大片空白。这里改成贪心装箱：
+  // 每张图都放进当前"预估高度最矮"的列，用宽高比例（不需要图片真正加载完）估算高度。
   const columns = Array.from({ length: columnCount }, () => []);
-  items.forEach((item, index) => columns[index % columnCount].push({ item, index }));
+  const columnHeights = new Array(columnCount).fill(0);
+  items.forEach((item) => {
+    const cover = item.images[0];
+    const ratio = (cover?.height || 5) / (cover?.width || 4);
+    let shortest = 0;
+    for (let i = 1; i < columnCount; i++) {
+      if (columnHeights[i] < columnHeights[shortest]) shortest = i;
+    }
+    columns[shortest].push(item);
+    columnHeights[shortest] += ratio;
+  });
 
   useEffect(() => {
     const oneColumn = window.matchMedia("(max-width: 390px)");
@@ -158,7 +171,7 @@ export default function ModelPromptGallery({ initialItems, initialCursor, model,
     if (!target || !hasMore || loadingMore || loadFailed) return;
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) beginLoadMore();
-    }, { rootMargin: "240px 0px" });
+    }, { rootMargin: "480px 0px" });
     observer.observe(target);
     return () => observer.disconnect();
   }, [beginLoadMore, hasMore, loadFailed, loadingMore]);
@@ -202,7 +215,7 @@ export default function ModelPromptGallery({ initialItems, initialCursor, model,
   return <>
     <div className="model-prompt-masonry" aria-label={copy.listLabel}>
       {columns.map((column, columnIndex) => <div className="model-prompt-column" key={columnIndex}>
-        {column.map(({ item }) => <PromptImageCard item={item} onOpen={open} copy={copy} key={item.id} />)}
+        {column.map((item) => <PromptImageCard item={item} onOpen={open} copy={copy} key={item.id} />)}
       </div>)}
     </div>
 
