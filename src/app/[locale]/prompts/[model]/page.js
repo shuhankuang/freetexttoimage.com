@@ -35,12 +35,17 @@ export default async function ModelPromptPage({ params }) {
   const activePath = `/prompts/${model.slug}`;
   const page = await getModelPromptFirstPage(model.slug);
 
-  return <ServerAppShell activePath={activePath} publicView locale={locale}>
+  return <ServerAppShell
+    activePath={activePath}
+    pageTitle={copy.breadcrumb.replace("{model}", name)}
+    publicView
+    locale={locale}
+  >
     <main className="workspace-page model-prompts-page">
       <Hero
         headingLevel="h1"
         className="section-heading model-prompts-heading"
-        label={copy.section}
+        label={copy.heroLabel.replace("{model}", name)}
         title={copy.pageTitle.replace("{model}", name)}
         accent={copy.pageTitleAccent.replace("{model}", name)}
         subtitle={copy.description.replace("{model}", name)}

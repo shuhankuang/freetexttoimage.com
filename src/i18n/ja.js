@@ -28,6 +28,8 @@ const ja = {
   },
   modelPrompts: {
     section: "モデル別プロンプト",
+    heroLabel: "{model} プロンプト例",
+    breadcrumb: "{model} プロンプト",
     pageTitle: "より良いAI画像を作るための",
     pageTitleAccent: "{model}プロンプト",
     metaTitle: "{model}のプロンプト例",
@@ -553,12 +555,16 @@ const ja = {
     useAnother: "別のメールアドレスを使う",
     or: "または",
     google: "Googleで続ける",
+    googleLoading: "Googleに接続しています…",
     legal: "初めての方は、メールのリンクを開くとアカウントが作成されます。",
     errors: {
+      emailRequired: "メールアドレスを入力してください。",
+      invalidEmail: "有効なメールアドレスを入力してください。",
       magicLink: "ログインリンクを送信できませんでした。もう一度お試しください。",
       invalidLink: "このログインリンクは無効か、有効期限が切れています。新しいリンクをリクエストしてください。",
       generic: "問題が発生しました。もう一度お試しください。",
       google: "Googleログインがまだ設定されていません。",
+      verification: "ログインリンクを送信する前に、セキュリティ確認を完了してください。",
     },
   },
 };

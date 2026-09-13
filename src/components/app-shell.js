@@ -10,7 +10,7 @@ import LanguageSwitcher from "@/components/language-switcher";
 import { useI18n } from "@/i18n/provider";
 import { CoinsIcon, LogoutIcon, PromptCardsIcon, UserIcon } from "@/components/ui";
 
-export default function AppShell({ children, footer, publicView = false, showAdmin = false, sidebar }) {
+export default function AppShell({ children, footer, pageTitle: pageTitleOverride, publicView = false, showAdmin = false, sidebar }) {
   const rawPathname = usePathname();
   const pathname = rawPathname.replace(/^\/en(?=\/|$)/, "") || "/";
   const router = useRouter();
@@ -60,7 +60,7 @@ export default function AppShell({ children, footer, publicView = false, showAdm
     try { await authClient.signOut(); } finally { router.replace(homePath); }
   }
 
-  const pageTitle = pathname === creationsPath
+  const pageTitle = pageTitleOverride || (pathname === creationsPath
     ? t("shell.creations")
     : pathname === imageToPromptPath
       ? t("shell.imageToPrompt")
@@ -74,7 +74,7 @@ export default function AppShell({ children, footer, publicView = false, showAdm
             ? t("modelPrompts.section")
           : pathname === adminPath
             ? "Prompt imports"
-      : t("shell.imageStudio");
+      : t("shell.imageStudio"));
 
   return <div className="app-frame">
     {sidebar}

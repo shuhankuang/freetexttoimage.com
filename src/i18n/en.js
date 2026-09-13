@@ -28,6 +28,8 @@ const en = {
   },
   modelPrompts: {
     section: "MODEL PROMPTS",
+    heroLabel: "{model} PROMPT EXAMPLES",
+    breadcrumb: "{model} Prompts",
     pageTitle: "{model} Prompts for Better",
     pageTitleAccent: "AI Images",
     metaTitle: "{model} Prompt Examples",
@@ -553,12 +555,16 @@ const en = {
     useAnother: "Use a different email",
     or: "or",
     google: "Continue with Google",
+    googleLoading: "Connecting to Google…",
     legal: "New here? Your account will be created when you use the email link.",
     errors: {
+      emailRequired: "Enter your email address.",
+      invalidEmail: "Enter a valid email address.",
       magicLink: "We couldn’t send the sign-in link. Please try again.",
       invalidLink: "This sign-in link is invalid or has expired. Request a new one below.",
       generic: "Something went wrong.",
       google: "Google sign-in is not configured yet.",
+      verification: "Complete the security check before requesting a sign-in link.",
     },
   },
 };
