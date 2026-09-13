@@ -3,7 +3,7 @@ import AdminPromptImports from "@/components/admin-prompt-imports";
 import { localePath } from "@/i18n/config";
 import { isAdminEmail } from "@/lib/admin-auth";
 import { loginPathWithRedirect } from "@/lib/auth-redirect";
-import { listPromptImportJobs } from "@/lib/prompt-import-jobs";
+import { getPromptImportSummary, listPromptImportJobs } from "@/lib/prompt-import-jobs";
 import { promptImportsEnabled } from "@/lib/prompt-import-settings";
 import { getServerSession } from "@/lib/server-session";
 
@@ -20,5 +20,11 @@ export default async function PromptAdminPage({ params }) {
   if (!session?.user) redirect(loginPathWithRedirect(localePath(locale, "/login"), returnTo));
   if (!isAdminEmail(session.user.email)) notFound();
 
-  return <AdminPromptImports initialJobs={await listPromptImportJobs()} initialImportsEnabled={promptImportsEnabled()} />;
+  const [initialJobs, initialSummary] = await Promise.all([listPromptImportJobs(), getPromptImportSummary()]);
+  return <AdminPromptImports
+    initialJobs={initialJobs}
+    initialSummary={initialSummary}
+    initialImportsEnabled={promptImportsEnabled()}
+    initialHasMore={initialJobs.length < initialSummary.jobs}
+  />;
 }

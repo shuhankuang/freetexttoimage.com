@@ -6,7 +6,7 @@ import { auth } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin-auth";
 import { db } from "@/lib/db";
 import { promptImportJobs } from "@/lib/schema";
-import { listPromptImportJobs } from "@/lib/prompt-import-jobs";
+import { getPromptImportSummary, listPromptImportJobs } from "@/lib/prompt-import-jobs";
 import { promptImportsEnabled } from "@/lib/prompt-import-settings";
 import { MAX_JSON_BYTES, normalizePromptItems, parsePromptFileName, previewPromptItems, sha256 } from "@/lib/prompt-import-core";
 import { objectExists, uploadObject } from "@/lib/storage";
@@ -21,9 +21,18 @@ async function adminSession() {
   return session?.user && isAdminEmail(session.user.email) ? session : null;
 }
 
-export async function GET() {
+export async function GET(request) {
   if (!(await adminSession())) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json({ jobs: await listPromptImportJobs(), importsEnabled: promptImportsEnabled() });
+  const { searchParams } = new URL(request.url);
+  const limit = Math.min(Math.max(Number(searchParams.get("limit")) || 20, 1), 50);
+  const offset = Math.max(Number(searchParams.get("offset")) || 0, 0);
+  const [jobs, summary] = await Promise.all([listPromptImportJobs(limit, offset), getPromptImportSummary()]);
+  return NextResponse.json({
+    jobs,
+    summary,
+    importsEnabled: promptImportsEnabled(),
+    hasMore: offset + jobs.length < summary.jobs,
+  });
 }
 
 export async function POST(request) {
