@@ -413,6 +413,7 @@ const ja = {
       free: {
         images: "最大 {count} 枚",
         models: "すべてのAIモデルを利用可能",
+        allTools: "クレジットはすべてのAIツールで共通利用",
         generation: "標準速度で生成",
         output: "標準出力",
         support: "標準サポート",
@@ -420,6 +421,7 @@ const ja = {
       basic: {
         images: "月に最大 {count} 枚",
         models: "すべてのAIモデルを利用可能",
+        allTools: "クレジットはすべてのAIツールで共通利用",
         generation: "より高速に生成",
         output: "透かしなしで出力",
         support: "標準サポート",
@@ -427,6 +429,7 @@ const ja = {
       pro: {
         images: "月に最大 {count} 枚",
         models: "すべてのAIモデルを利用可能",
+        allTools: "クレジットはすべてのAIツールで共通利用",
         generation: "より高速に生成",
         output: "透かしなしで出力",
         support: "優先サポート",

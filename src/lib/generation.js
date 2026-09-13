@@ -7,8 +7,9 @@ import { getCreation, updateCreationSucceeded, updateCreationStatus } from "@/li
 import { getProvider, DEFAULT_MODEL } from "@/lib/models";
 import { publicObjectUrl, uploadObject, s3Configured } from "@/lib/storage";
 import { deductCredits, refundCredits, getBalance } from "@/lib/credits";
-import { ensureSubscriptionCreditsFresh } from "@/lib/billing";
+import { ensureSubscriptionCreditsFresh, ensureSubscriptionFresh } from "@/lib/billing";
 import { resolveReferenceTokens } from "@/lib/reference-images";
+import { applyWatermark } from "@/lib/watermark";
 
 const THUMBNAIL_WIDTH = 640; // 网格列按宽度布局；固定宽度并保留原比例，避免裁掉生成内容
 
@@ -111,8 +112,13 @@ async function finalizeJob(jobId, urls) {
   const contentType = image.contentType?.startsWith("image/")
     ? image.contentType
     : mimeForExt(ext);
+
+  // 没有生效中的订阅就是免费用户，只给大图打水印；缩略图用原图切，不带水印。
+  const subscription = await ensureSubscriptionFresh(job.userId);
+  const buffer = subscription?.status === "active" ? image.buffer : await applyWatermark(image.buffer);
+
   const key = `${job.creationId}.${ext}`;
-  await uploadObject(key, image.buffer, contentType); // 原图必须成功，失败交给上层重试
+  await uploadObject(key, buffer, contentType); // 原图必须成功，失败交给上层重试
 
   const thumbnailKey = await buildThumbnail(job, image.buffer); // 尽力而为，失败不影响原图落盘
 

@@ -24,7 +24,7 @@ const PLANS = [
   },
 ];
 
-const PLAN_FEATURES = ["images", "models", "generation", "output", "support"];
+const PLAN_FEATURES = ["images", "models", "allTools", "generation", "output", "support"];
 
 export default function PricingPlans() {
   const router = useRouter();

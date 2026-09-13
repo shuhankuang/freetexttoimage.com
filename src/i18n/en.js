@@ -413,6 +413,7 @@ const en = {
       free: {
         images: "Up to {count} images",
         models: "Access to all AI models",
+        allTools: "Use credits across all AI tools",
         generation: "Standard generation",
         output: "Standard output",
         support: "Standard support",
@@ -420,6 +421,7 @@ const en = {
       basic: {
         images: "Up to {count} images/month",
         models: "Access to all AI models",
+        allTools: "Use credits across all AI tools",
         generation: "Faster generation",
         output: "Watermark-free output",
         support: "Standard support",
@@ -427,6 +429,7 @@ const en = {
       pro: {
         images: "Up to {count} images/month",
         models: "Access to all AI models",
+        allTools: "Use credits across all AI tools",
         generation: "Faster generation",
         output: "Watermark-free output",
         support: "Priority support",
