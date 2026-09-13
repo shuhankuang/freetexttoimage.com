@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button, Card, Spinner } from "@heroui/react";
 import { useI18n } from "@/i18n/provider";
 import { loginPathWithRedirect } from "@/lib/auth-redirect";
+import TurnstileVerification from "@/components/turnstile-verification";
 import {
   ArrowIcon, CheckIcon, CopyIcon, ImageIcon, ImagePlusIcon, SparkIcon, TrashIcon,
 } from "@/components/ui";
@@ -50,6 +51,10 @@ export default function ImageToPrompt() {
   const [dragging, setDragging] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileAttempt, setTurnstileAttempt] = useState(0);
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "";
+  const updateTurnstileToken = useCallback((token) => setTurnstileToken(token), []);
 
   useEffect(() => () => { if (image?.preview) URL.revokeObjectURL(image.preview); }, [image]);
 
@@ -58,6 +63,7 @@ export default function ImageToPrompt() {
     setError("");
     setPrompt("");
     setCopied(false);
+    setTurnstileToken("");
     if (!ACCEPTED_TYPES.has(file.type)) return setError(t("imageToPrompt.errors.type"));
     if (file.size > MAX_SOURCE_BYTES) return setError(t("imageToPrompt.errors.size"));
     setPreparing(true);
@@ -67,6 +73,7 @@ export default function ImageToPrompt() {
         if (current?.preview) URL.revokeObjectURL(current.preview);
         return { file: processed, name: file.name, size: file.size, preview: URL.createObjectURL(file) };
       });
+      setTurnstileAttempt((value) => value + 1);
     } catch {
       setError(t("imageToPrompt.errors.read"));
     } finally {
@@ -80,10 +87,15 @@ export default function ImageToPrompt() {
     setImage(null);
     setPrompt("");
     setError("");
+    setTurnstileToken("");
   }
 
   async function generatePrompt() {
     if (!image || pending) return;
+    if (!turnstileToken) {
+      setError(t("imageToPrompt.errors.verification"));
+      return;
+    }
     setPending(true);
     setError("");
     setCopied(false);
@@ -91,9 +103,17 @@ export default function ImageToPrompt() {
       const formData = new FormData();
       formData.append("image", image.file);
       formData.append("locale", locale);
-      const response = await fetch("/api/image-to-prompt", { method: "POST", body: formData });
+      const response = await fetch("/api/image-to-prompt", {
+        method: "POST",
+        headers: { "x-turnstile-token": turnstileToken },
+        body: formData,
+      });
       if (response.status === 401) {
         router.push(loginPathWithRedirect(path("/login"), path("/image-to-prompt")));
+        return;
+      }
+      if (response.status === 403) {
+        setError(t("imageToPrompt.errors.verification"));
         return;
       }
       const body = await response.json().catch(() => ({}));
@@ -103,6 +123,8 @@ export default function ImageToPrompt() {
       setError(t("imageToPrompt.errors.generate"));
     } finally {
       setPending(false);
+      setTurnstileToken("");
+      setTurnstileAttempt((value) => value + 1);
     }
   }
 
@@ -153,7 +175,7 @@ export default function ImageToPrompt() {
           <strong>{preparing ? t("imageToPrompt.preparing") : t("imageToPrompt.dropTitle")}</strong>
           <small>{t("imageToPrompt.dropBody")}</small>
         </button>}
-        <Button fullWidth size="lg" className="primary-button image-prompt-generate" isPending={pending || preparing} isDisabled={!image || preparing} onPress={generatePrompt}>
+        <Button fullWidth size="lg" className="primary-button image-prompt-generate" isPending={pending || preparing} isDisabled={!image || preparing || !turnstileToken} onPress={generatePrompt}>
           {pending ? <><Spinner size="sm" color="current" />{t("imageToPrompt.analyzing")}</> : <><SparkIcon />{t("imageToPrompt.generate")}<ArrowIcon /></>}
         </Button>
       </Card.Content></Card>
@@ -185,6 +207,13 @@ export default function ImageToPrompt() {
         </div>}
       </Card.Content></Card>
     </div>
+
+    <TurnstileVerification
+      active={Boolean(image)}
+      attempt={turnstileAttempt}
+      siteKey={turnstileSiteKey}
+      onChange={updateTurnstileToken}
+    />
 
     {error && <p className="image-prompt-error" role="alert">{error}</p>}
   </>;

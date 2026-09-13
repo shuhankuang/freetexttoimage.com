@@ -127,6 +127,9 @@ const en = {
     copy: "Copy prompt",
     copied: "Copied",
     usePrompt: "Create with prompt",
+    errors: {
+      verification: "Complete the security check before generating a prompt.",
+    },
     guideLabel: "How image to prompt works",
     guide: {
       uploadTitle: "Upload your image",

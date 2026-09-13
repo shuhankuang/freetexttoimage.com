@@ -127,6 +127,9 @@ const ja = {
     copy: "コピー",
     copied: "コピーしました",
     usePrompt: "このプロンプトで作成",
+    errors: {
+      verification: "プロンプトを生成する前にセキュリティ確認を完了してください。",
+    },
     guideLabel: "画像からプロンプトを作る流れ",
     guide: {
       uploadTitle: "画像をアップロード",

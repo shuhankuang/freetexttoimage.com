@@ -65,7 +65,7 @@ button, input, textarea { font: inherit; }
 .google-login-button:hover { background: #414e39 !important; transform: translateY(-1px); box-shadow: 0 10px 24px rgba(54, 66, 47, .25); }
 .email-link-button { min-height: 48px; gap: 9px; border: 1px solid transparent !important; border-radius: 9px !important; background: #ecefe4 !important; color: #5f6d53 !important; font-weight: 600 !important; box-shadow: none !important; }
 .email-link-button:hover { background: #e3e8d9 !important; color: #4d5d42 !important; }
-.turnstile-verification { min-width: 0; display: flex; justify-content: center; }
+.turnstile-verification { min-width: 0; display: flex; justify-content: center; margin-top: 10px; }
 .turnstile-widget { width: 300px; max-width: 100%; overflow: hidden; }
 .turnstile-widget:empty { display: none; }
 .legal-copy { font-size: 12px !important; line-height: 1.6; text-align: center; margin-top: 22px !important; }

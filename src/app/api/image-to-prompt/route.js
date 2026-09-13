@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import sharp from "sharp";
 import { auth } from "@/lib/auth";
 import { createPromptFromImage } from "@/lib/image-to-prompt";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -26,6 +27,14 @@ export async function POST(request) {
   }
   if (!file.size || file.size > MAX_UPLOAD_BYTES) {
     return NextResponse.json({ error: "The processed image must be smaller than 4 MB." }, { status: 413 });
+  }
+
+  const turnstileToken = request.headers.get("x-turnstile-token");
+  if (!await verifyTurnstileToken(turnstileToken)) {
+    return NextResponse.json(
+      { error: "Complete the security check before generating a prompt.", code: "TURNSTILE_VERIFICATION_FAILED" },
+      { status: 403 },
+    );
   }
 
   let image;
