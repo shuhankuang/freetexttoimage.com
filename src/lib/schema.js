@@ -111,9 +111,10 @@ export const creditAccounts = sqliteTable("credit_accounts", {
 export const signupBonusClaims = sqliteTable("signup_bonus_claims", {
   emailHash: text("email_hash").primaryKey(),
   userId: text("user_id").notNull().unique(),
+  ipHash: text("ip_hash"),
   amount: integer("amount").notNull(),
   createdAt: text("created_at").notNull(),
-});
+}, (table) => [index("idx_signup_bonus_claims_ip_time").on(table.ipHash, table.createdAt)]);
 
 // 每一笔积分变动都记一行，bucket 区分扣/退的是月度还是永久，reason 区分事件类型
 // （signup_bonus / generation_hold / generation_refund / ...）。refType+refId 关联到具体的

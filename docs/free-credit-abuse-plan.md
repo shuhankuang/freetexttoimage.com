@@ -2,7 +2,7 @@
 
 > 状态：已实现，待配置 Disify Key 并部署
 > 目标：用最少的代码阻止最低成本的批量注册，不追求完全防住所有攻击。
-> 原则：允许用户注册；只控制每个真实邮箱身份能否领取一次免费积分。
+> 原则：允许用户注册；只控制每个邮箱身份和网络来源能否领取免费积分。
 
 ## 1. 当前问题
 
@@ -12,11 +12,12 @@
 - Magic Link 已有 Turnstile；Google 登录需要真实 Google 账号，当前不增加额外验证摩擦。
 - 当前发放余额和写入积分流水是两笔独立操作，数据库瞬时失败时可能只完成其中一步。
 
-第一版只解决三个问题：
+第一版解决四个问题：
 
 1. 同一个 Gmail 收件箱只能领取一次注册积分。
 2. 常见一次性邮箱不能创建新账号。
 3. 奖励占位、余额和流水保持一致。
+4. 同一 IP 在滚动 24 小时内最多为 3 个账号领取注册积分。
 
 ## 2. 邮箱规范化
 
@@ -24,10 +25,11 @@
 
 1. 去除首尾空格并转为小写。
 2. 将 `googlemail.com` 映射为 `gmail.com`。
-3. 对 `gmail.com`：
-   - 删除 local part 中的所有 `.`。
-   - 删除第一个 `+` 及其后面的内容。
-4. 其他邮箱域名不处理点号和 `+tag`，避免破坏真实邮箱语义。
+3. 所有域名都删除 local part 中第一个 `+` 及其后面的内容——`+tag` 是通用的子地址约定
+   （Outlook/Yahoo/iCloud/自建域名邮箱都支持，不是 Gmail 独有），且只影响这里算出的防滥用哈希，
+   不改变真正用于收信、登录的邮箱地址，不存在破坏邮箱语义的问题。
+4. 只对 `gmail.com` 额外删除 local part 中的所有 `.`——只有 Gmail 把点号当无意义字符，
+   其他域名的点号是地址的真实组成部分，不能动。
 
 示例：
 
@@ -36,7 +38,8 @@
 | `a.b+test@gmail.com` | `ab@gmail.com` |
 | `a.b@googlemail.com` | `ab@gmail.com` |
 | `ab@gmail.com` | `ab@gmail.com` |
-| `a.b+test@outlook.com` | `a.b+test@outlook.com` |
+| `a.b+test@outlook.com` | `a.b@outlook.com` |
+| `a.b@outlook.com` | `a.b@outlook.com` |
 
 规范化结果不直接存入数据库。使用 HMAC-SHA256 生成不可读键：
 
@@ -100,7 +103,7 @@ const shouldBlock =
 
 隐私要求：
 
-- 邮箱地址会发送给 Disify 做验证，Privacy 页面需要披露该用途及服务提供方。
+- Privacy 页面以通用方式说明邮箱可能用于验证和防止滥用，不公开列出具体服务商名称。
 - 不把 Disify 的完整响应长期存入数据库。
 - 日志不保存原始邮箱、完整 API 响应或 API Key。
 
@@ -112,16 +115,21 @@ const shouldBlock =
 CREATE TABLE signup_bonus_claims (
   email_hash TEXT PRIMARY KEY,
   user_id TEXT NOT NULL UNIQUE,
+  ip_hash TEXT,
   amount INTEGER NOT NULL,
   created_at TEXT NOT NULL
 );
+
+CREATE INDEX idx_signup_bonus_claims_ip_time
+ON signup_bonus_claims (ip_hash, created_at);
 ```
 
 用途：
 
 - `email_hash` 唯一约束保证同一个规范化邮箱只能领取一次。
 - `user_id` 唯一约束保证一个用户只能领取一次。
-- 只记录成功领取，不保存 IP、设备指纹或原始邮箱。
+- `ip_hash` 使用同一个 HMAC 密钥生成，不保存原始 IP。
+- `amount=10` 表示成功领取，`amount=0` 表示被 IP 上限拒绝，防止补偿逻辑稍后误发。
 
 ## 5. 发放流程
 
@@ -141,11 +149,11 @@ grantSignupBonus({ id: userId, email })
 4. 新用户通过服务端调用 Disify。
 5. `disposable=true` 且 `confidence>=90` 时拒绝请求；API 失败时放行并记录告警。
 6. 通过检查的新用户继续注册流程。
-7. 用户创建后，在事务外完成邮箱规范化和 HMAC 计算。
-8. 开启一个短事务。
-9. 插入 `signup_bonus_claims`，使用 `onConflictDoNothing`。
-10. 插入失败表示该邮箱或用户已经领取，创建 0 余额账户并结束。
-11. 插入成功后给 `credit_accounts.permanent_balance` 增加 10。
+7. 用户创建后读取 Better Auth 解析的客户端 IP，并对邮箱和 IP 分别生成 HMAC。
+8. 开启一个短事务，统计该 `ip_hash` 最近 24 小时内 `amount>0` 的 claim。
+9. 未达到上限时插入 `amount=10` 的 claim；达到上限时插入 `amount=0` 的 claim 并创建 0 余额账户。
+10. claim 插入冲突表示该邮箱或用户已经处理，创建 0 余额账户并结束。
+11. 成功领取时给 `credit_accounts.permanent_balance` 增加 10。
 12. 写入确定性 ID 的积分流水：`signup-bonus:{email_hash}`。
 13. 提交事务。
 
@@ -160,7 +168,7 @@ Better Auth 的 `user.create.after` 在用户创建事务提交后执行，因�
 采用一个简单补偿：
 
 - 注册 hook 正常调用一次 `grantSignupBonus`。
-- 读取用户积分时，如果该用户没有 `credit_accounts` 行，再幂等调用一次 `grantSignupBonus`。
+- 读取用户积分时，如果该用户没有 `credit_accounts` 行，从最近会话读取 Better Auth 已解析的 IP，再幂等调用一次 `grantSignupBonus`。
 - 未获得奖励的重复邮箱创建一个 0 余额账户，避免以后每次读取都重复检查。
 
 这样数据库短暂故障不会让正常用户永久丢失注册积分，也不需要队列或定时任务。
@@ -178,9 +186,8 @@ Better Auth 的 `user.create.after` 在用户创建事务提交后执行，因�
 
 ## 8. 暂时不做
 
-- 不做 IP 或网段限制。
-- 不配置 `trustedProxies` 作为本功能的前置条件。
-- 不存 IP hash 或设备指纹。
+- 不做永久 IP 封禁或“一 IP 一账号”。
+- 不存原始 IP 或设备指纹。
 - 不给 Google 登录增加 Turnstile。
 - 不做延迟到账、审核状态或申诉流程。
 - 不做自动每日免费积分预算。
@@ -194,7 +201,7 @@ Better Auth 的 `user.create.after` 在用户创建事务提交后执行，因�
 
 1. 普通新用户获得 10 积分，并产生一条注册奖励流水。
 2. `a.b+1@gmail.com`、`ab@gmail.com`、`a.b@googlemail.com` 中只有第一个账号获得积分。
-3. Outlook 等非 Gmail 邮箱的点号与 `+tag` 不被修改。
+3. Outlook 等非 Gmail 邮箱的点号不被修改，但 `+tag` 会被去掉（`a.b+1@outlook.com` 与 `a.b@outlook.com` 归并为同一领取身份，`a.b` 与 `ab` 仍是两个不同身份）。
 4. Disify 返回 `disposable=true` 且 `confidence>=90` 时，新用户无法请求 Magic Link，也不会创建用户或积分记录。
 5. 已经存在的一次性邮箱用户仍可正常请求 Magic Link 登录。
 6. Disify 返回低于 90 的置信度时不拒绝注册。
@@ -205,13 +212,16 @@ Better Auth 的 `user.create.after` 在用户创建事务提交后执行，因�
 11. 奖励事务任一步失败时，claim、余额和流水都不产生部分写入。
 12. 注册 hook 失败后，第一次读取积分能够补发。
 13. 关闭 `FREE_SIGNUP_BONUS_ENABLED` 后仍可注册，但不会获得积分。
+14. 同一 IP 前 3 个新账号正常领取，第 4 个账号可注册但获得 0 积分。
+15. 第 4 个账号之后触发积分补偿也不会获得奖励。
+16. 无法可信解析 IP 时放行奖励并记录告警，不把所有用户归入同一个 IP。
 
 ## 10. 后续升级条件
 
 只有出现可量化的损失后才升级：
 
 - 新的一次性邮箱漏过：先查看 Disify 的返回信号和置信度，确认是否需要调整阈值或向 Disify 提交该服务商。
-- 同 IP 批量账号：先确认 Cloudflare、Coolify 和 Traefik 的真实 IP 链路，再观察 IP 分布。
+- 同 IP 批量账号仍明显：先核对 Cloudflare、Coolify 和 Traefik 的真实 IP 链路，再评估是否降低上限。
 - Google 账号批量注册：评估是否给 `/sign-in/social` 增加 Turnstile。
 - 免费奖励支出明显异常：增加告警或数据库预算计数器。
 

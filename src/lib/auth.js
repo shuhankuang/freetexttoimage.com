@@ -1,5 +1,5 @@
 import { betterAuth } from "better-auth";
-import { APIError, createAuthMiddleware } from "better-auth/api";
+import { APIError, createAuthMiddleware, getIP } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { magicLink } from "better-auth/plugins";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
@@ -11,11 +11,28 @@ import { verifyTurnstileToken } from "@/lib/turnstile";
 import { checkDisposableEmail } from "@/lib/disify";
 
 const googleEnabled = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+const ipAddressConfig = {
+  ipAddressHeaders: (process.env.AUTH_IP_HEADERS || "cf-connecting-ip,x-forwarded-for")
+    .split(",")
+    .map((header) => header.trim().toLowerCase())
+    .filter(Boolean),
+  trustedProxies: (process.env.AUTH_TRUSTED_PROXIES || "")
+    .split(",")
+    .map((proxy) => proxy.trim())
+    .filter(Boolean),
+  ipv6Subnet: 64,
+};
+
+function authRequestIp(context) {
+  const source = context?.request || context?.headers;
+  return source ? getIP(source, { advanced: { ipAddress: ipAddressConfig } }) : null;
+}
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "sqlite", schema }),
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
   secret: process.env.BETTER_AUTH_SECRET,
+  advanced: { ipAddress: ipAddressConfig },
   hooks: {
     before: createAuthMiddleware(async (context) => {
       if (context.path !== "/sign-in/magic-link") return;
@@ -52,7 +69,9 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        after: async (user) => { await grantSignupBonus(user); },
+        after: async (user, context) => {
+          await grantSignupBonus(user, { ipAddress: authRequestIp(context) });
+        },
       },
     },
   },

@@ -1,7 +1,7 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, count, desc, eq, gt, gte, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { creditAccounts, creditLedger, signupBonusClaims, user } from "@/lib/schema";
-import { hashBonusEmail } from "@/lib/signup-bonus-identity";
+import { creditAccounts, creditLedger, session, signupBonusClaims, user } from "@/lib/schema";
+import { hashBonusEmail, hashSignupIp } from "@/lib/signup-bonus-identity";
 
 // 积分账本服务端访问层。
 // 语义：generation_hold 在生成前扣（月度优先、永久其次），成功不再有动作（等于确认消费）；
@@ -10,7 +10,13 @@ import { hashBonusEmail } from "@/lib/signup-bonus-identity";
 // 不重新计算——这样即使以后月度积分有重置逻辑，退款也不会退错桶。
 
 const SIGNUP_BONUS_PERMANENT = 10;
+const SIGNUP_BONUS_IP_WINDOW_MS = 24 * 60 * 60 * 1000;
 const iso = () => new Date().toISOString();
+
+function signupBonusIpLimit() {
+  const configured = Number.parseInt(process.env.SIGNUP_BONUS_IP_LIMIT || "3", 10);
+  return Number.isFinite(configured) ? Math.max(1, Math.min(configured, 20)) : 3;
+}
 
 async function ensureEmptyCreditAccount(userId, executor = db) {
   await executor
@@ -21,7 +27,7 @@ async function ensureEmptyCreditAccount(userId, executor = db) {
 
 // claim、余额与流水在同一事务中提交。email_hash 和 user_id 的唯一约束共同保证幂等，
 // Gmail 点号、+tag 和 googlemail.com 由 hashBonusEmail 归并到同一个领取身份。
-export async function grantSignupBonus({ id: userId, email }) {
+export async function grantSignupBonus({ id: userId, email }, { ipAddress = null } = {}) {
   if (!userId || !email) throw new Error("Signup bonus requires a user id and email.");
 
   // 必须显式开启，避免新代码早于数据库迁移或密钥配置上线时阻断登录。
@@ -30,16 +36,48 @@ export async function grantSignupBonus({ id: userId, email }) {
     return false;
   }
 
-  const emailHash = hashBonusEmail(email);
+  // hashBonusEmail/hashSignupIp 在密钥缺失或邮箱格式异常时会抛错；这里必须兜住，
+  // 否则会从 better-auth 的 create.after 钩子队列里一路抛出去，
+  // 导致本该只是"不发奖励"的配置问题变成整个登录请求报错（用户行其实已经建好）。
+  let emailHash;
+  let ipHash;
+  try {
+    emailHash = hashBonusEmail(email);
+    ipHash = hashSignupIp(ipAddress);
+  } catch (error) {
+    console.error("[credits] signup bonus identity hashing failed; granting no bonus", {
+      userId,
+      error: error?.message,
+    });
+    await ensureEmptyCreditAccount(userId);
+    return false;
+  }
   const createdAt = iso();
 
   return db.transaction(async (tx) => {
+    let amount = SIGNUP_BONUS_PERMANENT;
+    if (ipHash) {
+      const windowStart = new Date(Date.now() - SIGNUP_BONUS_IP_WINDOW_MS).toISOString();
+      const [usage] = await tx
+        .select({ value: count() })
+        .from(signupBonusClaims)
+        .where(and(
+          eq(signupBonusClaims.ipHash, ipHash),
+          gte(signupBonusClaims.createdAt, windowStart),
+          gt(signupBonusClaims.amount, 0)
+        ));
+      if ((usage?.value ?? 0) >= signupBonusIpLimit()) amount = 0;
+    } else {
+      console.warn("[credits] signup bonus IP unavailable; allowing bonus", { userId });
+    }
+
     const claim = await tx
       .insert(signupBonusClaims)
       .values({
         emailHash,
         userId,
-        amount: SIGNUP_BONUS_PERMANENT,
+        ipHash,
+        amount,
         createdAt,
       })
       .onConflictDoNothing();
@@ -49,20 +87,26 @@ export async function grantSignupBonus({ id: userId, email }) {
       return false;
     }
 
+    if (amount === 0) {
+      await ensureEmptyCreditAccount(userId, tx);
+      console.info("[credits] signup bonus withheld by IP limit", { userId });
+      return false;
+    }
+
     await tx
       .insert(creditAccounts)
-      .values({ userId, monthlyBalance: 0, permanentBalance: SIGNUP_BONUS_PERMANENT })
+      .values({ userId, monthlyBalance: 0, permanentBalance: amount })
       .onConflictDoUpdate({
         target: creditAccounts.userId,
         set: {
-          permanentBalance: sql`${creditAccounts.permanentBalance} + ${SIGNUP_BONUS_PERMANENT}`,
+          permanentBalance: sql`${creditAccounts.permanentBalance} + ${amount}`,
         },
       });
 
     await tx.insert(creditLedger).values({
       id: `signup-bonus:${emailHash}`,
       userId,
-      delta: SIGNUP_BONUS_PERMANENT,
+      delta: amount,
       bucket: "permanent",
       reason: "signup_bonus",
       refType: null,
@@ -208,7 +252,13 @@ export async function getBalance(userId) {
       .from(user)
       .where(eq(user.id, userId));
     if (accountUser) {
-      await grantSignupBonus(accountUser);
+      const [recentSession] = await db
+        .select({ ipAddress: session.ipAddress })
+        .from(session)
+        .where(eq(session.userId, userId))
+        .orderBy(desc(session.createdAt))
+        .limit(1);
+      await grantSignupBonus(accountUser, { ipAddress: recentSession?.ipAddress || null });
       [account] = await db.select().from(creditAccounts).where(eq(creditAccounts.userId, userId));
     }
   }
