@@ -92,6 +92,9 @@ const en = {
     logoutTitle: "Sign out of FreeTexttoImage?",
     logoutBody: "Your creations stay saved in this workspace. You’ll just need to sign in again to create or edit.",
     cancel: "Cancel",
+    promoMessage: "Save {discount}% on plans and credit packs for a limited time.",
+    promoCta: "Get {discount}% Off",
+    promoClose: "Dismiss promotion",
   },
   imageToPrompt: {
     metaTitle: "Free AI Image to Prompt Generator",

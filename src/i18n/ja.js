@@ -92,6 +92,9 @@ const ja = {
     logoutTitle: "FreeTexttoImageからログアウトしますか？",
     logoutBody: "作品はこのワークスペースに保存されたままです。作成や編集を再開するには、もう一度ログインしてください。",
     cancel: "キャンセル",
+    promoMessage: "期間限定、プランとクレジットパックが{discount}%オフ。",
+    promoCta: "{discount}%オフを利用する",
+    promoClose: "プロモーションを閉じる",
   },
   imageToPrompt: {
     metaTitle: "無料AI画像プロンプト生成ツール",

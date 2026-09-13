@@ -7,6 +7,7 @@ import { Button, Dropdown, Modal, Spinner } from "@heroui/react";
 import { authClient } from "@/lib/auth-client";
 import { loginPathWithRedirect } from "@/lib/auth-redirect";
 import LanguageSwitcher from "@/components/language-switcher";
+import PromoBanner from "@/components/promo-banner";
 import { useI18n } from "@/i18n/provider";
 import { CoinsIcon, LogoutIcon, PromptCardsIcon, UserIcon } from "@/components/ui";
 
@@ -79,6 +80,7 @@ export default function AppShell({ children, footer, pageTitle: pageTitleOverrid
   return <div className="app-frame">
     {sidebar}
     <div className="app-main">
+      <PromoBanner />
       <header className="app-header">
         <span className="header-trail">{t("shell.workspace")} <i>/</i> <strong>{pageTitle}</strong></span>
         <div className="header-actions">
