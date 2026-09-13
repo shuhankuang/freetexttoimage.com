@@ -47,7 +47,7 @@ export async function POST(request) {
     console.error("[image-to-prompt] failed:", error?.message || error);
     return NextResponse.json(
       { error: "Image analysis is unavailable right now." },
-      { status: error?.code === "KIE_CONFIG" ? 503 : 502 }
+      { status: error?.code === "IMAGE_TO_PROMPT_CONFIG" ? 503 : 502 }
     );
   }
 }
