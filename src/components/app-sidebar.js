@@ -26,7 +26,9 @@ export default async function AppSidebar({ activePath = "/", locale, showMyCreat
       <span className="sidebar-nav-label">{copy.workspace}</span>
       <div className="sidebar-nav-group">
         <Link className={activePath === "/" || activePath === "/studio" ? "active" : undefined} href={path("/")}><ImageIcon />{copy.create}</Link>
-        <Link className={activeClass("/image-to-prompt")} href={path("/image-to-prompt")}><ImagePromptIcon />{copy.imageToPrompt}</Link>
+        <Link className={activeClass("/image-to-prompt")} href={path("/image-to-prompt")}>
+          <ImagePromptIcon />{copy.imageToPrompt}<sup className="sidebar-free-badge">Free</sup>
+        </Link>
         {showMyCreations && <Link className={activeClass("/creations")} href={path("/creations")}><GridIcon />{copy.creations}</Link>}
         <Link className={activeClass("/pricing")} href={path("/pricing")}><GemIcon />{copy.pricing}</Link>
       </div>
