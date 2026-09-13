@@ -8,6 +8,7 @@ import * as schema from "@/lib/schema";
 import { sendMagicLinkEmail } from "@/lib/postmark";
 import { grantSignupBonus } from "@/lib/credits";
 import { verifyTurnstileToken } from "@/lib/turnstile";
+import { checkDisposableEmail } from "@/lib/disify";
 
 const googleEnabled = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 
@@ -27,13 +28,31 @@ export const auth = betterAuth({
           message: "Complete the security check before requesting a sign-in link.",
         });
       }
+
+      const email = context.body?.email?.trim().toLowerCase();
+      if (!email) return;
+
+      const existing = await context.context.internalAdapter.findUserByEmail(email);
+      if (existing?.user) return;
+
+      const disposable = await checkDisposableEmail(email);
+      if (disposable.blocked) {
+        console.info("[auth] disposable email registration blocked", {
+          reason: "disposable_email",
+          confidence: disposable.confidence,
+          signals: disposable.signals,
+        });
+        throw new APIError("BAD_REQUEST", {
+          code: "DISPOSABLE_EMAIL_NOT_SUPPORTED",
+          message: "Temporary email addresses aren’t supported. Please use a permanent email address.",
+        });
+      }
     }),
   },
   databaseHooks: {
     user: {
       create: {
-        // 新用户建号即送 10 永久积分；grantSignupBonus 内部靠 insert+onConflictDoNothing 保证幂等。
-        after: async (user) => { await grantSignupBonus(user.id); },
+        after: async (user) => { await grantSignupBonus(user); },
       },
     },
   },

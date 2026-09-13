@@ -13,7 +13,29 @@ import TurnstileVerification from "@/components/turnstile-verification";
 
 function isValidEmail(value) {
   const email = value.trim();
-  return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if (!email || email.length > 254 || /\s/.test(email)) return false;
+
+  const parts = email.split("@");
+  if (parts.length !== 2) return false;
+
+  const [local, domain] = parts;
+  if (
+    !local
+    || local.length > 64
+    || !/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+$/i.test(local)
+    || local.startsWith(".")
+    || local.endsWith(".")
+    || local.includes("..")
+  ) return false;
+
+  const labels = domain.toLowerCase().split(".");
+  if (labels.length < 2 || labels.at(-1).length < 2) return false;
+
+  return labels.every((label) => (
+    label.length > 0
+    && label.length <= 63
+    && /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i.test(label)
+  ));
 }
 
 export default function LoginPage() {
@@ -87,7 +109,13 @@ export default function LoginPage() {
         metadata: { locale },
       }, { headers: { "x-turnstile-token": turnstileToken } });
       if (authError) {
-        setError(authError.code === "TURNSTILE_VERIFICATION_FAILED" ? t("auth.errors.verification") : t("auth.errors.magicLink"));
+        if (authError.code === "TURNSTILE_VERIFICATION_FAILED") {
+          setError(t("auth.errors.verification"));
+        } else if (authError.code === "DISPOSABLE_EMAIL_NOT_SUPPORTED") {
+          setError(t("auth.errors.disposableEmail"));
+        } else {
+          setError(t("auth.errors.magicLink"));
+        }
         setTurnstileToken("");
         setTurnstileAttempt((value) => value + 1);
         return;
@@ -156,7 +184,7 @@ export default function LoginPage() {
             siteKey={turnstileSiteKey}
             onChange={updateTurnstileToken}
           />
-          <Button type="submit" size="lg" fullWidth variant="soft" isPending={pending} isDisabled={!turnstileToken || pending} className="email-link-button">{t("auth.sendLink")} <ArrowIcon /></Button>
+          <Button type="submit" size="lg" fullWidth variant="soft" isPending={pending} isDisabled={!emailIsValid || !turnstileToken || pending} className="email-link-button">{t("auth.sendLink")} <ArrowIcon /></Button>
         </Form>
       </>}
       <p className="legal-copy">{t("auth.legal")}</p>

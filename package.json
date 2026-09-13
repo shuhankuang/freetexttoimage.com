@@ -11,6 +11,8 @@
     "db:generate": "drizzle-kit generate",
     "db:setup": "node scripts/setup-db.mjs",
     "db:setup:production": "node scripts/setup-db.mjs --env=.env.production",
+    "credits:backfill": "node scripts/backfill-signup-bonus-claims.mjs",
+    "credits:backfill:production": "node scripts/backfill-signup-bonus-claims.mjs --env=.env.production",
     "prompts:import": "node scripts/import-prompt-data.mjs",
     "prompts:import:dry": "node scripts/import-prompt-data.mjs --dry-run",
     "prompts:import:data01": "node scripts/import-prompt-data.mjs data-01",

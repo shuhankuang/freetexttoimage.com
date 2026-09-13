@@ -106,6 +106,15 @@ export const creditAccounts = sqliteTable("credit_accounts", {
   monthlyResetAt: text("monthly_reset_at"), // Phase 4（订阅）接入后才会用
 });
 
+// 注册奖励身份占位：不保存原始邮箱，只保存规范化邮箱的 HMAC。
+// 两个唯一约束分别保证同一个收件箱和同一个用户都只能领取一次。
+export const signupBonusClaims = sqliteTable("signup_bonus_claims", {
+  emailHash: text("email_hash").primaryKey(),
+  userId: text("user_id").notNull().unique(),
+  amount: integer("amount").notNull(),
+  createdAt: text("created_at").notNull(),
+});
+
 // 每一笔积分变动都记一行，bucket 区分扣/退的是月度还是永久，reason 区分事件类型
 // （signup_bonus / generation_hold / generation_refund / ...）。refType+refId 关联到具体的
 // job/order，退款时靠它精确查回原来扣了哪个桶多少，不靠重新计算。

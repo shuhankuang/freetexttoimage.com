@@ -1,6 +1,7 @@
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { creditAccounts, creditLedger } from "@/lib/schema";
+import { creditAccounts, creditLedger, signupBonusClaims, user } from "@/lib/schema";
+import { hashBonusEmail } from "@/lib/signup-bonus-identity";
 
 // 积分账本服务端访问层。
 // 语义：generation_hold 在生成前扣（月度优先、永久其次），成功不再有动作（等于确认消费）；
@@ -11,25 +12,64 @@ import { creditAccounts, creditLedger } from "@/lib/schema";
 const SIGNUP_BONUS_PERMANENT = 10;
 const iso = () => new Date().toISOString();
 
-// 注册即送：insert + onConflictDoNothing 是唯一的幂等保证（不是前面判断是否已存在的读——
-// 那只是省一次无谓写入的优化，真正防止并发/重复调用发两次的是这条唯一约束插入）。
-export async function grantSignupBonus(userId) {
-  const result = await db
+async function ensureEmptyCreditAccount(userId, executor = db) {
+  await executor
     .insert(creditAccounts)
-    .values({ userId, monthlyBalance: 0, permanentBalance: SIGNUP_BONUS_PERMANENT })
+    .values({ userId, monthlyBalance: 0, permanentBalance: 0 })
     .onConflictDoNothing({ target: creditAccounts.userId });
+}
 
-  if ((result.rowsAffected ?? 0) === 0) return; // 已经发过，不重复记账
+// claim、余额与流水在同一事务中提交。email_hash 和 user_id 的唯一约束共同保证幂等，
+// Gmail 点号、+tag 和 googlemail.com 由 hashBonusEmail 归并到同一个领取身份。
+export async function grantSignupBonus({ id: userId, email }) {
+  if (!userId || !email) throw new Error("Signup bonus requires a user id and email.");
 
-  await db.insert(creditLedger).values({
-    id: crypto.randomUUID(),
-    userId,
-    delta: SIGNUP_BONUS_PERMANENT,
-    bucket: "permanent",
-    reason: "signup_bonus",
-    refType: null,
-    refId: null,
-    createdAt: iso(),
+  // 必须显式开启，避免新代码早于数据库迁移或密钥配置上线时阻断登录。
+  if (process.env.FREE_SIGNUP_BONUS_ENABLED !== "true") {
+    await ensureEmptyCreditAccount(userId);
+    return false;
+  }
+
+  const emailHash = hashBonusEmail(email);
+  const createdAt = iso();
+
+  return db.transaction(async (tx) => {
+    const claim = await tx
+      .insert(signupBonusClaims)
+      .values({
+        emailHash,
+        userId,
+        amount: SIGNUP_BONUS_PERMANENT,
+        createdAt,
+      })
+      .onConflictDoNothing();
+
+    if ((claim.rowsAffected ?? 0) === 0) {
+      await ensureEmptyCreditAccount(userId, tx);
+      return false;
+    }
+
+    await tx
+      .insert(creditAccounts)
+      .values({ userId, monthlyBalance: 0, permanentBalance: SIGNUP_BONUS_PERMANENT })
+      .onConflictDoUpdate({
+        target: creditAccounts.userId,
+        set: {
+          permanentBalance: sql`${creditAccounts.permanentBalance} + ${SIGNUP_BONUS_PERMANENT}`,
+        },
+      });
+
+    await tx.insert(creditLedger).values({
+      id: `signup-bonus:${emailHash}`,
+      userId,
+      delta: SIGNUP_BONUS_PERMANENT,
+      bucket: "permanent",
+      reason: "signup_bonus",
+      refType: null,
+      refId: null,
+      createdAt,
+    });
+    return true;
   });
 }
 
@@ -161,7 +201,17 @@ export async function refreshMonthlyCreditsIfDue(userId, amount, {
 }
 
 export async function getBalance(userId) {
-  const [account] = await db.select().from(creditAccounts).where(eq(creditAccounts.userId, userId));
+  let [account] = await db.select().from(creditAccounts).where(eq(creditAccounts.userId, userId));
+  if (!account) {
+    const [accountUser] = await db
+      .select({ id: user.id, email: user.email })
+      .from(user)
+      .where(eq(user.id, userId));
+    if (accountUser) {
+      await grantSignupBonus(accountUser);
+      [account] = await db.select().from(creditAccounts).where(eq(creditAccounts.userId, userId));
+    }
+  }
   const monthlyBalance = account?.monthlyBalance ?? 0;
   const permanentBalance = account?.permanentBalance ?? 0;
   return {

@@ -565,6 +565,7 @@ const en = {
       generic: "Something went wrong.",
       google: "Google sign-in is not configured yet.",
       verification: "Complete the security check before requesting a sign-in link.",
+      disposableEmail: "Temporary email addresses aren’t supported. Please use a permanent email address.",
     },
   },
 };

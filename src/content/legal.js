@@ -4,7 +4,7 @@ export const legalContent = {
       back: "Back to home",
       terms: "Terms",
       privacy: "Privacy",
-      updated: "Last updated: September 9, 2026",
+      updated: "Last updated: September 13, 2026",
       contact: "Questions? Contact hello@freetexttoimage.com",
     },
     terms: {
@@ -21,12 +21,12 @@ export const legalContent = {
     },
     privacy: {
       title: "Privacy Policy",
-      description: "Learn how FreeTexttoImage handles account details, prompts, uploaded images, generated images, service providers, and deletion requests.",
+      description: "Learn how FreeTexttoImage handles account details, prompts, uploaded images, generated images, data security, and deletion requests.",
       intro: "This policy explains what information we collect and how we use it.",
       sections: [
         { title: "Information we collect", body: "We may store your email, account profile, prompts, generation settings, uploaded reference images, generated images, and basic technical information needed to operate the service." },
         { title: "How we use it", body: "We use this information to sign you in, generate and store images, provide your creations library, prevent abuse, and improve reliability." },
-        { title: "Service providers", body: "We use providers such as Google for sign-in, Postmark for email, KIE for image generation, and Backblaze for image storage. They process only the information needed to provide those services." },
+        { title: "Data security", body: "We use reasonable safeguards to protect your information. Your account data and creations are not made available to other users unless you choose to share them or their public image links. We do not sell your personal information." },
         { title: "Image privacy", body: "Generated images are delivered through public, hard-to-guess links. Anyone who has a link may be able to view the image, so do not submit confidential or sensitive content." },
         { title: "Control and contact", body: "You can delete creations from your library. Some records may remain temporarily in backups or provider systems. Contact us with privacy questions or deletion requests." },
       ],
@@ -37,7 +37,7 @@ export const legalContent = {
       back: "ホームへ戻る",
       terms: "利用規約",
       privacy: "プライバシー",
-      updated: "最終更新日：2026年9月9日",
+      updated: "最終更新日：2026年9月13日",
       contact: "お問い合わせ：hello@freetexttoimage.com",
     },
     terms: {
@@ -54,12 +54,12 @@ export const legalContent = {
     },
     privacy: {
       title: "プライバシーポリシー",
-      description: "FreeTexttoImageがアカウント情報、プロンプト、アップロード画像、生成画像、外部サービス、削除依頼をどう扱うか説明します。",
+      description: "FreeTexttoImageがアカウント情報、プロンプト、アップロード画像、生成画像、データ保護、削除依頼をどう扱うか説明します。",
       intro: "本ポリシーでは、収集する情報とその利用方法を説明します。",
       sections: [
         { title: "収集する情報", body: "メールアドレス、アカウント情報、プロンプト、生成設定、参考画像、生成画像、およびサービス運営に必要な基本的な技術情報を保存する場合があります。" },
         { title: "利用目的", body: "ログイン、画像の生成と保存、作品一覧の提供、不正利用の防止、サービスの安定性向上のために情報を利用します。" },
-        { title: "外部サービス", body: "ログインにGoogle、メール配信にPostmark、画像生成にKIE、画像保存にBackblazeなどを利用します。各社はサービス提供に必要な範囲で情報を処理します。" },
+        { title: "データの安全性", body: "情報を保護するために合理的な安全対策を講じています。利用者が共有した場合や公開画像リンクを共有した場合を除き、アカウント情報や作品が他の利用者に公開されることはありません。個人情報を販売することはありません。" },
         { title: "画像の公開範囲", body: "生成画像は推測されにくい公開リンクから配信されます。リンクを知っている人が画像を閲覧できる可能性があるため、機密情報やセンシティブな内容を送信しないでください。" },
         { title: "削除とお問い合わせ", body: "作品一覧から生成画像を削除できます。一部の記録はバックアップや外部サービスに一時的に残る場合があります。プライバシーや削除についてはお問い合わせください。" },
       ],
