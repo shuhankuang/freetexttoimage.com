@@ -5,7 +5,7 @@ export const legalContent = {
       terms: "Terms",
       privacy: "Privacy",
       updated: "Last updated: September 13, 2026",
-      contact: "Questions? Contact hello@freetexttoimage.com",
+      contact: "Questions? Contact hi@freetexttoimage.com",
     },
     terms: {
       title: "Terms of Service",
@@ -38,7 +38,7 @@ export const legalContent = {
       terms: "利用規約",
       privacy: "プライバシー",
       updated: "最終更新日：2026年9月13日",
-      contact: "お問い合わせ：hello@freetexttoimage.com",
+      contact: "お問い合わせ：hi@freetexttoimage.com",
     },
     terms: {
       title: "利用規約",

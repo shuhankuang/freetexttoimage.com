@@ -38,9 +38,9 @@ export default async function AppFooter({ locale }) {
       <div className="footer-brand">
         <Logo href={path("/")} label={messages.shell.homeLabel} />
         <p>{copy.tagline}</p>
-        <Link className="footer-email" href="mailto:hello@freetexttoimage.com">
+        <Link className="footer-email" href="mailto:hi@freetexttoimage.com">
           <Mail aria-hidden="true" size={15} strokeWidth={1.8} />
-          <span>hello@freetexttoimage.com</span>
+          <span>hi@freetexttoimage.com</span>
         </Link>
         <small>{copy.copyright.replace("{year}", String(new Date().getFullYear()))}</small>
       </div>

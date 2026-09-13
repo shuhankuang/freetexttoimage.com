@@ -25,7 +25,7 @@ Copy `.env.example` to `.env.local` and configure the services you use. Magic Li
 
 ```env
 POSTMARK_SERVER_TOKEN=
-POSTMARK_FROM_EMAIL="FreeTexttoImage <hello@example.com>"
+POSTMARK_FROM_EMAIL="FreeTexttoImage <hi@freetexttoimage.com>"
 POSTMARK_MESSAGE_STREAM=outbound
 ```
 
