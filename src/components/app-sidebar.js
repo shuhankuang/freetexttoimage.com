@@ -18,6 +18,7 @@ export default async function AppSidebar({ activePath = "/", locale, showMyCreat
   const path = (pathname) => localePath(locale, pathname);
   const activeClass = (pathname) => activePath === pathname ? "active" : undefined;
   const modelPromptCounts = await getModelPromptCounts();
+  const isHome = activePath === "/" || activePath === "/studio";
 
   return <aside className="app-sidebar">
     <Logo href={path("/")} label={copy.homeLabel} />
@@ -55,7 +56,7 @@ export default async function AppSidebar({ activePath = "/", locale, showMyCreat
       <span><SparklesIcon /></span>
       <div className="note-title">{copy.noteStart}<br /><em>{copy.noteEnd}</em></div>
       <p>{copy.noteBody.split("\n").map((line, index) => <span key={line}>{index > 0 && <br />}{line}</span>)}</p>
-      <Link href={path("/")}>{copy.backHome} <span>→</span></Link>
+      <Link href={isHome ? "#image-generator" : path("/")}>{isHome ? copy.startCreating : copy.backHome} <span>→</span></Link>
     </div>
   </aside>;
 }

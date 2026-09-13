@@ -56,6 +56,7 @@ export async function createTopupCheckoutSession({ userId, userEmail, packId, su
     success_url: successUrl,
     cancel_url: cancelUrl,
     automatic_tax: { enabled: false },
+    allow_promotion_codes: true,
   });
 }
 
@@ -166,6 +167,7 @@ export async function createSubscriptionCheckoutSession({ userId, userEmail, pla
     success_url: successUrl,
     cancel_url: cancelUrl,
     automatic_tax: { enabled: false },
+    allow_promotion_codes: true,
   });
 }
 
