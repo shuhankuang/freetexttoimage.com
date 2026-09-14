@@ -1,7 +1,7 @@
 import "server-only";
 
 import { unstable_cache } from "next/cache";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { promptItems } from "@/lib/schema";
 import { publicObjectUrl } from "@/lib/storage";
@@ -71,7 +71,7 @@ export async function listModelPromptItems(modelSlug, { cursor, limit = PROMPT_P
   const parsed = decodeCursor(cursor);
   const after = parsed ? sql`(${promptItems.publishedAt}, ${promptItems.id}) < (${parsed.publishedAt}, ${parsed.id})` : undefined;
   const rows = await db.select().from(promptItems)
-    .where(and(eq(promptItems.modelSlug, modelSlug), after))
+    .where(and(eq(promptItems.modelSlug, modelSlug), isNull(promptItems.deletedAt), after))
     .orderBy(desc(promptItems.publishedAt), desc(promptItems.id)).limit(pageSize + 1);
   const hasMore = rows.length > pageSize;
   const pageRows = hasMore ? rows.slice(0, pageSize) : rows;
@@ -83,7 +83,7 @@ export async function listModelPromptItems(modelSlug, { cursor, limit = PROMPT_P
 
 const cachedFirstPage = unstable_cache((slug) => listModelPromptItems(slug), ["model-prompt-first-page-v9"], { revalidate: 300, tags: ["prompt-gallery"] });
 const cachedCounts = unstable_cache(async () => {
-  const rows = await db.select({ modelSlug: promptItems.modelSlug, count: sql`count(*)` }).from(promptItems).groupBy(promptItems.modelSlug);
+  const rows = await db.select({ modelSlug: promptItems.modelSlug, count: sql`count(*)` }).from(promptItems).where(isNull(promptItems.deletedAt)).groupBy(promptItems.modelSlug);
   return Object.fromEntries(rows.map((row) => [row.modelSlug, Number(row.count)]));
 }, ["model-prompt-counts-v7"], { revalidate: 300, tags: ["prompt-gallery"] });
 

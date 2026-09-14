@@ -194,12 +194,14 @@ export const promptItems = sqliteTable(
     viewCount: integer("view_count"),
     publishedAt: integer("published_at").notNull(),
     images: text("images_json", { mode: "json" }).notNull(),
+    deletedAt: text("deleted_at"),
     createdAt: text("created_at").notNull(),
     updatedAt: text("updated_at").notNull(),
   },
   (table) => [
     uniqueIndex("idx_prompt_items_source_id").on(table.sourceId),
     index("idx_prompt_items_model_page").on(table.modelSlug, table.publishedAt, table.id),
+    index("idx_prompt_items_public_page").on(table.modelSlug, table.deletedAt, table.publishedAt, table.id),
   ]
 );
 
