@@ -728,7 +728,7 @@ body { font-family: Arial, Helvetica, sans-serif; }
 .model-prompts-heading > p:not(.hero-title) { max-width: 580px; }
 .model-prompt-masonry { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: start; }
 .model-prompt-column { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
-.model-prompt-card { width: 100%; overflow: hidden; border-radius: 12px; background: #e8e9e1; }
+.model-prompt-card { position: relative; width: 100%; overflow: hidden; border-radius: 12px; background: #e8e9e1; }
 .model-prompt-image { position: relative; width: 100%; display: block; padding: 0; overflow: hidden; border: 0; background: transparent; color: #fff; cursor: pointer; text-align: left; }
 .model-prompt-image:not(.is-loaded):not(.is-error) { cursor: wait; }
 .model-prompt-image.is-error { cursor: default; }
@@ -740,6 +740,9 @@ body { font-family: Arial, Helvetica, sans-serif; }
 .model-prompt-image:hover > img,.model-prompt-image:focus-visible > img { transform: scale(1.035); }
 .model-prompt-overlay { position: absolute; z-index: 1; inset: 0; padding: 18px; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; background: linear-gradient(to top, rgba(18,22,15,.78), rgba(18,22,15,.12) 45%, transparent 68%); opacity: 0; transition: opacity .22s ease; }
 .model-prompt-image:hover .model-prompt-overlay,.model-prompt-image:focus-visible .model-prompt-overlay { opacity: 1; }
+.model-prompt-card-delete { position: absolute; z-index: 2; top: 10px; right: 10px; width: 30px; min-width: 30px; height: 30px; min-height: 30px; border: 1px solid rgba(255,255,255,.6); border-radius: 8px; background: rgba(250,249,246,.88); color: #875444; box-shadow: 0 3px 12px rgba(24,29,20,.12); backdrop-filter: blur(8px); opacity: .78; transition: opacity .16s ease, background .16s ease, color .16s ease, transform .16s ease; }
+.model-prompt-card:hover .model-prompt-card-delete,.model-prompt-card-delete:focus-visible { opacity: 1; transform: translateY(-1px); }
+.model-prompt-card-delete:hover { background: #fff8f4; color: #a7472d; }
 .model-prompt-source { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .model-prompt-source strong { overflow: hidden; font-size: 13px; font-weight: 650; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
 .model-prompt-source small { overflow: hidden; color: rgba(255,255,255,.72); font-size: 11.5px; text-overflow: ellipsis; white-space: nowrap; }
@@ -791,6 +794,14 @@ body { font-family: Arial, Helvetica, sans-serif; }
 .model-prompt-detail-source > a:last-child { flex: none; display: inline-flex; align-items: center; gap: 6px; color: #69755f; font-size: 12px; font-weight: 600; white-space: nowrap; transition: color .15s; }
 .model-prompt-detail-source > a:last-child:hover { color: var(--accent); }
 .model-prompt-detail-source > a:last-child svg { width: 14px; height: 14px; transform: rotate(-45deg); }
+.model-prompt-delete-error { margin: 14px 0 0; color: #9a553e; font-size: 12px; line-height: 1.45; }
+.model-prompt-delete-dialog .modal__body { padding: 32px; }
+.model-prompt-delete-dialog .modal__heading { margin: 0; color: #454d40; font: 400 26px/1.2 Georgia, serif; }
+.model-prompt-delete-dialog .modal__body > p { margin: 12px 0 0; color: #777e71; font-size: 14px; line-height: 1.65; }
+.model-prompt-delete-dialog .model-prompt-delete-error { color: #9a553e; }
+.model-prompt-delete-actions { margin-top: 26px; display: flex; justify-content: flex-end; gap: 9px; }
+.model-prompt-delete-actions .button { min-width: 118px; gap: 7px; }
+@media (max-width: 620px) { .model-prompt-delete-dialog .modal__body { padding: 28px 22px 22px; }.model-prompt-delete-actions { flex-direction: column-reverse; }.model-prompt-delete-actions .button { width: 100%; } }
 .model-prompt-text-block { min-height: 0; padding: 0 0 28px; border-bottom: 1px solid #e3e2d9; flex: 1; display: flex; flex-direction: column; }
 .model-prompt-text-head { margin-bottom: 18px; flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .model-prompt-text-head > span { color: #979c90; font-size: 12px; }

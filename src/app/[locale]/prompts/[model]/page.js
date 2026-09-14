@@ -6,6 +6,8 @@ import { getDictionary } from "@/i18n/dictionaries";
 import { getModelPromptFirstPage } from "@/lib/model-prompt-data";
 import { getModelPromptPage, MODEL_PROMPT_PAGES } from "@/lib/model-prompt-pages";
 import { buildPublicMetadata } from "@/lib/metadata";
+import { getServerSession } from "@/lib/server-session";
+import { isAdminEmail } from "@/lib/admin-auth";
 
 export function generateStaticParams() {
   return MODEL_PROMPT_PAGES.map(({ slug }) => ({ model: slug }));
@@ -33,7 +35,8 @@ export default async function ModelPromptPage({ params }) {
   const copy = messages.modelPrompts;
   const name = copy.models[model.key];
   const activePath = `/prompts/${model.slug}`;
-  const page = await getModelPromptFirstPage(model.slug);
+  const [page, session] = await Promise.all([getModelPromptFirstPage(model.slug), getServerSession()]);
+  const canDelete = Boolean(session?.user && isAdminEmail(session.user.email));
 
   return <ServerAppShell
     activePath={activePath}
@@ -51,7 +54,7 @@ export default async function ModelPromptPage({ params }) {
         subtitle={copy.description.replace("{model}", name)}
       />
       {page.items.length > 0
-        ? <ModelPromptGallery initialItems={page.items} initialCursor={page.nextCursor} model={model.slug} copy={copy.gallery} />
+        ? <ModelPromptGallery initialItems={page.items} initialCursor={page.nextCursor} model={model.slug} copy={copy.gallery} canDelete={canDelete} />
         : <div className="explore-section-empty">{copy.developing}</div>}
     </main>
   </ServerAppShell>;

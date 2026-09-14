@@ -60,6 +60,13 @@ const en = {
       copy: "Copy",
       copied: "Copied",
       usePrompt: "Use this prompt",
+      delete: "Delete prompt",
+      deleteTitle: "Delete this prompt?",
+      deleteBody: "It will no longer appear in the public prompt gallery.",
+      deleteConfirm: "Delete prompt",
+      deleting: "Deleting…",
+      cancel: "Cancel",
+      deleteFailed: "This prompt could not be deleted. Try again.",
     },
   },
   shell: {

@@ -60,6 +60,13 @@ const ja = {
       copy: "コピー",
       copied: "コピー済み",
       usePrompt: "このプロンプトを使う",
+      delete: "プロンプトを削除",
+      deleteTitle: "このプロンプトを削除しますか？",
+      deleteBody: "公開プロンプトギャラリーには表示されなくなります。",
+      deleteConfirm: "プロンプトを削除",
+      deleting: "削除中…",
+      cancel: "キャンセル",
+      deleteFailed: "プロンプトを削除できませんでした。もう一度お試しください。",
     },
   },
   shell: {

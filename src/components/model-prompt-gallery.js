@@ -4,10 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button, Modal, Spinner } from "@heroui/react";
-import { ArrowIcon, CheckIcon, CopyIcon, ImageIcon as PlaceholderImageIcon } from "@/components/ui";
+import { ArrowIcon, CheckIcon, CopyIcon, ImageIcon as PlaceholderImageIcon, TrashIcon } from "@/components/ui";
 import { useI18n } from "@/i18n/provider";
 
-function PromptImageCard({ item, onOpen, copy }) {
+function PromptImageCard({ item, onOpen, onRequestDelete, copy, canDelete, deleting }) {
   const [status, setStatus] = useState("loading");
   const imageRef = useRef(null);
   const loaded = status === "loaded";
@@ -34,6 +34,7 @@ function PromptImageCard({ item, onOpen, copy }) {
         <span className="model-prompt-view">{copy.viewPrompt}<ArrowIcon /></span>
       </span>
     </button>
+    {canDelete && <Button className="model-prompt-card-delete" isIconOnly size="sm" variant="danger-soft" isPending={deleting} isDisabled={deleting} aria-label={copy.delete} onPress={() => onRequestDelete(item)}><TrashIcon /></Button>}
   </article>;
 }
 
@@ -107,7 +108,7 @@ async function copyText(text) {
   }
 }
 
-export default function ModelPromptGallery({ initialItems, initialCursor, model, copy }) {
+export default function ModelPromptGallery({ initialItems, initialCursor, model, copy, canDelete = false }) {
   const router = useRouter();
   const { path } = useI18n();
   const [items, setItems] = useState(initialItems);
@@ -118,6 +119,9 @@ export default function ModelPromptGallery({ initialItems, initialCursor, model,
   const [columnCount, setColumnCount] = useState(3);
   const [loadingMore, setLoadingMore] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteFailed, setDeleteFailed] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const loadMoreRef = useRef(null);
   const hasMore = Boolean(nextCursor);
   // 按索引轮流分配（index % columnCount）会让每列的图片数一样多，但图片高矮不一，
@@ -195,6 +199,7 @@ export default function ModelPromptGallery({ initialItems, initialCursor, model,
 
   function open(item) {
     setCopied(false);
+    setDeleteFailed(false);
     setActiveImage(item.images[0]);
     setActive(item);
   }
@@ -212,10 +217,36 @@ export default function ModelPromptGallery({ initialItems, initialCursor, model,
     router.push(path("/"));
   }
 
+  async function removePrompt(id) {
+    if (!id || deleting) return;
+    setDeleting(true);
+    setDeleteFailed(false);
+    try {
+      const response = await fetch(`/api/admin/prompts/${encodeURIComponent(id)}`, { method: "DELETE" });
+      if (!response.ok) throw new Error("Unable to delete prompt");
+      setItems((current) => current.filter((item) => item.id !== id));
+      if (active?.id === id) {
+        setActive(null);
+        setActiveImage(null);
+      }
+      return true;
+    } catch {
+      setDeleteFailed(true);
+      return false;
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    if (await removePrompt(deleteTarget.id)) setDeleteTarget(null);
+  }
+
   return <>
     <div className="model-prompt-masonry" aria-label={copy.listLabel}>
       {columns.map((column, columnIndex) => <div className="model-prompt-column" key={columnIndex}>
-        {column.map((item) => <PromptImageCard item={item} onOpen={open} copy={copy} key={item.id} />)}
+        {column.map((item) => <PromptImageCard item={item} onOpen={open} onRequestDelete={(target) => { setDeleteFailed(false); setDeleteTarget(target); }} copy={copy} canDelete={canDelete} deleting={deleting} key={item.id} />)}
       </div>)}
     </div>
 
@@ -223,6 +254,25 @@ export default function ModelPromptGallery({ initialItems, initialCursor, model,
       {loadingMore && <><Spinner size="sm" /><span>{copy.loadingMore}</span></>}
       {loadFailed && <Button variant="outline" onPress={beginLoadMore}>{copy.retry}</Button>}
     </div>
+
+    <Modal.Backdrop isOpen={Boolean(deleteTarget)} onOpenChange={(openState) => { if (!openState && !deleting) { setDeleteTarget(null); setDeleteFailed(false); } }}>
+      <Modal.Container size="sm">
+        <Modal.Dialog className="model-prompt-delete-dialog">
+          <Modal.CloseTrigger aria-label={copy.cancel} />
+          <Modal.Body>
+            <Modal.Heading>{copy.deleteTitle}</Modal.Heading>
+            <p>{copy.deleteBody}</p>
+            {deleteFailed && <p className="model-prompt-delete-error" role="alert">{copy.deleteFailed}</p>}
+            <div className="model-prompt-delete-actions">
+              <Button variant="outline" slot="close" isDisabled={deleting}>{copy.cancel}</Button>
+              <Button variant="danger" isDisabled={deleting} onPress={confirmDelete}>
+                {deleting ? <><Spinner size="sm" />{copy.deleting}</> : copy.deleteConfirm}
+              </Button>
+            </div>
+          </Modal.Body>
+        </Modal.Dialog>
+      </Modal.Container>
+    </Modal.Backdrop>
 
     <Modal.Backdrop isOpen={Boolean(active)} onOpenChange={(openState) => { if (!openState) { setActive(null); setActiveImage(null); } }} className="model-prompt-modal-backdrop">
       <Modal.Container size="full">
