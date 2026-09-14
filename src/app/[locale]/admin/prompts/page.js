@@ -5,11 +5,12 @@ import { isAdminEmail } from "@/lib/admin-auth";
 import { loginPathWithRedirect } from "@/lib/auth-redirect";
 import { getPromptImportSummary, listPromptImportJobs } from "@/lib/prompt-import-jobs";
 import { promptImportsEnabled } from "@/lib/prompt-import-settings";
+import { getPromptSyncConfig } from "@/lib/prompt-sync-config";
 import { getServerSession } from "@/lib/server-session";
 
 export const metadata = {
-  title: "Prompt imports",
-  description: "Import prompt gallery data.",
+  title: "Prompt sync",
+  description: "Monitor scheduled prompt gallery synchronization.",
   robots: { index: false, follow: false },
 };
 
@@ -20,11 +21,12 @@ export default async function PromptAdminPage({ params }) {
   if (!session?.user) redirect(loginPathWithRedirect(localePath(locale, "/login"), returnTo));
   if (!isAdminEmail(session.user.email)) notFound();
 
-  const [initialJobs, initialSummary] = await Promise.all([listPromptImportJobs(), getPromptImportSummary()]);
+  const [initialJobs, initialSummary, syncConfig] = await Promise.all([listPromptImportJobs(), getPromptImportSummary(), getPromptSyncConfig()]);
   return <AdminPromptImports
     initialJobs={initialJobs}
     initialSummary={initialSummary}
-    initialImportsEnabled={promptImportsEnabled()}
+    initialImportsEnabled={promptImportsEnabled() && syncConfig.settings.enabled}
     initialHasMore={initialJobs.length < initialSummary.jobs}
+    initialSyncConfig={syncConfig}
   />;
 }

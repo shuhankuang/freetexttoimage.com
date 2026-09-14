@@ -108,15 +108,16 @@ button, input, textarea { font: inherit; }
 .admin-import-switch.is-enabled { background: #edf2e8; }
 .admin-import-switch.is-enabled > span { background: #718663; box-shadow: 0 0 0 4px rgba(113,134,99,.1); }
 .admin-import-switch.is-enabled strong { color: #526249; }
-.admin-upload-panel { padding: 20px; border: 1px solid #dedfd4; border-radius: 15px; background: #fffdf9; box-shadow: 0 12px 32px rgba(47,50,40,.04); }
-.admin-upload-copy { display: flex; align-items: flex-start; gap: 13px; }
-.admin-upload-copy > span { flex: none; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; background: #eef1e7; color: #68775d; }
-.admin-upload-copy strong { display: block; color: #424b3d; font-size: 15px; }
-.admin-upload-copy p { margin: 5px 0 0; color: #7c8376; font-size: 13px; line-height: 1.55; }
-.admin-upload-actions { margin-top: 18px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; }
-.admin-upload-actions input { min-width: 0; height: 42px; padding: 8px 10px; border: 1px solid #e0e2d7; border-radius: 9px; background: #f7f7f1; color: #626a5c; font-size: 13px; }
-.admin-upload-actions input::file-selector-button { margin-right: 12px; border: 0; background: transparent; color: #526049; font-weight: 650; cursor: pointer; }
-.admin-upload-actions .button { min-width: 150px; min-height: 42px; }
+.admin-sync-sources { margin-top: 24px; padding: 20px; border: 1px solid #dedfd4; border-radius: 15px; background: #fffdf9; }
+.admin-source-list { display: grid; gap: 0; border-top: 1px solid #ebece4; }
+.admin-source { padding: 14px 0; display: grid; grid-template-columns: 66px minmax(0, 1fr) auto; align-items: center; gap: 16px; border-bottom: 1px solid #ebece4; }
+.admin-source > div { min-width: 0; display: grid; gap: 4px; }
+.admin-source strong { color: #4b5544; font-size: 14px; }.admin-source span { overflow: hidden; color: #7d8577; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }.admin-source small { color: #9a9f95; font-size: 10.5px; }.admin-source .button { min-height: 32px; border-radius: 8px !important; font-size: 11px; }
+.admin-source-copy { min-width: 0; display: grid; gap: 4px; }
+.admin-source-run { min-width: 82px; }
+.admin-source-toggle { width: 66px; height: 32px; padding: 3px 5px 3px 4px; display: inline-flex; align-items: center; gap: 5px; border: 1px solid #dfe3d6; border-radius: 999px; background: #f1f2eb; color: #8a9184; cursor: pointer; font-size: 10px; font-weight: 700; transition: background .16s, border-color .16s, color .16s; }
+.admin-source-toggle > span { width: 23px; height: 23px; display: grid; place-items: center; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(54,62,45,.14); transition: transform .16s; }
+.admin-source-toggle b { font-weight: 700; line-height: 1; }.admin-source-toggle.is-on { justify-content: flex-end; border-color: #cbd8be; background: #e5ecde; color: #586c4e; padding-left: 5px; padding-right: 4px; }.admin-source-toggle.is-on > span { order: 2; }.admin-source-toggle:disabled { opacity: .55; cursor: default; }
 .admin-file-selection { margin: 12px 0 0; overflow: hidden; color: #8c9286; font-size: 11.5px; line-height: 1.55; text-overflow: ellipsis; white-space: nowrap; }
 .admin-import-error { margin: 14px 0 0; padding: 11px 13px; border-radius: 9px; background: #fff0e9; color: #a3442e; font-size: 13px; }
 .admin-import-summary { margin-top: 16px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
@@ -162,10 +163,10 @@ button, input, textarea { font: inherit; }
 .admin-jobs-more { margin-top: 18px; display: flex; justify-content: center; }
 .admin-jobs-more .button { min-height: 38px; border-radius: 8px !important; color: #65705c; font-size: 12.5px; }
 @media (max-width: 680px) {
-  .admin-upload-actions { grid-template-columns: 1fr; }
-  .admin-upload-actions .button { width: 100%; }
   .admin-import-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .admin-job-counts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-source { grid-template-columns: 66px minmax(0, 1fr) auto; gap: 9px; align-items: center; }
+  .admin-source-run { min-width: 76px; }
   .admin-job-footer { align-items: flex-start; flex-direction: column; }
 }
 

@@ -6,7 +6,7 @@ export const MODEL_PROMPT_PAGES = [
     icon: "/icons/openai.png",
     sourceModels: [
       { key: "gpt-image-2-5", label: "GPT Image 2.5", aliases: ["ChatGPT Image 2.5", "GPT Image 2.5"] },
-      { key: "gpt-image-2", label: "GPT Image 2", aliases: ["ChatGPT Image 2", "GPT Image 2"] },
+      { key: "gpt-image-2", label: "GPT Image 2", aliases: ["ChatGPT Image 2", "GPT Image 2", "ChatGPT Image 2.0", "GPT Image 2.0"] },
     ],
   },
   {

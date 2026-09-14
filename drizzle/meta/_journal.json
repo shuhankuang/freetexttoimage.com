@@ -71,6 +71,13 @@
       "when": 1789269705269,
       "tag": "0009_faulty_living_mummy",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1789366167296,
+      "tag": "0010_busy_maverick",
+      "breakpoints": true
     }
   ]
 }

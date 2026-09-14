@@ -254,3 +254,25 @@ export const promptImportWorkerLocks = sqliteTable("prompt_import_worker_locks",
   owner: text("owner").notNull(),
   expiresAt: integer("expires_at").notNull(),
 });
+
+export const promptSyncSettings = sqliteTable("prompt_sync_settings", {
+  id: integer("id").primaryKey(),
+  enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
+  updatedBy: text("updated_by"),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const promptSyncSources = sqliteTable("prompt_sync_sources", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  preset: text("preset").notNull(),
+  query: text("query").notNull(),
+  enabled: integer("enabled", { mode: "boolean" }).notNull().default(true),
+  minFaves: integer("min_faves").notNull().default(5),
+  lookbackHours: integer("lookback_hours").notNull().default(48),
+  maxRecords: integer("max_records").notNull().default(500),
+  lastRunAt: text("last_run_at"),
+  lastStatus: text("last_status"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+});

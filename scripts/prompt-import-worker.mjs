@@ -30,6 +30,7 @@ const owner = randomUUID();
 const lockId = "prompt-import-worker";
 const lockMs = 10 * 60 * 1000;
 const concurrency = Math.min(Math.max(Number(process.env.PROMPT_IMPORT_CONCURRENCY) || 2, 1), 4);
+const requestedJobId = String(process.env.PROMPT_IMPORT_JOB_ID || "").trim();
 
 async function acquireLock() {
   const now = Date.now();
@@ -53,7 +54,9 @@ async function releaseLock() {
 
 async function nextJob() {
   return (await db.select().from(schema.promptImportJobs)
-    .where(eq(schema.promptImportJobs.status, "queued"))
+    .where(requestedJobId
+      ? and(eq(schema.promptImportJobs.status, "queued"), eq(schema.promptImportJobs.id, requestedJobId))
+      : eq(schema.promptImportJobs.status, "queued"))
     .orderBy(asc(schema.promptImportJobs.sourceDate), asc(schema.promptImportJobs.seriesName), asc(schema.promptImportJobs.sequence), asc(schema.promptImportJobs.fileName))
     .limit(1))[0];
 }
@@ -135,8 +138,10 @@ async function main() {
   const lockHeartbeat = setInterval(() => refreshLock().catch((error) => console.error(`Unable to refresh worker lock: ${error?.message || error}`)), 60_000);
   lockHeartbeat.unref();
   try {
-    const staleBefore = new Date(Date.now() - lockMs).toISOString();
-    await db.update(schema.promptImportJobs).set({ status: "queued" }).where(and(eq(schema.promptImportJobs.status, "running"), lt(schema.promptImportJobs.heartbeatAt, staleBefore)));
+    if (!requestedJobId) {
+      const staleBefore = new Date(Date.now() - lockMs).toISOString();
+      await db.update(schema.promptImportJobs).set({ status: "queued" }).where(and(eq(schema.promptImportJobs.status, "running"), lt(schema.promptImportJobs.heartbeatAt, staleBefore)));
+    }
     while (true) {
       const job = await nextJob();
       if (!job) break;
