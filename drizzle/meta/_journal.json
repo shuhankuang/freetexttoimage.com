@@ -85,6 +85,13 @@
       "when": 1789459200000,
       "tag": "0011_disable_unpublished_prompt_sources",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1789545600000,
+      "tag": "0012_add_grok_prompt_source",
+      "breakpoints": true
     }
   ]
 }

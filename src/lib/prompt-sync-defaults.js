@@ -32,7 +32,7 @@ export const PROMPT_SYNC_DEFAULTS = [
   {
     id: "grok_imagine",
     name: "Grok Imagine",
-    query: '("prompt" OR "prompt:") ("Grok Imagine" OR "Grok Image") filter:images',
+    query: '("prompt" OR "prompt:") ("Grok Imagine" OR "Grok Image") filter:images -nsfw -porn -xxx -onlyfans -hentai',
     enabled: true,
   },
 ];

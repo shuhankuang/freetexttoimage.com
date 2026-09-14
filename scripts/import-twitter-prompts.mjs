@@ -168,7 +168,9 @@ async function main() {
   if (!options.skipExtraction) {
     const extractedPath = path.join(dir, `twitter-${options.preset}-${stamp}-extracted.json`);
     const dataPath = path.join(dir, `twitter-${options.preset}-${stamp}-data.json`);
-    await run(path.resolve("scripts/extract-prompts.mjs"), ["--in", rawPath, "--out", extractedPath, "--data-out", dataPath], env);
+    const extractionArgs = ["--in", rawPath, "--out", extractedPath, "--data-out", dataPath];
+    if (options.preset === "grok_imagine") extractionArgs.push("--reject-explicit-adult");
+    await run(path.resolve("scripts/extract-prompts.mjs"), extractionArgs, env);
     if (options.apply) await run(path.resolve("scripts/queue-prompt-data.mjs"), [dataPath, "--apply"], env);
     else console.log(`Dry run complete. Standard JSON: ${dataPath}`);
   } else {

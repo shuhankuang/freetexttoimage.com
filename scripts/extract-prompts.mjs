@@ -31,7 +31,18 @@ import path from "node:path";
 
 const OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions";
 
-function buildSystemPrompt(modelAliasBlock) {
+function buildSystemPrompt(modelAliasBlock, classifyExplicitAdult) {
+  const adultInstruction = classifyExplicitAdult ? `
+
+Also classify whether the tweet text or extracted prompt contains EXPLICIT adult sexual content.
+Set "is_explicit_adult" to true only for explicit sexual acts, explicit sexualized nudity,
+sexual references to genitals, or material clearly intended as pornography.
+Set it to false for swimwear, fashion, non-explicit romance, ordinary portraits,
+and non-explicit artistic nudity.
+` : "";
+  const adultField = classifyExplicitAdult
+    ? ',\n  "is_explicit_adult": boolean'
+    : "";
   return `You are a strict classifier and extractor for AI image-generation prompts found in tweets.
 
 Determine whether the tweet text contains an ACTUAL AI image generation prompt
@@ -61,6 +72,7 @@ If the tweet clearly used one of the models above (matched against any of its al
 set "model" to that exact label string. If the tweet used a different model (Midjourney, Flux, Stable
 Diffusion, Seedream, Qwen, or anything else not listed above) or the model is unclear, set "model" to null.
 Do NOT invent or guess one of the supported labels just to fill the field.
+${adultInstruction}
 
 Return ONLY a JSON object with this exact shape, no extra text:
 {
@@ -71,7 +83,8 @@ Return ONLY a JSON object with this exact shape, no extra text:
   "category": string | null,     // short label e.g. "Portrait", "Photography", "Poster", "Anime"
   "style": string | null,        // short label e.g. "Cinematic", "Photorealistic", "Anime"
   "quality_score": number,       // 0-10, how useful/detailed/reusable this prompt is for a prompt gallery
-  "confidence": number           // 0-1, your confidence in has_prompt
+  "confidence": number${adultField}
+}
 }`;
 }
 
@@ -85,6 +98,7 @@ function parseArgs(argv) {
     concurrency: 5,
     minConfidence: 0.9,
     minQuality: 6,
+    rejectExplicitAdult: false,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -113,6 +127,9 @@ function parseArgs(argv) {
         break;
       case "--min-quality":
         args.minQuality = Number(next());
+        break;
+      case "--reject-explicit-adult":
+        args.rejectExplicitAdult = true;
         break;
       default:
         console.error(`未知参数: ${a}`);
@@ -242,7 +259,7 @@ async function main() {
   const modelAliasBlock = MODEL_PROMPT_PAGES
     .flatMap((page) => page.sourceModels.map((m) => `- "${m.label}"`))
     .join("\n");
-  const systemPrompt = buildSystemPrompt(modelAliasBlock);
+  const systemPrompt = buildSystemPrompt(modelAliasBlock, args.rejectExplicitAdult);
 
   const inPath = path.resolve(args.in);
   const raw = JSON.parse(await fs.readFile(inPath, "utf-8"));
@@ -259,15 +276,38 @@ async function main() {
       extracted = await extractOne(apiKey, args.model, systemPrompt, record);
     } catch (e) {
       error = String(e.message ?? e);
-      extracted = { has_prompt: null, prompt: null, model: null, prompt_type: "unknown", category: null, style: null, quality_score: 0, confidence: 0 };
+      extracted = {
+        has_prompt: null,
+        prompt: null,
+        model: null,
+        prompt_type: "unknown",
+        category: null,
+        style: null,
+        quality_score: 0,
+        confidence: 0,
+        ...(args.rejectExplicitAdult ? { is_explicit_adult: null } : {}),
+      };
     }
     done++;
-    const tag = extracted.has_prompt ? "✅ prompt" : extracted.has_prompt === false ? "⬜ no-prompt" : "❌ error";
+    const tag = extracted.is_explicit_adult === true ? "🚫 explicit-adult" : extracted.has_prompt ? "✅ prompt" : extracted.has_prompt === false ? "⬜ no-prompt" : "❌ error";
     console.error(`  [${done}/${records.length}] ${tag} @${record.author} ${error ? "- " + error : ""}`);
     return { ...record, extraction: extracted, extraction_error: error };
   });
 
-  const withPrompt = enriched.filter((r) => r.extraction?.has_prompt);
+  const rejected = [];
+  const eligible = enriched.filter((record) => {
+    if (!args.rejectExplicitAdult) return true;
+    if (record.extraction?.is_explicit_adult === true) {
+      rejected.push({ tweetId: record.tweet_id, reason: "explicit_adult_text" });
+      return false;
+    }
+    if (record.extraction?.is_explicit_adult !== false) {
+      rejected.push({ tweetId: record.tweet_id, reason: "adult_classification_unavailable" });
+      return false;
+    }
+    return true;
+  });
+  const withPrompt = eligible.filter((r) => r.extraction?.has_prompt);
   const highQuality = withPrompt.filter(
     (r) =>
       (r.extraction.confidence ?? 0) >= args.minConfidence &&
@@ -276,7 +316,6 @@ async function main() {
 
   // 高质量候选 -> data/*.json 格式 -> 逐条跑真正的导入校验，只保留通过的。
   const dataFormatItems = [];
-  const rejected = [];
   for (const record of highQuality) {
     const { skip, item } = toDataFormatCandidate(record);
     if (skip) {
@@ -307,7 +346,7 @@ async function main() {
         with_prompt: withPrompt.length,
         high_quality: highQuality.length,
         data_format_ready: dataFormatItems.length,
-        filters: { min_confidence: args.minConfidence, min_quality: args.minQuality },
+        filters: { min_confidence: args.minConfidence, min_quality: args.minQuality, reject_explicit_adult: args.rejectExplicitAdult },
         rejected,
         data: enriched,
       },
