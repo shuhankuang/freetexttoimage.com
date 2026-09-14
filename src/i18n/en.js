@@ -110,12 +110,12 @@ const en = {
     promoClose: "Dismiss promotion",
   },
   imageToPrompt: {
-    metaTitle: "Free AI Image to Prompt Generator",
-    metaDescription: "Turn a photo or illustration into a detailed AI prompt you can copy, edit, or use to generate a new image. Start with free signup credits.",
+    metaTitle: "Free AI Image to Text Prompt Generator",
+    metaDescription: "Turn a photo or illustration into a detailed image to text prompt you can copy, edit, or use to create new AI images. Start with free signup credits.",
     section: "AI IMAGE TO PROMPT GENERATOR",
     title: "Turn Any Image Into a",
     titleAccent: "Ready-to-Use AI Prompt",
-    subtitle: "Upload an image and get a detailed prompt you can copy, edit, and use to create new AI images.",
+    subtitle: "Upload an image and get a detailed image to text prompt you can copy, edit, and use to create new AI images.",
     uploadTitle: "Image",
     uploadBody: "Upload an image to describe.",
     dropTitle: "Drop an image here",
@@ -189,7 +189,7 @@ const en = {
       items: {
         what: {
           question: "What is an image to prompt generator?",
-          answer: "An image to prompt generator turns an image into a written prompt that describes what it sees. You can copy the prompt, edit it, or use it to create a new image.",
+          answer: "An image to prompt generator, also called an image to text prompt tool, turns an image into written words that describe what it sees. You can copy, edit, or use the prompt to create a new image.",
         },
         how: {
           question: "How do I generate a prompt from an image?",
