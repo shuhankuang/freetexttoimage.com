@@ -38,6 +38,7 @@ const en = {
     models: {
       gptImage: "GPT Image",
       nanoBanana: "Nano Banana",
+      grokImagine: "Grok Imagine",
     },
     gallery: {
       listLabel: "Prompt example gallery",

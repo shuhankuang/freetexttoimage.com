@@ -19,6 +19,15 @@ export const MODEL_PROMPT_PAGES = [
       { key: "nano-banana-pro", label: "Nano Banana Pro", aliases: ["Nano Banana Pro", "Nano-Banana", "Nano-Banana-Pro"] },
     ],
   },
+  {
+    slug: "grok-imagine",
+    key: "grokImagine",
+    label: "Grok Imagine",
+    icon: "/icons/grok.png",
+    sourceModels: [
+      { key: "grok-imagine", label: "Grok Imagine", aliases: ["Grok Imagine", "Grok Image", "Grok Imagine Image"] },
+    ],
+  },
 ];
 
 export function getModelPromptPage(slug) {

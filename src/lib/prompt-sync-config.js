@@ -16,9 +16,9 @@ export async function ensurePromptSyncConfig() {
       name: source.name,
       preset: source.id,
       query: source.query,
-      enabled: true,
-      lookbackHours: 48,
-      maxRecords: 500,
+      enabled: source.enabled,
+      lookbackHours: 1,
+      maxRecords: 100,
       createdAt: now,
       updatedAt: now,
     });

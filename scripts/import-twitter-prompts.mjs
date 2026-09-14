@@ -18,11 +18,12 @@ const MODEL_BY_PRESET = {
   seedream: "Seedream 4.5",
   gpt_image: "GPT Image 2.5",
   qwen: "Qwen-Image-3.0 Pro",
+  grok_imagine: "Grok Imagine",
 };
 
 function args(argv) {
-  const out = { preset: null, query: null, since: null, until: null, windowHours: Number(process.env.TWITTER_IMPORT_WINDOW_HOURS || 24),
-    limit: Number(process.env.TWITTER_IMPORT_MAX_RECORDS || 500), delayMs: Number(process.env.TWITTER_IMPORT_DELAY_MS || 1000),
+  const out = { preset: null, query: null, since: null, until: null, lookbackHours: 1,
+    limit: 100, delayMs: Number(process.env.TWITTER_IMPORT_DELAY_MS || 1000),
     skipExtraction: false, apply: false, keep: false, queryType: "Latest" };
   for (let i = 0; i < argv.length; i += 1) {
     const key = argv[i]; const next = () => argv[++i];
@@ -30,7 +31,7 @@ function args(argv) {
     else if (key === "--query") out.query = next();
     else if (key === "--since") out.since = next();
     else if (key === "--until") out.until = next();
-    else if (key === "--window-hours") out.windowHours = Number(next());
+    else if (key === "--lookback-hours") out.lookbackHours = Number(next());
     else if (key === "--limit") out.limit = Number(next());
     else if (key === "--delay-ms") out.delayMs = Number(next());
     else if (key === "--query-type") out.queryType = next();
@@ -62,14 +63,15 @@ function mediaUrls(tweet) {
   }
   return [];
 }
-async function request(apiKey, query, queryType, since, until, attempt = 0) {
+async function request(apiKey, query, queryType, since, until, cursor, attempt = 0) {
   const params = new URLSearchParams({ query, queryType });
   if (since) params.set("since_time", String(Math.floor(since.getTime() / 1000)));
   if (until) params.set("until_time", String(Math.floor(until.getTime() / 1000)));
+  if (cursor) params.set("cursor", cursor);
   const response = await fetch(`${BASE_URL}${SEARCH_PATH}?${params}`, { headers: { "X-API-Key": apiKey }, signal: AbortSignal.timeout(45_000) });
   if (!response.ok) {
     const body = await response.text();
-    if ((response.status === 429 || response.status >= 500) && attempt < 4) { await sleep(700 * 2 ** attempt); return request(apiKey, query, queryType, since, until, attempt + 1); }
+    if ((response.status === 429 || response.status >= 500) && attempt < 4) { await sleep(700 * 2 ** attempt); return request(apiKey, query, queryType, since, until, cursor, attempt + 1); }
     throw new Error(`TwitterAPI.io HTTP ${response.status}: ${body.slice(0, 300)}`);
   }
   return response.json();
@@ -97,27 +99,28 @@ async function main() {
     const syncDb = drizzle(createClient({ url: process.env.TURSO_DATABASE_URL, authToken: process.env.TURSO_AUTH_TOKEN }));
     const [setting] = await syncDb.select().from(schema.promptSyncSettings).where(eq(schema.promptSyncSettings.id, 1)).limit(1);
     if (setting && !setting.enabled) { console.log("Prompt sync is paused in the admin settings."); return; }
-    let rows = await syncDb.select().from(schema.promptSyncSources).where(eq(schema.promptSyncSources.enabled, true));
-    if (!rows.length) {
-      const now = new Date().toISOString();
-      for (const source of PROMPT_SYNC_DEFAULTS) {
+    const existingRows = await syncDb.select({ id: schema.promptSyncSources.id }).from(schema.promptSyncSources);
+    const existingIds = new Set(existingRows.map((source) => source.id));
+    const now = new Date().toISOString();
+    for (const source of PROMPT_SYNC_DEFAULTS) {
+      if (!existingIds.has(source.id)) {
         await syncDb.insert(schema.promptSyncSources).values({
           id: source.id,
           name: source.name,
           preset: source.id,
           query: source.query,
-          enabled: true,
-          lookbackHours: 48,
-          maxRecords: 500,
+          enabled: source.enabled,
+          lookbackHours: 1,
+          maxRecords: 100,
           createdAt: now,
           updatedAt: now,
         }).onConflictDoNothing();
       }
-      rows = await syncDb.select().from(schema.promptSyncSources).where(eq(schema.promptSyncSources.enabled, true));
     }
+    const rows = await syncDb.select().from(schema.promptSyncSources).where(eq(schema.promptSyncSources.enabled, true));
     if (!rows.length) { console.log("No enabled Twitter sync sources."); return; }
     for (const source of rows) {
-      const childArgs = ["--preset", source.preset, "--query", source.query, "--window-hours", String(source.lookbackHours), "--limit", String(source.maxRecords)];
+      const childArgs = ["--preset", source.preset, "--query", source.query, "--lookback-hours", "1", "--limit", "100"];
       if (options.since) childArgs.push("--since", options.since); if (options.until) childArgs.push("--until", options.until); if (options.apply) childArgs.push("--apply");
       await run(path.resolve("scripts/import-twitter-prompts.mjs"), childArgs, process.env);
     }
@@ -126,21 +129,38 @@ async function main() {
   const apiKey = process.env.TWITTERAPI_IO_KEY; if (!apiKey) throw new Error("Missing TWITTERAPI_IO_KEY");
   const preset = PROMPT_SYNC_DEFAULTS_BY_ID.get(options.preset);
   if (!options.query && !preset) throw new Error(`Unknown preset: ${options.preset}`);
-  if (!Number.isInteger(options.windowHours) || options.windowHours < 1) throw new Error("--window-hours must be a positive integer");
+  if (!Number.isInteger(options.lookbackHours) || options.lookbackHours < 1 || options.lookbackHours > 24) throw new Error("--lookback-hours must be between 1 and 24");
+  if (!Number.isInteger(options.limit) || options.limit < 1 || options.limit > 100) throw new Error("--limit must be between 1 and 100");
   const until = timestamp(options.until, new Date());
-  const since = timestamp(options.since, new Date(until.getTime() - 24 * 3600 * 1000));
+  const since = timestamp(options.since, new Date(until.getTime() - options.lookbackHours * 3600 * 1000));
   if (since >= until) throw new Error("--since must be before --until");
   const query = queryWithFilters(options.query || preset.query);
-  const tweets = new Map(); const windowMs = options.windowHours * 3600 * 1000;
-  for (let start = since; start < until && tweets.size < options.limit; start = new Date(start.getTime() + windowMs)) {
-    const end = new Date(Math.min(start.getTime() + windowMs, until.getTime()));
-    const data = await request(apiKey, query, options.queryType, start, end);
-    for (const tweet of data.tweets || []) { const item = record(tweet); if (item) tweets.set(item.tweet_id, item); }
-    console.error(`[${start.toISOString()} → ${end.toISOString()}] fetched ${(data.tweets || []).length}, unique with images ${tweets.size}`);
-    if (end < until) await sleep(options.delayMs);
+  const tweets = new Map();
+  const seenCursors = new Set();
+  let cursor = null;
+  let page = 0;
+  while (tweets.size < options.limit) {
+    const data = await request(apiKey, query, options.queryType, since, until, cursor);
+    const pageTweets = data.tweets || [];
+    page += 1;
+    for (const tweet of pageTweets) {
+      const item = record(tweet);
+      if (item) tweets.set(item.tweet_id, item);
+      if (tweets.size >= options.limit) break;
+    }
+    console.error(`[page ${page}] fetched ${pageTweets.length}, unique with images ${tweets.size}/${options.limit}`);
+
+    const nextCursor = data.next_cursor || data.nextCursor;
+    if (!pageTweets.length || !data.has_next_page || !nextCursor || seenCursors.has(nextCursor)) break;
+    seenCursors.add(nextCursor);
+    cursor = nextCursor;
+    if (tweets.size < options.limit) await sleep(options.delayMs);
   }
   const records = [...tweets.values()].sort((a, b) => new Date(a.created_at) - new Date(b.created_at)).slice(0, options.limit);
-  if (!records.length) throw new Error("No image tweets found");
+  if (!records.length) {
+    console.log(`No image tweets found for ${options.preset || "this query"}; skipping extraction.`);
+    return;
+  }
   const dir = path.resolve(".prompt-import-api"); await mkdir(dir, { recursive: true });
   const stamp = ymd(since); const rawPath = path.join(dir, `twitter-${options.preset}-${stamp}-raw.json`);
   await writeFile(rawPath, JSON.stringify({ query, since: since.toISOString(), until: until.toISOString(), data: records }, null, 2));

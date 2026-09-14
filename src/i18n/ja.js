@@ -38,6 +38,7 @@ const ja = {
     models: {
       gptImage: "GPT Image",
       nanoBanana: "Nano Banana",
+      grokImagine: "Grok Imagine",
     },
     gallery: {
       listLabel: "プロンプト例のギャラリー",
