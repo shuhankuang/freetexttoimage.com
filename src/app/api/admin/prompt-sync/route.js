@@ -17,7 +17,6 @@ export async function PATCH(request) {
   else {
     const id = String(body.id || ""); if (!id) return NextResponse.json({ error: "Missing source id." }, { status: 400 });
     const values = {}; if (typeof body.enabled === "boolean") values.enabled = body.enabled;
-    if (body.minFaves != null) values.minFaves = Math.min(Math.max(Number(body.minFaves) || 0, 0), 100000);
     if (body.lookbackHours != null) values.lookbackHours = Math.min(Math.max(Number(body.lookbackHours) || 24, 1), 168);
     if (body.maxRecords != null) values.maxRecords = Math.min(Math.max(Number(body.maxRecords) || 100, 1), 1000);
     if (typeof body.query === "string" && body.query.trim().length <= 500) values.query = body.query.trim();

@@ -20,7 +20,7 @@ export async function POST(request) {
   const [source] = await db.select().from(promptSyncSources).where(eq(promptSyncSources.id, String(body.id || ""))).limit(1);
   if (!source) return NextResponse.json({ error: "Sync source not found." }, { status: 404 });
   if (!source.enabled) return NextResponse.json({ error: "Enable this sync source first." }, { status: 409 });
-  const scriptArgs = ["--preset", source.preset, "--query", source.query, "--min-faves", String(source.minFaves), "--window-hours", String(source.lookbackHours), "--limit", String(Math.min(source.maxRecords, 100)), "--apply"];
+  const scriptArgs = ["--preset", source.preset, "--query", source.query, "--window-hours", String(source.lookbackHours), "--limit", String(Math.min(source.maxRecords, 100)), "--apply"];
   const child = spawn(process.execPath, [path.resolve("scripts/import-twitter-prompts.mjs"), ...scriptArgs], { cwd: process.cwd(), env: process.env, detached: true, stdio: "ignore" });
   child.unref();
   return NextResponse.json({ started: true, source: source.id }, { status: 202 });

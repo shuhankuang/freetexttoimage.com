@@ -17,7 +17,6 @@ export async function ensurePromptSyncConfig() {
       preset: source.id,
       query: source.query,
       enabled: true,
-      minFaves: 5,
       lookbackHours: 48,
       maxRecords: 500,
       createdAt: now,

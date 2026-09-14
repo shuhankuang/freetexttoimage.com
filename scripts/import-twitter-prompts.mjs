@@ -23,7 +23,7 @@ const MODEL_BY_PRESET = {
 function args(argv) {
   const out = { preset: null, query: null, since: null, until: null, windowHours: Number(process.env.TWITTER_IMPORT_WINDOW_HOURS || 24),
     limit: Number(process.env.TWITTER_IMPORT_MAX_RECORDS || 500), delayMs: Number(process.env.TWITTER_IMPORT_DELAY_MS || 1000),
-    skipExtraction: false, apply: false, keep: false, queryType: "Latest", minFaves: 5 };
+    skipExtraction: false, apply: false, keep: false, queryType: "Latest" };
   for (let i = 0; i < argv.length; i += 1) {
     const key = argv[i]; const next = () => argv[++i];
     if (key === "--preset") out.preset = next();
@@ -34,7 +34,6 @@ function args(argv) {
     else if (key === "--limit") out.limit = Number(next());
     else if (key === "--delay-ms") out.delayMs = Number(next());
     else if (key === "--query-type") out.queryType = next();
-    else if (key === "--min-faves") out.minFaves = Number(next());
     else if (key === "--skip-extraction") out.skipExtraction = true;
     else if (key === "--keep") out.keep = true;
     else if (key === "--apply") out.apply = true;
@@ -52,10 +51,8 @@ function timestamp(value, fallback) {
   return date;
 }
 function ymd(date) { return date.toISOString().slice(0, 10).replaceAll("-", ""); }
-function queryWithFilters(base, minFaves) {
-  const suffix = ["-filter:retweets", "-filter:replies", "lang:en"];
-  if (Number.isFinite(minFaves)) suffix.push(`min_faves:${minFaves}`);
-  return [base, ...suffix].join(" ");
+function queryWithFilters(base) {
+  return [base, "-filter:retweets", "-filter:replies", "lang:en"].join(" ");
 }
 function mediaUrls(tweet) {
   for (const field of ["extendedEntities", "entities"]) {
@@ -110,7 +107,6 @@ async function main() {
           preset: source.id,
           query: source.query,
           enabled: true,
-          minFaves: 5,
           lookbackHours: 48,
           maxRecords: 500,
           createdAt: now,
@@ -121,7 +117,7 @@ async function main() {
     }
     if (!rows.length) { console.log("No enabled Twitter sync sources."); return; }
     for (const source of rows) {
-      const childArgs = ["--preset", source.preset, "--query", source.query, "--min-faves", String(source.minFaves), "--window-hours", String(source.lookbackHours), "--limit", String(source.maxRecords)];
+      const childArgs = ["--preset", source.preset, "--query", source.query, "--window-hours", String(source.lookbackHours), "--limit", String(source.maxRecords)];
       if (options.since) childArgs.push("--since", options.since); if (options.until) childArgs.push("--until", options.until); if (options.apply) childArgs.push("--apply");
       await run(path.resolve("scripts/import-twitter-prompts.mjs"), childArgs, process.env);
     }
@@ -134,7 +130,7 @@ async function main() {
   const until = timestamp(options.until, new Date());
   const since = timestamp(options.since, new Date(until.getTime() - 24 * 3600 * 1000));
   if (since >= until) throw new Error("--since must be before --until");
-  const query = queryWithFilters(options.query || preset.query, options.minFaves);
+  const query = queryWithFilters(options.query || preset.query);
   const tweets = new Map(); const windowMs = options.windowHours * 3600 * 1000;
   for (let start = since; start < until && tweets.size < options.limit; start = new Date(start.getTime() + windowMs)) {
     const end = new Date(Math.min(start.getTime() + windowMs, until.getTime()));

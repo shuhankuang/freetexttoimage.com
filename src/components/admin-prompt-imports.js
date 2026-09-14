@@ -164,7 +164,7 @@ export default function AdminPromptImports({ initialJobs, initialSummary, initia
           <div className="admin-source-copy">
             <strong>{source.name}</strong>
             <span>{source.query}</span>
-            <small>Last {source.lookbackHours} hours · min {source.minFaves} likes · max {source.maxRecords}</small>
+            <small>Last {source.lookbackHours} hours · max {source.maxRecords}</small>
           </div>
           <Button className="admin-source-run" variant="outline" isDisabled={Boolean(configBusy) || Boolean(sourceBusy) || !source.enabled} onPress={() => runSource(source.id)}>
             {sourceBusy === source.id && <Spinner size="sm" />}
