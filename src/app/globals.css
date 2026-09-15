@@ -29,7 +29,7 @@ button, input, textarea { font: inherit; }
 .logo { display: inline-flex; align-items: center; gap: 9px; min-width: 0; height: 32px; font-size: 18px; letter-spacing: -.55px; }
 .logo-mark { flex: none; width: 32px; height: 32px; background: center / contain no-repeat url("./icon.svg"); }
 .logo strong { min-width: 0; height: 32px; display: inline-flex; align-items: center; color: #33382f; font-weight: 720; line-height: 1; white-space: nowrap; }
-.logo-free { margin-right: 2px; color: #687658; font: italic 500 1.08em/1 Georgia, serif; letter-spacing: -.6px; }
+.logo-free { margin-right: 2px; color: var(--accent); font: italic 500 1.08em/1 Georgia, serif; letter-spacing: -.6px; }
 .logo-connector { color: #d45f3a; }
 .logo i { color: var(--accent); font-style: normal; }
 .eyebrow, .section-label { display: inline-flex; align-items: center; gap: 8px; color: #737a68; font-size: 12px; font-weight: 650; letter-spacing: 1.6px; }

@@ -20,6 +20,7 @@
     "prompts:queue:production": "node scripts/queue-prompt-data.mjs --env=.env.production",
     "prompts:twitter": "node scripts/import-twitter-prompts.mjs --apply",
     "prompts:twitter:dry": "node scripts/import-twitter-prompts.mjs",
+    "prompts:export": "node scripts/export-reddit-prompts.mjs",
     "prompts:worker": "node scripts/prompt-import-worker.mjs",
     "prompts:worker:check": "node scripts/prompt-import-worker.mjs --check",
     "prompts:worker:check:production": "node scripts/prompt-import-worker.mjs --env=.env.production --check",
