@@ -319,7 +319,7 @@ export async function handleCallback(payload = {}) {
   const urls = extractResultUrls(payload?.resultJson);
   try {
     if (state === "fail") {
-      await failJob(job.id, payload?.msg || payload?.failMsg || "Image generation failed.");
+      await failJob(job.id, resolveFailMessage(payload?.msg || payload?.failMsg));
       return { reason: "failed" };
     }
     if (state === "success" || urls.length > 0) {
@@ -336,6 +336,15 @@ export async function handleCallback(payload = {}) {
 }
 
 // ── 小工具 ──────────────────────────────────────────────
+// KIE 回调直接透传的失败原因有时是中文（KIE 自己内部报错，或某些模型原样转发的上游消息），
+// 不适合原样显示给终端用户——不做翻译，检测到中文就换成通用英文兜底，
+// 消息本身是英文时保留具体内容。跟 kie.js getTask() 里的同名逻辑重复，两处解析的是不同形状的
+// payload（这里是 webhook 原始 body，kie.js 那边是 recordInfo 响应），各自处理更简单。
+function resolveFailMessage(message) {
+  const isChinese = typeof message === "string" && /[一-鿿]/.test(message);
+  return message && !isChinese ? message : "Image generation failed. Please try again with different wording.";
+}
+
 function extractResultUrls(resultJson) {
   let urls = [];
   if (!resultJson) return urls;

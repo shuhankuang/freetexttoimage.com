@@ -15,11 +15,11 @@ const inspiration = [
   { id: "trending", category: "trending", ratio: "4 / 5", src: "/gallery/examples/07-trending-visual.webp", alt: "AI-generated festive European street at Christmas", prompt: "A charming European street at Christmas, warm shop windows, festive wreaths and string lights, softly falling snow, reflections on wet cobblestones, people strolling through the market, cozy cinematic atmosphere, highly detailed." },
 ];
 
-export default function InspirationGallery({ onChoose }) {
+export default function InspirationGallery({ onChoose, minimal = false }) {
   const { t } = useI18n();
 
-  return <section className="inspiration-section" aria-labelledby="inspiration-title">
-    <Hero headingId="inspiration-title" className="section-heading inspiration-heading--hero" label={t("inspiration.section")} title={t("inspiration.title")} accent={t("inspiration.titleAccent")} subtitle={t("inspiration.subtitle")} />
+  return <section className="inspiration-section" aria-labelledby={minimal ? undefined : "inspiration-title"}>
+    {!minimal && <Hero headingId="inspiration-title" className="section-heading inspiration-heading--hero" label={t("inspiration.section")} title={t("inspiration.title")} accent={t("inspiration.titleAccent")} subtitle={t("inspiration.subtitle")} />}
     <div className="inspiration-masonry">{inspiration.map((item, index) => {
       const title = t(`inspiration.items.${item.id}`);
       return <button key={item.id} className="inspiration-tile ratio-tile" style={{ "--tile-ratio": item.ratio }} onClick={() => onChoose(item.prompt)} aria-label={t("inspiration.usePromptLabel", { title })}><Image src={item.src} alt={item.alt} fill sizes="(max-width: 620px) 45vw, (max-width: 1100px) 28vw, 30vw" priority={index < 4} /><span className="tile-arrow"><ArrowIcon /></span><span className="tile-caption"><span>{t(`inspiration.categories.${item.category}`)}</span><strong>{title}</strong><span className="tile-action">{t("inspiration.usePrompt")} <ArrowIcon /></span></span></button>;

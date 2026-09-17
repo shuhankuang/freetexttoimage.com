@@ -376,6 +376,7 @@ const ja = {
     emptyBody: "最初の画像を生成すると、プロンプトや設定と一緒にここへ表示されます。",
     createImage: "画像を作成",
     delete: "作品を削除",
+    viewAll: "すべての作品（{count}件）を見る",
   },
   result: {
     type: "テキストから画像生成",

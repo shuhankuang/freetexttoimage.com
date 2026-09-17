@@ -1,6 +1,6 @@
 import { and, desc, eq, lt, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { creations } from "@/lib/schema";
+import { creations, generationJobs } from "@/lib/schema";
 import { listProviders } from "@/lib/models";
 import { publicObjectUrl } from "@/lib/storage";
 import { Buffer } from "node:buffer";
@@ -14,6 +14,28 @@ import { Buffer } from "node:buffer";
 const MODEL_LABELS = new Map(listProviders().map((p) => [p.id, p.label]));
 function fileName(key) {
   return key?.split("/").at(-1) || null;
+}
+
+// 失败原因存在 generation_jobs.error（一个 creation 对应一个 job），creations 表本身没有
+// 这个字段。显式列出列名 + LEFT JOIN，而不是裸 select(*)，避免两张表同名列（id/createdAt）冲突。
+const CREATION_COLUMNS = {
+  id: creations.id,
+  userId: creations.userId,
+  title: creations.title,
+  prompt: creations.prompt,
+  style: creations.style,
+  ratio: creations.ratio,
+  image: creations.image,
+  imageKey: creations.imageKey,
+  thumbnailKey: creations.thumbnailKey,
+  status: creations.status,
+  model: creations.model,
+  createdAt: creations.createdAt,
+  error: generationJobs.error,
+};
+
+function selectCreations() {
+  return db.select(CREATION_COLUMNS).from(creations).leftJoin(generationJobs, eq(generationJobs.creationId, creations.id));
 }
 
 const decorate = (row) => {
@@ -54,9 +76,7 @@ export async function listCreationsPage(userId, { limit = DEFAULT_PAGE_SIZE, cur
 
   const where = cursor ? and(eq(creations.userId, userId), afterCursor(cursor)) : eq(creations.userId, userId);
 
-  const rows = await db
-    .select()
-    .from(creations)
+  const rows = await selectCreations()
     .where(where)
     .orderBy(desc(creations.createdAt), desc(creations.id))
     .limit(pageSize + 1);
@@ -82,9 +102,7 @@ export async function listCreationsPage(userId, { limit = DEFAULT_PAGE_SIZE, cur
 }
 
 export async function getCreation(userId, id) {
-  const [row] = await db
-    .select()
-    .from(creations)
+  const [row] = await selectCreations()
     .where(and(eq(creations.userId, userId), eq(creations.id, id)));
   return decorate(row);
 }

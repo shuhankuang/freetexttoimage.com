@@ -7,7 +7,7 @@ import { useI18n } from "@/i18n/provider";
 
 function ResultState({ item, t }) {
   if (item?.status === "failed") {
-    return <><strong>{t("result.failedTitle")}</strong><span>{t("result.failedBody")}</span></>;
+    return <><strong>{t("result.failedTitle")}</strong><span>{item.error || t("result.failedBody")}</span></>;
   }
   return <><strong>{t("result.workingTitle")}</strong><span>{t("result.workingBody")}</span></>;
 }

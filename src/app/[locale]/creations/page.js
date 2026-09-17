@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button, Spinner } from "@heroui/react";
 import { ArrowIcon, ImageIcon, PlusIcon, TrashIcon } from "@/components/ui";
+import CreationStatus from "@/components/creation-status";
 import ResultViewer from "@/components/result-viewer";
 import { authClient } from "@/lib/auth-client";
 import { useI18n } from "@/i18n/provider";
@@ -32,9 +33,19 @@ function columnCountFor(width) {
   return 1;
 }
 
-function CreationTile({ item, position, total, onOpen, t }) {
+function CreationTile({ item, position, total, onOpen, onDelete, t }) {
   const heightRatio = tileHeightRatio(item.ratio);
   const failed = item.status === "failed";
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete(event) {
+    event.stopPropagation();
+    if (deleting) return;
+    setDeleting(true);
+    await onDelete(item.id);
+    setDeleting(false);
+  }
+
   return (
     <article className="creation-tile" role="listitem" aria-posinset={position} aria-setsize={total}>
       <button
@@ -52,15 +63,23 @@ function CreationTile({ item, position, total, onOpen, t }) {
             unoptimized
           />
         ) : (
-          <span className="creation-state">
-            {failed ? <><TrashIcon size={14} />{t("creations.generationFailed")}</> : <><Spinner size="sm" color="current" />{t("creations.generating")}</>}
-          </span>
+          <CreationStatus failed={failed} failedLabel={t("creations.generationFailed")} generatingLabel={t("creations.generating")} />
         )}
         <span className="creation-overlay" aria-hidden="true">
           <span>{[item.model, item.ratio].filter(Boolean).join(" · ") || t("creations.aiImage")}</span>
         </span>
-        <span className="creation-open" aria-hidden="true"><ArrowIcon /></span>
       </button>
+      {failed && (
+        <button
+          type="button"
+          className="creation-delete"
+          aria-label={t("creations.delete")}
+          disabled={deleting}
+          onClick={handleDelete}
+        >
+          {deleting ? <Spinner size="sm" color="current" /> : <TrashIcon size={14} />}
+        </button>
+      )}
     </article>
   );
 }
@@ -79,6 +98,7 @@ function distribute(items, count) {
 export default function CreationsPage() {
   const { path, t } = useI18n();
   const [selected, setSelected] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [initialError, setInitialError] = useState(false);
@@ -153,13 +173,16 @@ export default function CreationsPage() {
   }
 
   async function remove(id) {
+    setDeletingId(id);
     try {
       const response = await fetch(`/api/creations/${id}`, { method: "DELETE" });
       if (!response.ok) return;
       setSelected(null);
       setItems((current) => current.filter((item) => item.id !== id));
       setTotal((current) => Math.max(0, current - 1));
-    } catch { /* 网络失败时保留作品，避免界面与服务端状态不一致 */ }
+    } catch { /* 网络失败时保留作品，避免界面与服务端状态不一致 */ } finally {
+      setDeletingId((current) => (current === id ? null : current));
+    }
   }
 
   if (isPending || (signedIn && loading)) {
@@ -172,7 +195,7 @@ export default function CreationsPage() {
     {!initialError && items.length > 0 && <>
       <div className="library-summary"><span>{t("creations.count", { count: total })}</span></div>
       <div className="creation-wall" ref={wallRef} role="list" aria-label={t("creations.listLabel")}>
-        {columns.map((column, index) => <div className="creation-column" key={index}>{column.map(({ item, position }) => <CreationTile key={item.id} item={item} position={position} total={total} onOpen={() => setSelected(item)} t={t} />)}</div>)}
+        {columns.map((column, index) => <div className="creation-column" key={index}>{column.map(({ item, position }) => <CreationTile key={item.id} item={item} position={position} total={total} onOpen={() => setSelected(item)} onDelete={remove} t={t} />)}</div>)}
       </div>
       {(nextCursor || pageError) && <div className="library-pagination">
         {pageError && <p role="alert">{t("creations.pageError")}</p>}
@@ -180,6 +203,20 @@ export default function CreationsPage() {
       </div>}
     </>}
     {!initialError && items.length === 0 && <div className="empty-library"><span><ImageIcon /></span><h2>{t("creations.emptyTitle")}</h2><p>{t("creations.emptyBody")}</p><Link className="link-button primary-button" href={path("/studio")}>{t("creations.createImage")} <ArrowIcon /></Link></div>}
-    <ResultViewer item={selected} isOpen={!!selected} onOpenChange={(open) => { if (!open) setSelected(null); }} actions={selected && <Button isIconOnly variant="danger-soft" aria-label={t("creations.delete")} onPress={() => remove(selected.id)}><TrashIcon /></Button>} />
+    <ResultViewer
+      item={selected}
+      isOpen={!!selected}
+      onOpenChange={(open) => { if (!open) setSelected(null); }}
+      actions={selected && <Button
+        isIconOnly
+        variant="danger-soft"
+        aria-label={t("creations.delete")}
+        isPending={deletingId === selected.id}
+        isDisabled={deletingId === selected.id}
+        onPress={() => remove(selected.id)}
+      >
+        {deletingId === selected.id ? <Spinner size="sm" color="current" /> : <TrashIcon />}
+      </Button>}
+    />
   </main>;
 }

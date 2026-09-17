@@ -376,6 +376,7 @@ const en = {
     emptyBody: "Generate your first image and it will appear here with its prompt and settings.",
     createImage: "Create an image",
     delete: "Delete creation",
+    viewAll: "View all {count} creations",
   },
   result: {
     type: "Text to Image",

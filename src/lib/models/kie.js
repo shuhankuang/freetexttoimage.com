@@ -125,7 +125,13 @@ function makeKieProvider({ id, label, icon, fixedInput = {}, nsfw = false, promp
         return { status: "succeeded", resultUrls: extractResultUrls(data?.resultJson) };
       }
       if (state === "fail") {
-        return { status: "failed", resultUrls: [], error: data?.failMsg || "The image generation failed." };
+        // KIE 直接透传的 failMsg 有时是中文（它自己内部报错，或某些模型原样转发的上游消息），
+        // 不适合原样显示给终端用户——这里不做翻译，检测到中文就换成通用英文兜底，
+        // 保留 failMsg 本身是英文时的具体信息。
+        const message = data?.failMsg;
+        const isChinese = typeof message === "string" && /[一-鿿]/.test(message);
+        const error = message && !isChinese ? message : "Image generation failed. Please try again with different wording.";
+        return { status: "failed", resultUrls: [], error };
       }
       // waiting / queuing / generating（以及任何未知状态）一律视为仍在处理，不轻易判死
       return { status: "processing", resultUrls: [], error: null };

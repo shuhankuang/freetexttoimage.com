@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Spinner } from "@heroui/react";
+import CreationStatus from "@/components/creation-status";
 
 // 瀑布流用 CSS columns 实现（每格按图片真实宽高比自然排布，不需要知道尺寸），
 // 滚动到底部前用 IntersectionObserver 自动加载下一页，不需要点"加载更多"。
@@ -54,7 +55,7 @@ export default function AdminUserCreationsGrid({ userId, initialItems, initialNe
       >
         {item.image
           ? <img src={item.thumbnail || item.image} alt={item.prompt || "Generated image"} loading="lazy" />
-          : <span className="creation-state">{item.status === "failed" ? "Failed" : "Processing"}</span>}
+          : <CreationStatus failed={item.status === "failed"} failedLabel="Generation failed" generatingLabel="Processing…" />}
       </a>)}
     </div>
 

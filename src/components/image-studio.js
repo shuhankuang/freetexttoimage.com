@@ -9,7 +9,7 @@ import ImageSettingsPopover from "@/components/image-settings-popover";
 import ModelPickerPopover from "@/components/model-picker-popover";
 import { MODEL_SELECT_EVENT } from "@/components/model-showcase-button";
 import InspirationGallery from "@/components/inspiration-gallery";
-import ResultViewer from "@/components/result-viewer";
+import MyCreationsPreview from "@/components/my-creations-preview";
 import { useI18n } from "@/i18n/provider";
 import { ArrowIcon, CheckIcon, CloseIcon, CoinsIcon, DiceIcon, ImagePlusIcon, NoCardIcon, SparkIcon, SparklesIcon } from "@/components/ui";
 import Hero from "@/components/blocks/hero";
@@ -24,7 +24,7 @@ const SETTINGS_STORAGE_KEY = "freetexttoimage:image-settings:v1";
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export default function ImageStudio({ models = [], defaultModel = "z-image", howItWorks = null, modelShowcase = null, faq = null, cta = null }) {
+export default function ImageStudio({ models = [], defaultModel = "z-image", howItWorks = null, modelShowcase = null, faq = null, cta = null, simplified = false, myCreations = null, creationsHref = null }) {
   const router = useRouter(); const fileInput = useRef(null);
   const referencesRef = useRef([]);
   const pathname = usePathname();
@@ -226,6 +226,12 @@ export default function ImageStudio({ models = [], defaultModel = "z-image", how
     throw new Error(t("studio.errors.timeout"));
   }
   function choosePrompt(value) { setPrompt(value); setError(""); document.getElementById("image-prompt")?.focus({ preventScroll: true }); window.scrollTo({ top: 0, behavior: "smooth" }); }
+
+  // 三者任一为真就显示"我的作品"瀑布流：本来就有历史作品 / 正在生成 / 这次会话刚生成成功。
+  // 不用额外状态记"是否已经开始用"——生成失败时 pending 和 result 都会落回 false/null，
+  // 自然退回灵感画廊，配合生成框旁边已有的内联错误提示，不重复报错。
+  const showMyCreations = myCreations !== null && (pending || result || myCreations.items.length > 0);
+
   return <main className="workspace-page image-studio">
     <Hero
       headingLevel="h1"
@@ -264,10 +270,18 @@ export default function ImageStudio({ models = [], defaultModel = "z-image", how
     </Card.Footer></Card>
     <div className="studio-footnote"><span className="ft-item"><CheckIcon size={14} />{t("studio.freeToTry")}</span><span className="ft-dot">·</span><span className="ft-item"><NoCardIcon size={15} />{t("studio.noCard")}</span><span className="ft-dot">·</span><span className="ft-item"><SparklesIcon size={14} />{t("studio.quality")}</span></div>
     {howItWorks}
-    <InspirationGallery onChoose={choosePrompt} />
+    {showMyCreations
+      ? <MyCreationsPreview
+          initialItems={myCreations.items}
+          remaining={myCreations.remaining}
+          viewAllHref={creationsHref}
+          pending={pending}
+          pendingRatio={ratio}
+          latestResult={result}
+        />
+      : <InspirationGallery onChoose={choosePrompt} minimal={simplified} />}
     {modelShowcase}
     {faq}
     {cta}
-    <ResultViewer item={result} isOpen={!!result} onOpenChange={(open) => { if (!open) setResult(null); }} />
   </main>;
 }
