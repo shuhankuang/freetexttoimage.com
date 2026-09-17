@@ -1,0 +1,1 @@
+CREATE INDEX `idx_user_created` ON `user` (`createdAt`);

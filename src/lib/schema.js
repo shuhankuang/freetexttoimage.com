@@ -4,15 +4,20 @@ import { sqliteTable, text, integer, index, uniqueIndex } from "drizzle-orm/sqli
 // better-auth 四张表的日期列实际存的是
 // ISO 字符串（TEXT），不是 epoch 整数，所以这里用 text()，不是 integer(mode:'timestamp')。
 
-export const user = sqliteTable("user", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  email: text("email").notNull().unique(),
-  emailVerified: integer("emailVerified", { mode: "boolean" }).notNull(),
-  image: text("image"),
-  createdAt: text("createdAt").notNull(),
-  updatedAt: text("updatedAt").notNull(),
-});
+export const user = sqliteTable(
+  "user",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    email: text("email").notNull().unique(),
+    emailVerified: integer("emailVerified", { mode: "boolean" }).notNull(),
+    image: text("image"),
+    createdAt: text("createdAt").notNull(),
+    updatedAt: text("updatedAt").notNull(),
+  },
+  // admin 用户列表按 createdAt 倒序游标分页，用户量上去后没有这个索引会退化成全表排序。
+  (table) => [index("idx_user_created").on(table.createdAt)]
+);
 
 export const session = sqliteTable("session", {
   id: text("id").primaryKey(),

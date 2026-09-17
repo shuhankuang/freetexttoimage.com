@@ -29,7 +29,7 @@ export default function AppShell({ children, footer, pageTitle: pageTitleOverrid
   const explorePath = path("/explore");
   const promptsPath = path("/prompts");
   const loginPath = path("/login");
-  const adminPath = path("/admin/prompts");
+  const adminPath = path("/admin");
   const loginHref = loginPathWithRedirect(loginPath, pathname);
 
   useEffect(() => {
@@ -73,8 +73,8 @@ export default function AppShell({ children, footer, pageTitle: pageTitleOverrid
           ? t("shell.explore")
           : pathname.startsWith(`${promptsPath}/`)
             ? t("modelPrompts.section")
-          : pathname === adminPath
-            ? "Prompt imports"
+          : pathname.startsWith(adminPath)
+            ? "Admin"
       : t("shell.imageStudio"));
 
   return <div className="app-frame">
@@ -103,8 +103,8 @@ export default function AppShell({ children, footer, pageTitle: pageTitleOverrid
                   <Dropdown.Item id="profile" textValue={t("shell.profileBilling")}>
                     <UserIcon /><span>{t("shell.profileBilling")}</span>
                   </Dropdown.Item>
-                  {showAdmin && <Dropdown.Item id="admin" textValue="Prompt imports">
-                    <PromptCardsIcon /><span>Prompt imports</span>
+                  {showAdmin && <Dropdown.Item id="admin" textValue="Admin">
+                    <PromptCardsIcon /><span>Admin</span>
                   </Dropdown.Item>}
                   <Dropdown.Item id="logout" textValue={t("shell.signOut")}>
                     <LogoutIcon /><span>{t("shell.signOut")}</span>
