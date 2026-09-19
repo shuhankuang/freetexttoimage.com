@@ -1,6 +1,6 @@
 const ja = {
   meta: {
-    title: "無料AI画像生成｜テキストから画像を作成 | FreeTexttoImage",
+    title: "画像生成AI｜無料でテキストからAI画像を生成 | FreeTextToImage",
     description: "主要なAIモデルを使って、テキストから高品質な画像をすばやく生成。モデルと縦横比を選び、登録特典の無料クレジットで始められます。",
     loginTitle: "ログイン",
     loginDescription: "FreeTexttoImageにログインして、AI画像の生成、クレジットの管理、作品の確認ができます。",
@@ -237,7 +237,7 @@ const ja = {
     section: "無料のAI画像生成ツール",
     title: "言葉を画像に。",
     titleAccent: "アイデアをかたちに。",
-    subtitle: "テキストを入力するだけで、高品質なAI画像を数秒で作成できます。",
+    subtitle: "テキストを入力するだけで、高品質なAI画像を簡単に生成。人気の画像生成AIモデルから用途に合ったモデルを選べます。",
     promptLabel: "作りたい画像を説明してください",
     surprise: "おまかせ",
     placeholder: "静かな海辺に建つ陽光あふれるヴィラ。やわらかなリネンのカーテンが風に揺れている…",
@@ -299,7 +299,7 @@ const ja = {
     },
   },
   modelShowcase: {
-    section: "AI画像モデル",
+    section: "人気の画像生成AIモデル",
     title: "主要なAI画像モデルで",
     titleAccent: "アイデアをかたちに",
     subtitle: "テキストからの画像生成、画像編集、商品ビジュアル、クリエイティブデザインに対応する主要なAI画像モデルを比較できます。",
@@ -313,13 +313,13 @@ const ja = {
     },
   },
   homeFaq: {
-    section: "よくある質問",
+    section: "画像生成AIについてよくある質問",
     title: "テキストからの",
     titleAccent: "画像作成について",
     subtitle: "テキストからの画像作成、プロンプト、モデル、無料画像生成について、わかりやすく答えます。",
     items: {
       what: {
-        question: "AIテキスト画像生成とは何ですか？",
+        question: "画像生成AIとは何ですか？",
         answer: "入力した言葉をもとにAIが画像を作る機能です。作りたい画像を説明し、モデルを選ぶだけで、テキストから数秒で画像を生成できます。",
       },
       how: {
@@ -327,7 +327,7 @@ const ja = {
         answer: "プロンプト欄に見たいものを入力し、画像モデルとサイズを選んで「画像を生成」を押します。思いどおりの結果になるまで、プロンプトを変えて何度でも試せます。",
       },
       free: {
-        question: "AI画像を無料で生成できますか？",
+        question: "画像生成AIは無料で使えますか？",
         answer: "はい。FreeTextToImageに登録すると無料クレジットを受け取れるため、支払い前に画像生成を試せます。開始時にクレジットカードは必要ありません。",
       },
       models: {
