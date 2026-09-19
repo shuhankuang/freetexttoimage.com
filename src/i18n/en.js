@@ -1,7 +1,7 @@
 const en = {
   meta: {
-    title: "Free AI Text to Image Generator | FreeTexttoImage",
-    description: "Create high-quality AI images from text in seconds with leading models. Choose a model and aspect ratio, then start generating with free signup credits.",
+    title: "Text to Image AI Generator | FreeTexttoImage",
+    description: "Use our text to image AI generator to create high-quality images in seconds. Choose a model and aspect ratio, then start with free signup credits.",
     loginTitle: "Sign In",
     loginDescription: "Sign in to FreeTexttoImage to generate AI images, manage credits, and view your creations.",
     studioTitle: "AI Image Studio",
@@ -234,10 +234,10 @@ const en = {
     },
   },
   studio: {
-    section: "FREE AI TEXT TO IMAGE GENERATOR",
-    title: "Turn Text Into Images.",
-    titleAccent: "Bring Your Ideas to Life.",
-    subtitle: "Create high-quality AI images from text in seconds — free to start.",
+    section: "FREE AI IMAGE GENERATOR",
+    title: "Create Images with",
+    titleAccent: "Text to Image AI.",
+    subtitle: "Turn a written idea into a high-quality image in seconds with our text to image generator — free to start.",
     promptLabel: "Describe the image you want to create",
     surprise: "Surprise me",
     placeholder: "A sun-drenched villa on the edge of a quiet sea, soft linen curtains dancing in the breeze...",
@@ -264,7 +264,7 @@ const en = {
       settingsTitle: "Choose your settings",
       settingsBody: "Select an AI model, aspect ratio, and image settings.",
       generateTitle: "Generate your image",
-      generateBody: "Turn your prompt into an AI image, then refine or download it.",
+      generateBody: "Use the text to image generator, then refine or download your AI image.",
     },
     errors: {
       referenceSize: "Reference images must be smaller than 10 MB.",
@@ -280,7 +280,7 @@ const en = {
     },
   },
   inspiration: {
-    section: "TEXT-TO-IMAGE EXAMPLES",
+    section: "TEXT TO IMAGE EXAMPLES",
     title: "See Real Text Prompts",
     titleAccent: "Turn Into AI-Generated Images",
     subtitle: "Choose an example, reuse its prompt, and make the idea your own.",
@@ -302,7 +302,7 @@ const en = {
     section: "AI IMAGE MODELS",
     title: "Create with Leading",
     titleAccent: "AI Image Models",
-    subtitle: "Compare leading AI image models for text-to-image generation, image editing, product visuals, and creative design.",
+    subtitle: "Compare leading AI image models for text to image generation, image editing, product visuals, and creative design.",
     descriptions: {
       qwen: "Fast generation and flexible image editing.",
       bfl: "Photorealistic, cinematic, production-ready visuals.",
@@ -315,12 +315,12 @@ const en = {
   homeFaq: {
     section: "FREQUENTLY ASKED QUESTIONS",
     title: "Questions About",
-    titleAccent: "Creating Images from Text",
-    subtitle: "Simple answers about creating images from text, prompts, models, and free image generation.",
+    titleAccent: "Text to Image AI",
+    subtitle: "Simple answers about AI image prompts, models, and free image generation.",
     items: {
       what: {
-        question: "What is an AI text-to-image generator?",
-        answer: "An AI text-to-image generator creates images from written words. Describe the image you want, choose a model, and generate an image from your text in seconds.",
+        question: "What is a text to image AI generator?",
+        answer: "A text to image AI generator creates images from written words. Describe the image you want, choose a model, and generate an image from your text in seconds.",
       },
       how: {
         question: "How do I create an image from text?",
@@ -346,9 +346,9 @@ const en = {
   },
   homeCta: {
     section: "START CREATING",
-    title: "Ready to Turn Your Ideas",
-    titleAccent: "Into Images?",
-    description: "Create images from text with leading AI image models.",
+    title: "Ready to Create",
+    titleAccent: "Your Ideas Into Images?",
+    description: "Create images from text with leading AI image models and our text to image generator.",
     descriptionSecond: "Start free and see what you can make.",
     action: "Start Creating Free",
     note: "No credit card required · Free credits included",
